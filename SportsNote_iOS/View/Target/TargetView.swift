@@ -27,7 +27,10 @@ struct TargetView: View {
                     }
                 )
             },
-            buttonAction: {}
+            actionItems: [
+                ("年間目標", {}),
+                ("月間目標", {})
+            ]
         )
     }
 }

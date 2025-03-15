@@ -27,7 +27,10 @@ struct NoteView: View {
                     }
                 )
             },
-            buttonAction: {}
+            actionItems: [
+                ("練習ノート", {}),
+                ("大会ノート", {})
+            ]
         )
     }
 }

@@ -18,7 +18,10 @@ struct TaskView: View {
                     Text("Additional Content")
                 }
             },
-            buttonAction: {}
+            actionItems: [
+                ("グループ", {}),
+                ("課題", {})
+            ]
         )
     }
 }

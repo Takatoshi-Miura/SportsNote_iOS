@@ -7,7 +7,9 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
     let leadingItem: Leading
     let trailingItem: Trailing
     let content: () -> AnyView
-    let buttonAction: () -> Void
+    let actionItems: [(title: String, action: () -> Void)]
+    
+    @State private var showActionSheet = false
     
     init(
         isMenuOpen: Binding<Bool>,
@@ -16,7 +18,7 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
         @ViewBuilder leadingItem: () -> Leading,
         @ViewBuilder trailingItem: () -> Trailing,
         @ViewBuilder content: @escaping () -> some View,
-        buttonAction: @escaping () -> Void
+        actionItems: [(title: String, action: () -> Void)]
     ) {
         self._isMenuOpen = isMenuOpen
         self.title = title
@@ -24,7 +26,7 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
         self.leadingItem = leadingItem()
         self.trailingItem = trailingItem()
         self.content = { AnyView(content()) }
-        self.buttonAction = buttonAction
+        self.actionItems = actionItems
     }
     
     var body: some View {
@@ -53,7 +55,7 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
                 HStack {
                     Spacer()
                     Button(action: {
-                        buttonAction()
+                        showActionSheet = true
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .resizable()
@@ -65,6 +67,13 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
                 }
             }
         }
+        .confirmationDialog("何を追加しますか？", isPresented: $showActionSheet, titleVisibility: .visible) {
+            ForEach(actionItems.indices, id: \.self) { index in
+                Button(actionItems[index].title) {
+                    actionItems[index].action()
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        }
     }
 }
-
