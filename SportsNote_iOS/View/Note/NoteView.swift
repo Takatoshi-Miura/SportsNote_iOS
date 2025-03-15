@@ -26,7 +26,8 @@ struct NoteView: View {
                         Text("Additional Content")
                     }
                 )
-            }
+            },
+            buttonAction: {}
         )
     }
 }

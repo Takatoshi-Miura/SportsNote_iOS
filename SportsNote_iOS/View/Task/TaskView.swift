@@ -17,7 +17,8 @@ struct TaskView: View {
                     Text("Custom Content for Task View")
                     Text("Additional Content")
                 }
-            }
+            },
+            buttonAction: {}
         )
     }
 }

@@ -26,7 +26,8 @@ struct TargetView: View {
                         Text("Additional Content")
                     }
                 )
-            }
+            },
+            buttonAction: {}
         )
     }
 }
