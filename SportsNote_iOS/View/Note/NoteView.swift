@@ -4,7 +4,6 @@ struct NoteView: View {
     var body: some View {
         TabTopView(
             title: LocalizedStrings.note,
-            destination: NoteDetailView(),
             trailingItem: {
                 Button(action: {
                     print("Right button tapped")
@@ -16,6 +15,9 @@ struct NoteView: View {
             content: {
                 AnyView(
                     VStack {
+                        NavigationLink(destination: NoteDetailView()) {
+                            Text("Go to Note Detail")
+                        }
                         Text("Custom Content for Note View")
                         Text("Additional Content")
                     }

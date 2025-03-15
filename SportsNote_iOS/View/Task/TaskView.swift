@@ -4,10 +4,12 @@ struct TaskView: View {
     var body: some View {
         TabTopView(
             title: LocalizedStrings.task,
-            destination: TaskDetailView(),
             trailingItem: {},
             content: {
                 VStack {
+                    NavigationLink(destination: TaskDetailView()) {
+                        Text("Go to Task Detail")
+                    }
                     Text("Custom Content for Task View")
                     Text("Additional Content")
                 }

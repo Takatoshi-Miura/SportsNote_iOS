@@ -1,26 +1,23 @@
 import SwiftUI
 
-struct TabTopView<Content: View, Trailing: View>: View {
+struct TabTopView<Trailing: View, Content: View>: View {
     @State private var isMenuOpen: Bool = false
     @State private var showActionSheet = false
     
     let title: String
-    let destination: Content
     let trailingItem: Trailing
-    let content: () -> AnyView
+    let content: () -> Content
     let actionItems: [(title: String, action: () -> Void)]
     
     init(
         title: String,
-        destination: Content,
         @ViewBuilder trailingItem: () -> Trailing,
-        @ViewBuilder content: @escaping () -> some View,
+        @ViewBuilder content: @escaping () -> Content,
         actionItems: [(title: String, action: () -> Void)]
     ) {
         self.title = title
-        self.destination = destination
         self.trailingItem = trailingItem()
-        self.content = { AnyView(content()) }
+        self.content = content
         self.actionItems = actionItems
     }
     
@@ -28,9 +25,6 @@ struct TabTopView<Content: View, Trailing: View>: View {
         ZStack {
             VStack {
                 content()
-                NavigationLink(destination: destination) {
-                    Text("Go to \(title) Detail")
-                }
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
