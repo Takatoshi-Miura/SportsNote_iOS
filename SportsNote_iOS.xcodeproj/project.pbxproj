@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8D4EF5F62D85171600AC19C1 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F52D85171600AC19C1 /* Realm */; };
 		8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F72D85171600AC19C1 /* RealmSwift */; };
 /* End PBXBuildFile section */
 
@@ -58,7 +57,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */,
-				8D4EF5F62D85171600AC19C1 /* Realm in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
