@@ -6,7 +6,7 @@ struct NoteView: View {
     var body: some View {
         TabTopView(
             isMenuOpen: $isMenuOpen,
-            title: "Note",
+            title: LocalizedStrings.note,
             destination: NoteDetailView(),
             leadingItem: {
                 MenuButton(isMenuOpen: $isMenuOpen)
@@ -28,8 +28,8 @@ struct NoteView: View {
                 )
             },
             actionItems: [
-                ("練習ノート", {}),
-                ("大会ノート", {})
+                (LocalizedStrings.practiceNote, {}),
+                (LocalizedStrings.tournamentNote, {})
             ]
         )
     }

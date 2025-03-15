@@ -194,11 +194,12 @@
 				};
 			};
 			buildConfigurationList = 8D79F2D32D80660200D5D685 /* Build configuration list for PBXProject "SportsNote_iOS" */;
-			developmentRegion = en;
+			developmentRegion = ja;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = 8D79F2CF2D80660200D5D685;
 			minimizedProjectReferenceProxies = 1;

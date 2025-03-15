@@ -1,0 +1,21 @@
+// 日本語用
+
+// MARK: Common
+"cancel" = "キャンセル";
+"addPrompt" = "何を追加しますか？";
+
+// MARK: Group
+"group" = "グループ";
+
+// MARK: Task
+"task" = "課題";
+
+// MARK: Note
+"note" = "ノート";
+"practiceNote" = "練習ノート";
+"tournamentNote" = "大会ノート";
+
+// MARK: Target
+"target" = "目標";
+"yearlyTarget" = "年間目標";
+"monthlyTarget" = "月間目標";

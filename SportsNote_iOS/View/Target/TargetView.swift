@@ -6,7 +6,7 @@ struct TargetView: View {
     var body: some View {
         TabTopView(
             isMenuOpen: $isMenuOpen,
-            title: "Target",
+            title: LocalizedStrings.target,
             destination: TargetDetailView(),
             leadingItem: {
                 MenuButton(isMenuOpen: $isMenuOpen)
@@ -28,8 +28,8 @@ struct TargetView: View {
                 )
             },
             actionItems: [
-                ("年間目標", {}),
-                ("月間目標", {})
+                (LocalizedStrings.yearlyTarget, {}),
+                (LocalizedStrings.monthlyTarget, {})
             ]
         )
     }

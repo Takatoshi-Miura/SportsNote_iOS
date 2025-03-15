@@ -43,7 +43,7 @@ struct MainTabView: View {
                 TaskView(isMenuOpen: $isMenuOpen)
             }
             .tabItem {
-                Label("Task", systemImage: "checkmark.circle.fill")
+                Label(LocalizedStrings.task, systemImage: "checkmark.circle.fill")
             }
             .tag(Tab.task)
             
@@ -51,7 +51,7 @@ struct MainTabView: View {
                 NoteView(isMenuOpen: $isMenuOpen)
             }
             .tabItem {
-                Label("Note", systemImage: "note.text")
+                Label(LocalizedStrings.note, systemImage: "note.text")
             }
             .tag(Tab.note)
             
@@ -59,7 +59,7 @@ struct MainTabView: View {
                 TargetView(isMenuOpen: $isMenuOpen)
             }
             .tabItem {
-                Label("Target", systemImage: "target")
+                Label(LocalizedStrings.target, systemImage: "target")
             }
             .tag(Tab.target)
         }

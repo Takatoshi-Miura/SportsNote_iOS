@@ -6,7 +6,7 @@ struct TaskView: View {
     var body: some View {
         TabTopView(
             isMenuOpen: $isMenuOpen,
-            title: "Task",
+            title: LocalizedStrings.task,
             destination: TaskDetailView(),
             leadingItem: {
                 MenuButton(isMenuOpen: $isMenuOpen)
@@ -19,8 +19,8 @@ struct TaskView: View {
                 }
             },
             actionItems: [
-                ("グループ", {}),
-                ("課題", {})
+                (LocalizedStrings.group, {}),
+                (LocalizedStrings.task, {})
             ]
         )
     }

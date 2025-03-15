@@ -61,19 +61,18 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
                             .resizable()
                             .frame(width: 60, height: 60)
                             .foregroundColor(.blue)
-                            .shadow(radius: 10)
                     }
                     .padding()
                 }
             }
         }
-        .confirmationDialog("何を追加しますか？", isPresented: $showActionSheet, titleVisibility: .visible) {
+        .confirmationDialog(LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible) {
             ForEach(actionItems.indices, id: \.self) { index in
                 Button(actionItems[index].title) {
                     actionItems[index].action()
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(LocalizedStrings.cancel, role: .cancel) {}
         }
     }
 }
