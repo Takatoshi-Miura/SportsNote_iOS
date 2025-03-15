@@ -1,29 +1,24 @@
 import SwiftUI
 
-struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
-    @Binding var isMenuOpen: Bool
+struct TabTopView<Content: View, Trailing: View>: View {
+    @State private var isMenuOpen: Bool = false
+    @State private var showActionSheet = false
+    
     let title: String
     let destination: Content
-    let leadingItem: Leading
     let trailingItem: Trailing
     let content: () -> AnyView
     let actionItems: [(title: String, action: () -> Void)]
     
-    @State private var showActionSheet = false
-    
     init(
-        isMenuOpen: Binding<Bool>,
         title: String,
         destination: Content,
-        @ViewBuilder leadingItem: () -> Leading,
         @ViewBuilder trailingItem: () -> Trailing,
         @ViewBuilder content: @escaping () -> some View,
         actionItems: [(title: String, action: () -> Void)]
     ) {
-        self._isMenuOpen = isMenuOpen
         self.title = title
         self.destination = destination
-        self.leadingItem = leadingItem()
         self.trailingItem = trailingItem()
         self.content = { AnyView(content()) }
         self.actionItems = actionItems
@@ -40,8 +35,12 @@ struct TabTopView<Content: View, Leading: View, Trailing: View>: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) { leadingItem }
-                ToolbarItem(placement: .navigationBarTrailing) { trailingItem }
+                ToolbarItemGroup(placement: .navigationBarLeading) {
+                    MenuButton(isMenuOpen: $isMenuOpen)
+                }
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    trailingItem
+                }
             }
             .overlay(
                 MenuView(isMenuOpen: $isMenuOpen)

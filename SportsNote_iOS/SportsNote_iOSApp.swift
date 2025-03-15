@@ -31,7 +31,6 @@ struct SportsNote_iOSApp: App {
 
 struct MainTabView: View {
     @State private var selectedTab: Tab = .task
-    @State private var isMenuOpen = false
     
     enum Tab: Int {
         case task, note, target
@@ -40,7 +39,7 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                TaskView(isMenuOpen: $isMenuOpen)
+                TaskView()
             }
             .tabItem {
                 Label(LocalizedStrings.task, systemImage: "checkmark.circle.fill")
@@ -48,7 +47,7 @@ struct MainTabView: View {
             .tag(Tab.task)
             
             NavigationStack {
-                NoteView(isMenuOpen: $isMenuOpen)
+                NoteView()
             }
             .tabItem {
                 Label(LocalizedStrings.note, systemImage: "note.text")
@@ -56,7 +55,7 @@ struct MainTabView: View {
             .tag(Tab.note)
             
             NavigationStack {
-                TargetView(isMenuOpen: $isMenuOpen)
+                TargetView()
             }
             .tabItem {
                 Label(LocalizedStrings.target, systemImage: "target")
