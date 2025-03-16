@@ -17,7 +17,7 @@ open class Target: Object {
     convenience override init() {
         self.init(
             targetID: UUID().uuidString,
-            userID: UUID().uuidString, // TODO: UserDefaultsから取得
+            userID: UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString),
             title: "",
             year: 2020,
             month: 1,
@@ -30,7 +30,7 @@ open class Target: Object {
 
     convenience init(
         targetID: String = UUID().uuidString,
-        userID: String = UUID().uuidString, // TODO: UserDefaultsから取得
+        userID: String = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString),
         title: String,
         year: Int,
         month: Int,

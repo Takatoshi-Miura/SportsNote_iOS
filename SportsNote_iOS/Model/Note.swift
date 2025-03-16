@@ -33,7 +33,7 @@ class Note: Object {
     override init() {
         super.init()
         self.noteID = UUID().uuidString
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.noteType = NoteType.free.rawValue
         self.isDeleted = false
         self.created_at = Date()

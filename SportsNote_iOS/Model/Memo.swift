@@ -17,7 +17,7 @@ class Memo: Object {
     override init() {
         super.init()
         self.memoID = UUID().uuidString
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.measuresID = ""
         self.noteID = ""
         self.detail = ""
@@ -36,7 +36,7 @@ class Memo: Object {
     ) {
         self.init()
         self.memoID = memoID
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.measuresID = measuresID
         self.noteID = noteID
         self.detail = detail

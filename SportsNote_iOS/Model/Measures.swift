@@ -32,7 +32,7 @@ class Measures: Object {
     ) {
         self.init()
         self.measuresID = measuresID
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.taskID = taskID
         self.title = title
         self.order = order

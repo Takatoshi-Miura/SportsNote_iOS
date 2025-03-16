@@ -32,7 +32,7 @@ class Group: Object {
     ) {
         self.init()
         self.groupID = groupID
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.title = title
         self.color = color
         self.order = order

@@ -36,7 +36,7 @@ open class TaskData: Object {
     ) {
         self.init()
         self.taskID = taskID
-        self.userID = UUID().uuidString // TODO: UserDefaultsから取得
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.groupID = groupID
         self.title = title
         self.cause = cause
