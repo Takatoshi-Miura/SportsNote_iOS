@@ -54,5 +54,9 @@ struct LocalizedStrings {
     static let termsOfService = "termsOfService".localized
     static let privacyPolicy = "privacyPolicy".localized
     static let appVersion = "appVersion".localized
+    static let termsOfServiceTitle = "TermsOfServiceTitle".localized
+    static let termsOfServiceMessage = "TermsOfServiceMessage".localized
+    static let checkTermsOfService = "checkTermsOfService".localized
+    static let agree = "agree".localized
 }
 

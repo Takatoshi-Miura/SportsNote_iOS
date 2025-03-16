@@ -47,3 +47,7 @@
 "termsOfService" = "利用規約";
 "privacyPolicy" = "プライバシーポリシー";
 "appVersion" = "アプリバージョン";
+"TermsOfServiceTitle" = "利用規約に同意しますか？";
+"TermsOfServiceMessage" = "このアプリを使用するには、利用規約に同意する必要があります。";
+"checkTermsOfService" = "利用規約を確認";
+"agree" = "同意";

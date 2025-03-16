@@ -19,8 +19,9 @@ struct TaskView: View {
             },
             actionItems: [
                 (LocalizedStrings.group, {}),
-                (LocalizedStrings.task, {})
+                (LocalizedStrings.task, { TermsManager.showDialog() })
             ]
         )
+        .overlay(TermsDialogView())
     }
 }
