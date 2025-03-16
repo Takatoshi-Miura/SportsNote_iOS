@@ -19,3 +19,14 @@
 "target" = "目標";
 "yearlyTarget" = "年間目標";
 "monthlyTarget" = "月間目標";
+
+// MARK: Setting
+"data" = "データ";
+"dataTransfer" = "データの引継ぎ";
+"help" = "ヘルプ";
+"howToUseThisApp" = "アプリの使い方";
+"inquiry" = "お問い合わせ";
+"other" = "その他";
+"termsOfService" = "利用規約";
+"privacyPolicy" = "プライバシーポリシー";
+"appVersion" = "アプリバージョン";

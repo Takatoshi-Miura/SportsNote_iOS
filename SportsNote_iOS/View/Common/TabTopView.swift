@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TabTopView<Trailing: View, Content: View>: View {
-    @State private var isMenuOpen: Bool = false
+    @Binding var isMenuOpen: Bool
     @State private var showActionSheet = false
     
     let title: String
@@ -11,11 +11,13 @@ struct TabTopView<Trailing: View, Content: View>: View {
     
     init(
         title: String,
+        isMenuOpen: Binding<Bool>,
         @ViewBuilder trailingItem: () -> Trailing,
         @ViewBuilder content: @escaping () -> Content,
         actionItems: [(title: String, action: () -> Void)]
     ) {
         self.title = title
+        self._isMenuOpen = isMenuOpen
         self.trailingItem = trailingItem()
         self.content = content
         self.actionItems = actionItems
@@ -37,9 +39,8 @@ struct TabTopView<Trailing: View, Content: View>: View {
                 }
             }
             .overlay(
-                MenuView(isMenuOpen: $isMenuOpen)
-                    .offset(x: isMenuOpen ? 0 : -UIScreen.main.bounds.width)
-                    .animation(.easeInOut(duration: 0.3), value: isMenuOpen)
+                // 設定メニューをオーバーレイ
+                EmptyView()
             )
             
             // ＋ボタン

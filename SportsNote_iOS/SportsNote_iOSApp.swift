@@ -31,39 +31,59 @@ struct SportsNote_iOSApp: App {
 
 struct MainTabView: View {
     @State private var selectedTab: Tab = .task
-    
+    @State private var isMenuOpen: Bool = false
+
     enum Tab: Int {
         case task, note, target
     }
-    
+
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                TaskView()
+        ZStack {
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    TaskView(isMenuOpen: $isMenuOpen)
+                }
+                .tabItem {
+                    Label(LocalizedStrings.task, systemImage: "checkmark.circle.fill")
+                }
+                .tag(Tab.task)
+
+                NavigationStack {
+                    NoteView(isMenuOpen: $isMenuOpen)
+                }
+                .tabItem {
+                    Label(LocalizedStrings.note, systemImage: "note.text")
+                }
+                .tag(Tab.note)
+
+                NavigationStack {
+                    TargetView(isMenuOpen: $isMenuOpen)
+                }
+                .tabItem {
+                    Label(LocalizedStrings.target, systemImage: "target")
+                }
+                .tag(Tab.target)
             }
-            .tabItem {
-                Label(LocalizedStrings.task, systemImage: "checkmark.circle.fill")
-            }
-            .tag(Tab.task)
+            .toolbarBackground(.visible, for: .tabBar)
+            .toolbarBackground(Color(.systemBackground), for: .tabBar)
             
-            NavigationStack {
-                NoteView()
+            // 設定メニュー
+            if isMenuOpen {
+                Color.gray.opacity(0.3)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        withAnimation {
+                            isMenuOpen = false
+                        }
+                    }
+                
+                MenuView(isMenuOpen: $isMenuOpen, onDismiss: {
+                    isMenuOpen = false
+                })
+                .transition(.move(edge: .leading))
+                .zIndex(1)
             }
-            .tabItem {
-                Label(LocalizedStrings.note, systemImage: "note.text")
-            }
-            .tag(Tab.note)
-            
-            NavigationStack {
-                TargetView()
-            }
-            .tabItem {
-                Label(LocalizedStrings.target, systemImage: "target")
-            }
-            .tag(Tab.target)
         }
-        .toolbarBackground(.visible, for: .tabBar)
-        .toolbarBackground(Color(.systemBackground), for: .tabBar)
     }
 }
 

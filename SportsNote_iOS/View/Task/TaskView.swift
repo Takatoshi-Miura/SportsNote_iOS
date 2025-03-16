@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct TaskView: View {
+    @Binding var isMenuOpen: Bool
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.task,
+            isMenuOpen: $isMenuOpen,
             trailingItem: {},
             content: {
                 VStack {

@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct TargetView: View {
+    @Binding var isMenuOpen: Bool
+    
     var body: some View {
         TabTopView(
             title: LocalizedStrings.target,
+            isMenuOpen: $isMenuOpen,
             trailingItem: {
                 Button(action: {
                     print("Right button tapped")
