@@ -2,6 +2,8 @@ import SwiftUI
 
 struct TaskView: View {
     @Binding var isMenuOpen: Bool
+    @State private var isAddGroupPresented = false
+    @ObservedObject var viewModel = GroupViewModel()
 
     var body: some View {
         TabTopView(
@@ -18,10 +20,13 @@ struct TaskView: View {
                 }
             },
             actionItems: [
-                (LocalizedStrings.group, {}),
+                (LocalizedStrings.group, { isAddGroupPresented = true} ),
                 (LocalizedStrings.task, { TermsManager.showDialog() })
             ]
         )
         .overlay(TermsDialogView())
+        .sheet(isPresented: $isAddGroupPresented) {
+            AddGroupView(viewModel: viewModel)
+        }
     }
 }

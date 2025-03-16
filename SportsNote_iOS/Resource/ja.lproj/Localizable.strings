@@ -2,7 +2,10 @@
 
 // MARK: Common
 "cancel" = "キャンセル";
+"save" = "保存";
+"addTitle" = "%@の追加";
 "addPrompt" = "何を追加しますか？";
+"title" = "タイトル";
 
 // MARK: - Color
 "red" = "レッド";

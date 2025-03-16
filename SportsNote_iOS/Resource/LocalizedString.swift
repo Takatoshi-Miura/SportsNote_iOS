@@ -9,7 +9,10 @@ extension String {
 struct LocalizedStrings {
     // MARK: Common
     static let cancel = "cancel".localized
+    static let save = "save".localized
+    static let addTitle = "addTitle".localized
     static let addPrompt = "addPrompt".localized
+    static let title = "title".localized
     
     // MARK: Color
     static let red = "red".localized
