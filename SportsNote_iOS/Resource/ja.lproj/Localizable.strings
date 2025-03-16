@@ -4,6 +4,18 @@
 "cancel" = "キャンセル";
 "addPrompt" = "何を追加しますか？";
 
+// MARK: - Color
+"red" = "レッド";
+"pink" = "ピンク";
+"orange" = "オレンジ";
+"yellow" = "イエロー";
+"green" = "グリーン";
+"blue" = "ブルー";
+"purple" = "パープル";
+"gray" = "グレー";
+"white" = "白";
+"black" = "黒";
+
 // MARK: Group
 "group" = "グループ";
 
@@ -14,6 +26,11 @@
 "note" = "ノート";
 "practiceNote" = "練習ノート";
 "tournamentNote" = "大会ノート";
+"weather" = "天気";
+"temperature" = "気温";
+"sunny" = "晴れ";
+"cloudy" = "くもり";
+"rainy" = "雨";
 
 // MARK: Target
 "target" = "目標";

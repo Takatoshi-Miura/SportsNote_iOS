@@ -1,9 +1,5 @@
 import SwiftUI
 
-#Preview {
-    MainTabView()
-}
-
 @main
 struct SportsNote_iOSApp: App {
     var body: some Scene {
