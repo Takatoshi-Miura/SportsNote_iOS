@@ -9,6 +9,7 @@
 "title" = "タイトル";
 
 // MARK: - Color
+"color" = "カラー";
 "red" = "レッド";
 "pink" = "ピンク";
 "orange" = "オレンジ";
@@ -35,8 +36,6 @@
 "sunny" = "晴れ";
 "cloudy" = "くもり";
 "rainy" = "雨";
-
-// Search
 "searchNotes" = "ノートを検索...";
 "noNotesFound" = "ノートが見つかりません";
 

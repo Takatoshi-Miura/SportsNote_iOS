@@ -16,6 +16,7 @@ struct LocalizedStrings {
     static let title = "title".localized
     
     // MARK: Color
+    static let color = "color".localized
     static let red = "red".localized
     static let pink = "pink".localized
     static let orange = "orange".localized
