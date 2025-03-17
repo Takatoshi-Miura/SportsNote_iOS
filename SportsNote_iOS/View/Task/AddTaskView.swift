@@ -3,45 +3,37 @@ import SwiftUI
 struct AddTaskView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
-    
-    let groups: [Group]
-    
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
     @State private var measuresTitle: String = ""
+    let groups: [Group]
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Task Information")) {
+                Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $taskTitle)
-                    
-                    TextField("Cause", text: $cause)
-                        .frame(height: 80)
                 }
-                
-                Section(header: Text("Group")) {
-                    if groups.isEmpty {
-                        Text("No groups available. Please create a group first.")
-                            .foregroundColor(.gray)
-                    } else {
-                        Picker("Group", selection: $selectedGroupIndex) {
-                            ForEach(0..<groups.count, id: \.self) { index in
-                                HStack {
-                                    Circle()
-                                        .fill(Color(GroupColor.allCases[Int(groups[index].color)].color))
-                                        .frame(width: 12, height: 12)
-                                    
-                                    Text(groups[index].title)
-                                }
+                Section(header: Text(LocalizedStrings.cause)) {
+                    TextEditor(text: $cause)
+                        .frame(height: 80)
+                        .cornerRadius(8)
+                }
+                Section(header: Text(LocalizedStrings.group)) {
+                    Picker(LocalizedStrings.group, selection: $selectedGroupIndex) {
+                        ForEach(0..<groups.count, id: \.self) { index in
+                            HStack {
+                                Circle()
+                                    .fill(Color(GroupColor.allCases[Int(groups[index].color)].color))
+                                    .frame(width: 12, height: 12)
+                                Text(groups[index].title)
                             }
                         }
                     }
                 }
-                
-                Section(header: Text("Initial Measure (Optional)")) {
-                    TextField("Measure", text: $measuresTitle)
+                Section(header: Text(LocalizedStrings.measuresPriority)) {
+                    TextField(LocalizedStrings.measures, text: $measuresTitle)
                 }
             }
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.task))

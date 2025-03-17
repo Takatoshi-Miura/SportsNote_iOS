@@ -14,6 +14,7 @@ struct LocalizedStrings {
     static let addTitle = "addTitle".localized
     static let addPrompt = "addPrompt".localized
     static let title = "title".localized
+    static let basicInfo = "basicInfo".localized
     
     // MARK: Color
     static let color = "color".localized
@@ -33,6 +34,9 @@ struct LocalizedStrings {
     
     // MARK: Task
     static let task = "task".localized
+    static let cause = "cause".localized
+    static let measures = "measures".localized
+    static let measuresPriority = "measuresPriority".localized
     
     // MARK: Note
     static let note = "note".localized

@@ -7,6 +7,7 @@
 "addTitle" = "%@の追加";
 "addPrompt" = "何を追加しますか？";
 "title" = "タイトル";
+"basicInfo" = "基本情報";
 
 // MARK: - Color
 "color" = "カラー";
@@ -26,6 +27,9 @@
 
 // MARK: Task
 "task" = "課題";
+"cause" = "原因";
+"measures" = "対策";
+"measuresPriority" = "対策(優先度が高い順)";
 
 // MARK: Note
 "note" = "ノート";
