@@ -3,6 +3,7 @@
 // MARK: Common
 "cancel" = "キャンセル";
 "save" = "保存";
+"delete" = "削除";
 "addTitle" = "%@の追加";
 "addPrompt" = "何を追加しますか？";
 "title" = "タイトル";
@@ -34,6 +35,10 @@
 "sunny" = "晴れ";
 "cloudy" = "くもり";
 "rainy" = "雨";
+
+// Search
+"searchNotes" = "ノートを検索...";
+"noNotesFound" = "ノートが見つかりません";
 
 // MARK: Target
 "target" = "目標";

@@ -17,7 +17,7 @@ class Memo: Object {
     override init() {
         super.init()
         self.memoID = UUID().uuidString
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         self.measuresID = ""
         self.noteID = ""
         self.detail = ""
@@ -28,22 +28,18 @@ class Memo: Object {
     }
 
     convenience init(
-        memoID: String = UUID().uuidString,
         measuresID: String,
         noteID: String,
-        detail: String,
-        created_at: Date = Date()
+        detail: String
     ) {
         self.init()
-        self.memoID = memoID
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.measuresID = measuresID
         self.noteID = noteID
         self.detail = detail
-        self.isDeleted = false
-        self.created_at = created_at
-        self.updated_at = Date()
-        self.noteDate = Date()
+    }
+
+    override static func primaryKey() -> String? {
+        return "memoID"
     }
 }
 

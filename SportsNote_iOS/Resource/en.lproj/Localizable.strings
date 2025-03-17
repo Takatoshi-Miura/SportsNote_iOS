@@ -1,2 +1,23 @@
 // 英語用
+// MARK: Common
+"cancel" = "Cancel";
+"save" = "Save";
+"delete" = "Delete";
+"addTitle" = "Add %@";
+"addPrompt" = "What would you like to add?";
+"title" = "Title";
+
+// MARK: Note
+"note" = "Note";
+"practiceNote" = "Practice Note";
+"tournamentNote" = "Tournament Note";
+"weather" = "Weather";
+"temperature" = "Temperature";
+"sunny" = "Sunny";
+"cloudy" = "Cloudy";
+"rainy" = "Rainy";
+
+// Search
+"searchNotes" = "Search notes...";
+"noNotesFound" = "No notes found";
 

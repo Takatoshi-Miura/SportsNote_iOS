@@ -11,33 +11,31 @@ class Measures: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-
-    /// デフォルトイニシャライザ
-    convenience override init() {
-        self.init(
-            measuresID: UUID().uuidString,
-            taskID: "",
-            title: "",
-            order: 0,
-            created_at: Date()
-        )
+    
+    override init() {
+        super.init()
+        measuresID = UUID().uuidString
+        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        taskID = ""
+        title = ""
+        order = 0
+        isDeleted = false
+        created_at = Date()
+        updated_at = Date()
     }
-
+    
     convenience init(
-        measuresID: String = UUID().uuidString,
         taskID: String,
         title: String,
-        order: Int,
-        created_at: Date = Date()
+        order: Int
     ) {
         self.init()
-        self.measuresID = measuresID
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.taskID = taskID
         self.title = title
         self.order = order
-        self.isDeleted = false
-        self.created_at = created_at
-        self.updated_at = Date()
+    }
+    
+    override static func primaryKey() -> String? {
+        return "measuresID"
     }
 }

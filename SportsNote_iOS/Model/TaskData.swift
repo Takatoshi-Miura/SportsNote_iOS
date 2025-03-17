@@ -13,38 +13,36 @@ open class TaskData: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-
-    // デフォルトイニシャライザ
-    convenience override init() {
-        self.init(
-            taskID: UUID().uuidString,
-            title: "",
-            cause: "",
-            groupID: "",
-            isComplete: false,
-            created_at: Date()
-        )
+    
+    override init() {
+        super.init()
+        taskID = UUID().uuidString
+        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        groupID = ""
+        title = ""
+        cause = ""
+        order = 0
+        isComplete = false
+        isDeleted = false
+        created_at = Date()
+        updated_at = Date()
     }
-
+    
     convenience init(
-        taskID: String = UUID().uuidString,
         title: String,
         cause: String,
         groupID: String,
-        isComplete: Bool,
-        created_at: Date = Date()
+        isComplete: Bool = false
     ) {
         self.init()
-        self.taskID = taskID
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
-        self.groupID = groupID
         self.title = title
         self.cause = cause
-        self.order = 0
+        self.groupID = groupID
         self.isComplete = isComplete
-        self.isDeleted = false
-        self.created_at = created_at
-        self.updated_at = Date()
+    }
+    
+    public override static func primaryKey() -> String? {
+        return "taskID"
     }
 }
 

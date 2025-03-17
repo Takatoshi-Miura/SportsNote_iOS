@@ -10,6 +10,7 @@ struct LocalizedStrings {
     // MARK: Common
     static let cancel = "cancel".localized
     static let save = "save".localized
+    static let delete = "delete".localized
     static let addTitle = "addTitle".localized
     static let addPrompt = "addPrompt".localized
     static let title = "title".localized
@@ -47,6 +48,10 @@ struct LocalizedStrings {
     static let yearlyTarget = "yearlyTarget".localized
     static let monthlyTarget = "monthlyTarget".localized
     
+    // MARK: Search
+    static let searchNotes = "searchNotes".localized
+    static let noNotesFound = "noNotesFound".localized
+
     // MARK: Setting
     static let data = "data".localized
     static let dataTransfer = "dataTransfer".localized

@@ -12,42 +12,34 @@ open class Target: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-
-    // デフォルトイニシャライザ
-    convenience override init() {
-        self.init(
-            targetID: UUID().uuidString,
-            userID: UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString),
-            title: "",
-            year: 2020,
-            month: 1,
-            isYearlyTarget: false,
-            isDeleted: false,
-            created_at: Date(),
-            updated_at: Date()
-        )
+    
+    override init() {
+        super.init()
+        targetID = UUID().uuidString
+        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        title = ""
+        year = 2020
+        month = 1
+        isYearlyTarget = false
+        isDeleted = false
+        created_at = Date()
+        updated_at = Date()
     }
-
+    
     convenience init(
-        targetID: String = UUID().uuidString,
-        userID: String = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString),
         title: String,
         year: Int,
         month: Int,
-        isYearlyTarget: Bool = false,
-        isDeleted: Bool = false,
-        created_at: Date = Date(),
-        updated_at: Date = Date()
+        isYearlyTarget: Bool = false
     ) {
         self.init()
-        self.targetID = targetID
-        self.userID = userID
         self.title = title
         self.year = year
         self.month = month
         self.isYearlyTarget = isYearlyTarget
-        self.isDeleted = isDeleted
-        self.created_at = created_at
-        self.updated_at = updated_at
+    }
+    
+    public override static func primaryKey() -> String? {
+        return "targetID"
     }
 }

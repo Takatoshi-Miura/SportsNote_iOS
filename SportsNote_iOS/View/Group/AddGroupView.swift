@@ -4,7 +4,7 @@ import SwiftUI
 struct AddGroupView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
-    @State private var color: Int = Color.red.hashValue
+    @State private var selectedColor: GroupColor = .red
     @ObservedObject var viewModel: GroupViewModel
     
     var body: some View {
@@ -12,7 +12,7 @@ struct AddGroupView: View {
             VStack {
                 GroupFormContent(
                     title: $title,
-                    color: $color
+                    selectedColor: $selectedColor
                 )
                 Spacer()
             }
@@ -25,14 +25,13 @@ struct AddGroupView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
-                        Task {
-                            guard !title.isEmpty else {
-                                print("Title cannot be empty")
-                                return
-                            }
-                            viewModel.saveGroup(title: title, colorId: color, order: nil)
-                            dismiss()
+                        guard !title.isEmpty else {
+                            // Show alert for empty title (could be improved)
+                            print("Title cannot be empty")
+                            return
                         }
+                        viewModel.saveGroup(title: title, color: selectedColor)
+                        dismiss()
                     }
                 }
             }
@@ -42,32 +41,40 @@ struct AddGroupView: View {
 
 struct GroupFormContent: View {
     @Binding var title: String
-    @Binding var color: Int
+    @Binding var selectedColor: GroupColor
     
     var body: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(LocalizedStrings.title)
-                TextField("Enter title", text: $title)
+                    .font(.headline)
+                TextField("", text: $title)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
             }
             .padding(.horizontal)
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Select Color")
-                ColorPicker("", selection: Binding(
-                    get: { Color(UIColor.systemRed) },
-                    set: { newColor in color = newColor.hashValue }
-                ))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Color")
+                    .font(.headline)
+                
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 10) {
+                    ForEach(GroupColor.allCases, id: \.self) { color in
+                        Circle()
+                            .fill(Color(color.color))
+                            .frame(width: 30, height: 30)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.primary, lineWidth: selectedColor == color ? 2 : 0)
+                                    .padding(1)
+                            )
+                            .onTapGesture {
+                                selectedColor = color
+                            }
+                    }
+                }
             }
             .padding(.horizontal)
         }
+        .padding(.top)
     }
 }
-
-class GroupViewModel: ObservableObject {
-    func saveGroup(title: String, colorId: Int, order: Int?) {
-        // データ保存処理
-    }
-}
-

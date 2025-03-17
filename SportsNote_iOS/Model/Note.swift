@@ -33,7 +33,7 @@ class Note: Object {
     override init() {
         super.init()
         self.noteID = UUID().uuidString
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         self.noteType = NoteType.free.rawValue
         self.isDeleted = false
         self.created_at = Date()
@@ -73,6 +73,10 @@ class Note: Object {
         self.target = target
         self.consciousness = consciousness
         self.result = result
+    }
+
+    override static func primaryKey() -> String? {
+        return "noteID"
     }
 }
 

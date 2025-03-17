@@ -2,12 +2,47 @@ import SwiftUI
 
 @main
 struct SportsNote_iOSApp: App {
+    init() {
+        // Realmの初期化
+        RealmManager.shared.initRealm()
+        
+        // Setup app for first launch if needed
+        setupFirstLaunch()
+    }
+    
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .onAppear {
                     setupNavigationBarAppearance()
+                    
+                    // 利用規約ダイアログを表示
+                    if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
+                        TermsManager.showDialog()
+                    }
+                    
+                    // For debugging
+                    RealmManager.shared.printRealmFilePath()
                 }
+        }
+    }
+    
+    /// 起動時の初期化処理
+    private func setupFirstLaunch() {
+        let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
+        if isFirstLaunch {
+            // userID作成
+            let userID = UUID().uuidString
+            UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: userID)
+            UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
+            
+            // フリーノート作成
+            let freeNote = Note(title: "Free Note")
+            RealmManager.shared.saveItem(freeNote)
+            
+            // 未分類グループ作成
+            let uncategorizedGroup = Group(title: "未分類", color: GroupColor.gray.rawValue, order: 0, created_at: Date())
+            RealmManager.shared.saveItem(uncategorizedGroup)
         }
     }
     

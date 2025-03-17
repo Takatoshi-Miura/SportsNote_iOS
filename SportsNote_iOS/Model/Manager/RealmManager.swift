@@ -110,10 +110,14 @@ class RealmManager {
     func getDataList<T: Object>(clazz: T.Type) -> [T] {
         do {
             let realm = try Realm()
-            return realm.objects(clazz)
+            var results = realm.objects(clazz)
                 .filter("isDeleted == false")
-                .sorted(byKeyPath: "order", ascending: true)
-                .map { $0 }
+            // "order" プロパティが存在する場合のみソート
+            if let schema = clazz.sharedSchema(),
+               schema.properties.contains(where: { $0.name == "order" }) {
+                results = results.sorted(byKeyPath: "order", ascending: true)
+            }
+            return Array(results)
         } catch {
             print("Error fetching data list: \(error)")
             return []
@@ -221,6 +225,20 @@ class RealmManager {
         }
     }
     
+    /// すべてのノートを取得（フリーノートは除く）
+    /// - Returns: ノートのリスト
+    func getNotes() -> [Note] {
+        do {
+            let realm = try Realm()
+            return Array(realm.objects(Note.self)
+                .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
+                .sorted(byKeyPath: "date", ascending: false))
+        } catch {
+            print("Error fetching notes: \(error)")
+            return []
+        }
+    }
+
     /// measuresIDに合致するメモを取得
     /// - Parameter measuresID: 対策ID
     /// - Returns: 対策IDに関連するメモのリスト

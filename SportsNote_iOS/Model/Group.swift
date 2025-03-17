@@ -11,34 +11,34 @@ class Group: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-
-    /// デフォルトコンストラクタ
-    convenience override init() {
-        self.init(
-            groupID: UUID().uuidString,
-            title: "",
-            color: GroupColor.red.rawValue,
-            order: 0,
-            created_at: Date()
-        )
+    
+    override init() {
+        super.init()
+        groupID = UUID().uuidString
+        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        title = ""
+        color = GroupColor.red.rawValue
+        order = 0
+        isDeleted = false
+        created_at = Date()
+        updated_at = Date()
     }
-
+    
     convenience init(
-        groupID: String = UUID().uuidString,
         title: String,
         color: Int,
         order: Int,
         created_at: Date
     ) {
         self.init()
-        self.groupID = groupID
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
         self.title = title
         self.color = color
         self.order = order
-        self.isDeleted = false
         self.created_at = created_at
-        self.updated_at = Date()
+    }
+
+    override static func primaryKey() -> String? {
+        return "groupID"
     }
 }
 
