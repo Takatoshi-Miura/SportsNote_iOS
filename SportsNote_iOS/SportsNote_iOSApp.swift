@@ -117,19 +117,3 @@ struct MainTabView: View {
         }
     }
 }
-
-struct NoteDetailView: View {
-    var body: some View {
-        Text("Note Detail View")
-            .navigationTitle("Note Detail")
-            .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct TargetDetailView: View {
-    var body: some View {
-        Text("Target Detail View")
-            .navigationTitle("Target Detail")
-            .navigationBarTitleDisplayMode(.inline)
-    }
-}
