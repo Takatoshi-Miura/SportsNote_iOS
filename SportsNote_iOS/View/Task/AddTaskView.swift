@@ -24,14 +24,32 @@ struct AddTaskView: View {
                 }
                 // グループ
                 Section(header: Text(LocalizedStrings.group)) {
-                    Picker(LocalizedStrings.group, selection: $selectedGroupIndex) {
-                        ForEach(0..<groups.count, id: \.self) { index in
-                            HStack {
-                                Circle()
-                                    .fill(Color(GroupColor.allCases[Int(groups[index].color)].color))
-                                    .frame(width: 12, height: 12)
-                                Text(groups[index].title)
+                    HStack {
+                        Circle()
+                            .fill(getGroupColor(for: selectedGroupIndex))
+                            .frame(width: 16, height: 16)
+                        Text(groups[selectedGroupIndex].title)
+                        Spacer()
+                        Menu {
+                            ForEach(0..<groups.count, id: \.self) { index in
+                                Button(action: {
+                                    selectedGroupIndex = index
+                                }) {
+                                    HStack {
+                                        Circle()
+                                            .fill(getGroupColor(for: index))
+                                            .frame(width: 16, height: 16)
+                                        Text(groups[index].title)
+                                        if selectedGroupIndex == index {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
                             }
+                        } label: {
+                            Text(LocalizedStrings.select)
+                                .foregroundColor(.blue)
                         }
                     }
                 }
@@ -58,21 +76,33 @@ struct AddTaskView: View {
         }
     }
     
+    /// グループの色を取得
+    /// - Parameter index: Index
+    /// - Returns: グループの色
+    private func getGroupColor(for index: Int) -> Color {
+        guard index < groups.count else { return Color.gray }
+        let colorIndex = Int(groups[index].color)
+        
+        if GroupColor.allCases.indices.contains(colorIndex) {
+            return Color(GroupColor.allCases[colorIndex].color)
+        } else {
+            return Color.gray
+        }
+    }
+    
+    /// 保存処理
     private func saveTask() {
         guard !groups.isEmpty, !taskTitle.isEmpty else { return }
         
         let groupID = groups[selectedGroupIndex].groupID
         
-        // Save Task
         viewModel.saveTask(
             title: taskTitle,
             cause: cause,
             groupID: groupID
         )
         
-        // If measures title provided, add a measure
         if !measuresTitle.isEmpty {
-            // Find the latest task (the one we just created)
             let tasks = RealmManager.shared.getDataList(clazz: TaskData.self)
             if let latestTask = tasks.last {
                 viewModel.addMeasure(title: measuresTitle, taskID: latestTask.taskID)

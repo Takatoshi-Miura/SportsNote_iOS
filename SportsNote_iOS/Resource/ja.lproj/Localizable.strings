@@ -8,6 +8,7 @@
 "addPrompt" = "何を追加しますか？";
 "title" = "タイトル";
 "basicInfo" = "基本情報";
+"select" = "選択";
 
 // MARK: - Color
 "color" = "カラー";

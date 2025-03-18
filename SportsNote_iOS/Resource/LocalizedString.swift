@@ -15,6 +15,7 @@ struct LocalizedStrings {
     static let addPrompt = "addPrompt".localized
     static let title = "title".localized
     static let basicInfo = "basicInfo".localized
+    static let select = "select".localized
     
     // MARK: Color
     static let color = "color".localized
