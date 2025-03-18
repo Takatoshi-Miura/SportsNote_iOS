@@ -74,7 +74,7 @@ struct AddTournamentNoteView: View {
                         .frame(height: 50)
                 }
             }
-            .navigationTitle(LocalizedStrings.tournamentNote)
+            .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.tournamentNote))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // キャンセル
@@ -93,6 +93,7 @@ struct AddTournamentNoteView: View {
         }
     }
     
+    /// 保存処理
     private func saveNote() {
         let note = Note()
         note.noteType = NoteType.tournament.rawValue

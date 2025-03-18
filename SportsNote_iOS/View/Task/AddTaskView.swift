@@ -12,14 +12,17 @@ struct AddTaskView: View {
     var body: some View {
         NavigationView {
             Form {
+                // タイトル
                 Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $taskTitle)
                 }
+                // 原因
                 Section(header: Text(LocalizedStrings.cause)) {
                     TextEditor(text: $cause)
                         .frame(height: 80)
                         .cornerRadius(8)
                 }
+                // グループ
                 Section(header: Text(LocalizedStrings.group)) {
                     Picker(LocalizedStrings.group, selection: $selectedGroupIndex) {
                         ForEach(0..<groups.count, id: \.self) { index in
@@ -32,6 +35,7 @@ struct AddTaskView: View {
                         }
                     }
                 }
+                // 対策
                 Section(header: Text(LocalizedStrings.measuresPriority)) {
                     TextField(LocalizedStrings.measures, text: $measuresTitle)
                 }
@@ -39,9 +43,11 @@ struct AddTaskView: View {
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.task))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // キャンセル
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(LocalizedStrings.cancel) { dismiss() }
                 }
+                // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
                         saveTask()

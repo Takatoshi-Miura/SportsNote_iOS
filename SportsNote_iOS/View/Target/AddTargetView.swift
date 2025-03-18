@@ -27,12 +27,14 @@ struct AddTargetView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Title")) {
-                    TextField("Target", text: $title)
+                // タイトル
+                Section(header: Text(LocalizedStrings.title)) {
+                    TextField(LocalizedStrings.title, text: $title)
                 }
-                
-                Section(header: Text("Period")) {
+                // 期間
+                Section(header: Text(LocalizedStrings.period)) {
                     if isYearly {
+                        // Year picker
                         Picker("Year", selection: $selectedYear) {
                             ForEach((selectedYear-5)...(selectedYear+5), id: \.self) { year in
                                 Text("\(year)")
@@ -50,7 +52,6 @@ struct AddTargetView: View {
                                 }
                             }
                             .pickerStyle(.wheel)
-                            .frame(width: 100)
                             
                             // Month picker
                             Picker("Month", selection: $selectedMonth) {
@@ -60,20 +61,20 @@ struct AddTargetView: View {
                                 }
                             }
                             .pickerStyle(.wheel)
-                            .frame(width: 80)
                         }
                     }
                 }
             }
-            .navigationTitle(isYearly ? LocalizedStrings.yearlyTarget : LocalizedStrings.monthlyTarget)
+            .navigationTitle(getNavigationTitle())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // キャンセル
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(LocalizedStrings.cancel) {
                         dismiss()
                     }
                 }
-                
+                // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
                         saveTarget()
@@ -84,6 +85,17 @@ struct AddTargetView: View {
         }
     }
     
+    /// NavigationBarのタイトルを取得
+    /// - Returns: タイトル
+    private func getNavigationTitle() -> String {
+        if isYearly {
+            return String(format: LocalizedStrings.addTitle, LocalizedStrings.yearlyTarget)
+        } else {
+            return String(format: LocalizedStrings.addTitle, LocalizedStrings.monthlyTarget)
+        }
+    }
+    
+    /// 目標を保存
     private func saveTarget() {
         let target = Target(
             title: title,

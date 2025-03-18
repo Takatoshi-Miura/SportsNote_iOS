@@ -61,6 +61,7 @@ struct LocalizedStrings {
     static let target = "target".localized
     static let yearlyTarget = "yearlyTarget".localized
     static let monthlyTarget = "monthlyTarget".localized
+    static let period = "period".localized
 
     // MARK: Setting
     static let data = "data".localized

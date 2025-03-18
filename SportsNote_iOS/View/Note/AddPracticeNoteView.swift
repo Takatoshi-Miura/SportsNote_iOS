@@ -68,7 +68,7 @@ struct AddPracticeNoteView: View {
                         .frame(height: 50)
                 }
             }
-            .navigationTitle(LocalizedStrings.practiceNote)
+            .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.practiceNote))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // キャンセル
@@ -87,6 +87,7 @@ struct AddPracticeNoteView: View {
         }
     }
     
+    /// 保存処理
     private func saveNote() {
         let note = Note()
         note.noteType = NoteType.practice.rawValue
