@@ -4,6 +4,7 @@ import RealmSwift
 
 class TaskViewModel: ObservableObject {
     @Published var tasks: [TaskData] = []
+    @Published var taskListData: [TaskListData] = []
     @Published var taskDetail: TaskDetailData?
     
     init() {
@@ -15,6 +16,7 @@ class TaskViewModel: ObservableObject {
     /// 全ての課題を取得
     func fetchAllTasks() {
         tasks = RealmManager.shared.getDataList(clazz: TaskData.self)
+        convertToTaskListData()
     }
     
     /// 指定したグループIDの課題を取得
@@ -26,10 +28,58 @@ class TaskViewModel: ObservableObject {
                 .filter("groupID == %@ AND isDeleted == false", groupID)
                 .sorted(byKeyPath: "order", ascending: true)
                 .map { $0 }
+            convertToTaskListData()
         } catch {
             print("Error fetching tasks by group ID: \(error)")
             tasks = []
+            taskListData = []
         }
+    }
+    
+    /// TaskDataをTaskListDataに変換する
+    private func convertToTaskListData() {
+        var taskList = [TaskListData]()
+        
+        for task in tasks {
+            // グループカラーを取得
+            let groupColor = getGroupColor(groupID: task.groupID)
+            
+            // 対策情報を取得
+            let measures = getMostPriorityMeasures(taskID: task.taskID)
+            
+            // TaskListDataを作成
+            let taskListItem = TaskListData(
+                taskID: task.taskID,
+                groupID: task.groupID,
+                groupColor: groupColor,
+                title: task.title,
+                measuresID: measures?.measuresID ?? "",
+                measures: measures?.title ?? "未設定",
+                memoID: nil,
+                order: task.order
+            )
+            taskList.append(taskListItem)
+        }
+        
+        taskListData = taskList
+    }
+    
+    /// グループIDに基づいて色を取得
+    /// - Parameter groupID: グループID
+    /// - Returns: GroupColorの列挙型
+    private func getGroupColor(groupID: String) -> GroupColor {
+        if let group = RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
+            return GroupColor.allCases[Int(group.color)]
+        }
+        return GroupColor.gray // デフォルトはグレー
+    }
+    
+    /// 最も優先度の高い（orderが低い）対策を取得
+    /// - Parameter taskID: 課題ID
+    /// - Returns: 対策オブジェクト（存在しない場合はnil）
+    private func getMostPriorityMeasures(taskID: String) -> Measures? {
+        let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+        return measuresList.min { $0.order < $1.order }
     }
     
     /// 課題を保存
@@ -61,20 +111,27 @@ class TaskViewModel: ObservableObject {
     
     /// 課題の完了状態を切り替え
     /// - Parameter task: 対象の課題
-    func toggleTaskCompletion(task: TaskData) {
+    func toggleTaskCompletion(taskID: String) {
         do {
             let realm = try Realm()
-            if let taskToUpdate = realm.object(ofType: TaskData.self, forPrimaryKey: task.taskID) {
+            if let taskToUpdate = realm.object(ofType: TaskData.self, forPrimaryKey: taskID) {
                 try realm.write {
                     taskToUpdate.isComplete = !taskToUpdate.isComplete
                     taskToUpdate.updated_at = Date()
                 }
                 
                 // Update the local task list
-                if let index = tasks.firstIndex(where: { $0.taskID == task.taskID }) {
+                if let index = tasks.firstIndex(where: { $0.taskID == taskID }) {
                     tasks[index].isComplete = !tasks[index].isComplete
-                    self.objectWillChange.send()
                 }
+                // Update the task list data
+                if let index = taskListData.firstIndex(where: { $0.taskID == taskID }) {
+                    // TaskListDataはstructなので新しいインスタンスを作る必要がある
+                    var updatedTask = taskListData[index]
+//                    updatedTask.isComplete = !updatedTask.isComplete
+                    taskListData[index] = updatedTask
+                }
+                self.objectWillChange.send()
             }
         } catch {
             print("Error toggling task completion: \(error)")
@@ -88,6 +145,7 @@ class TaskViewModel: ObservableObject {
         
         // Update task list by removing the deleted task
         tasks.removeAll(where: { $0.taskID == id })
+        taskListData.removeAll(where: { $0.taskID == id })
         self.objectWillChange.send()
     }
     

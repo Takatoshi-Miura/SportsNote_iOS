@@ -57,27 +57,28 @@ struct TaskView: View {
                     
                     // Task list
                     List {
-                        ForEach(taskViewModel.tasks.filter { task in
-                            showCompletedTasks || !task.isComplete
-                        }, id: \.taskID) { task in
-                            NavigationLink(destination: TaskDetailView(taskData: task)) {
-                                TaskRow(task: task, groupColor: getGroupColor(for: task.groupID))
+                        ForEach(taskViewModel.taskListData.filter { task in
+                            showCompletedTasks || !(taskViewModel.tasks.first(where: { $0.taskID == task.taskID })?.isComplete ?? false)
+                        }, id: \.taskID) { taskList in
+                            NavigationLink(destination: TaskDetailView(taskData: taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })!)) {
+                                TaskRow(taskList: taskList, isComplete: taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false)
                             }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    taskViewModel.deleteTask(id: task.taskID)
+                                    taskViewModel.deleteTask(id: taskList.taskID)
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
                             }
                             .swipeActions(edge: .leading) {
                                 Button {
-                                    taskViewModel.toggleTaskCompletion(task: task)
+                                    taskViewModel.toggleTaskCompletion(taskID: taskList.taskID)
                                 } label: {
-                                    Label(task.isComplete ? "Incomplete" : "Complete", 
-                                          systemImage: task.isComplete ? "xmark.circle" : "checkmark.circle")
+                                    let isComplete = taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false
+                                    Label(isComplete ? "Incomplete" : "Complete", 
+                                          systemImage: isComplete ? "xmark.circle" : "checkmark.circle")
                                 }
-                                .tint(task.isComplete ? .orange : .green)
+                                .tint(taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false ? .orange : .green)
                             }
                         }
                     }
@@ -155,28 +156,27 @@ struct GroupChip: View {
 }
 
 struct TaskRow: View {
-    let task: TaskData
-    let groupColor: Color
+    let taskList: TaskListData
+    let isComplete: Bool
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Circle()
-                .fill(groupColor)
+                .fill(Color(taskList.groupColor.color))
                 .frame(width: 10, height: 10)
                 .padding(.top, 6)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(task.title)
+                Text(taskList.title)
                     .font(.headline)
-                    .strikethrough(task.isComplete)
-                    .foregroundColor(task.isComplete ? .gray : .primary)
+                    .strikethrough(isComplete)
+                    .foregroundColor(isComplete ? .gray : .primary)
                 
-                if !task.cause.isEmpty {
-                    Text(task.cause)
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
-                }
+                // 対策を表示
+                Text("対策: \(taskList.measures)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
         }
         .padding(.vertical, 4)

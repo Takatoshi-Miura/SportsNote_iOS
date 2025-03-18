@@ -142,19 +142,13 @@ struct NoteRow: View {
             HStack {
                 Rectangle()
                     .fill(Color(UIColor.systemBlue)) // Can be dynamically set based on note type
-                    .frame(width: 4)
+                    .frame(width: 10)
                     .cornerRadius(2)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(getTitle(note: note))
                         .font(.headline)
                         .lineLimit(1)
-                    
-                    Text(getSubtitle(note: note))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                    
                     Text(formatDate(note.date))
                         .font(.caption)
                         .foregroundColor(.gray)
@@ -167,20 +161,7 @@ struct NoteRow: View {
     private func getTitle(note: Note) -> String {
         switch NoteType(rawValue: note.noteType) {
         case .free:
-            return note.title.isEmpty ? "Free Note" : note.title
-        case .practice:
-            return note.purpose.isEmpty ? "Practice Note" : note.purpose
-        case .tournament:
-            return note.target.isEmpty ? "Tournament Note" : note.target
-        case .none:
-            return "Note"
-        }
-    }
-    
-    private func getSubtitle(note: Note) -> String {
-        switch NoteType(rawValue: note.noteType) {
-        case .free:
-            return ""
+            return note.detail.isEmpty ? "" : note.detail
         case .practice:
             return note.detail.isEmpty ? note.reflection : note.detail
         case .tournament:

@@ -35,11 +35,18 @@
 "note" = "ノート";
 "practiceNote" = "練習ノート";
 "tournamentNote" = "大会ノート";
+"date" = "日付";
 "weather" = "天気";
 "temperature" = "気温";
 "sunny" = "晴れ";
 "cloudy" = "くもり";
 "rainy" = "雨";
+"condition" = "体調";
+"consciousness" = "意識すること";
+"result" = "結果";
+"reflection" = "反省";
+"purpose" = "練習の目的";
+"practiceDetail" = "練習内容";
 "searchNotes" = "ノートを検索...";
 "noNotesFound" = "ノートが見つかりません";
 

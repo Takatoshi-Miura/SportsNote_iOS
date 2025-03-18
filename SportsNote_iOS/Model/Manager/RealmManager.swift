@@ -94,12 +94,37 @@ class RealmManager {
     /// - Parameter id: 検索するID（文字列）
     /// - Returns: 取得データ（存在しない場合やエラーが発生した場合は`nil`）
     internal func getObjectById<T: Object>(id: String, type: T.Type) -> T? {
+        guard !id.isEmpty else {
+            print("Error: Empty ID provided")
+            return nil
+        }
+        
         do {
             let realm = try Realm()
+            // PrimaryKeyで安全に検索
             let primaryKeyName = getPrimaryKeyName(type)
-            return realm.object(ofType: T.self, forPrimaryKey: id)
-        } catch {
-            print("Error fetching object: \(error)")
+            
+            // 削除されていないオブジェクトのみを返す
+            if let object = realm.object(ofType: type, forPrimaryKey: id) {
+                // オブジェクトがisDeletedプロパティを持っているか確認
+                if let noteObj = object as? Note, noteObj.isDeleted {
+                    return nil
+                } else if let groupObj = object as? Group, groupObj.isDeleted {
+                    return nil
+                } else if let taskObj = object as? TaskData, taskObj.isDeleted {
+                    return nil
+                } else if let measuresObj = object as? Measures, measuresObj.isDeleted {
+                    return nil
+                } else if let memoObj = object as? Memo, memoObj.isDeleted {
+                    return nil
+                } else if let targetObj = object as? Target, targetObj.isDeleted {
+                    return nil
+                }
+                return object
+            }
+            return nil
+        } catch let error {
+            print("Error fetching object by ID \(id): \(error)")
             return nil
         }
     }
@@ -201,8 +226,14 @@ class RealmManager {
                 .filter("isDeleted == false")
                 .filter("condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@", query, query, query, query, query, query, query))
             
-            // 結果を結合して重複を除去
-            return Array(Set(freeNotes + queryNotes))
+            // 結果を結合して重複を除去しつつ、無効なIDのノートを除外
+            let combinedNotes = Array(Set(freeNotes + queryNotes))
+            return combinedNotes.filter { note in
+                // IDが空でないことを確認
+                !note.noteID.isEmpty &&
+                // 取得したノートが実際にRealmに存在することを確認（無効参照を防止）
+                realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
+            }
         } catch {
             print("Error searching notes by query: \(error)")
             return []
@@ -246,7 +277,7 @@ class RealmManager {
         do {
             let realm = try Realm()
             return Array(realm.objects(Memo.self)
-                .filter("measuresID == %@ AND isDeleted == false")
+                .filter("measuresID == %@ AND isDeleted == false", measuresID)
                 .sorted(byKeyPath: "created_at", ascending: true))
         } catch {
             print("Error fetching memos by measuresID: \(error)")
@@ -261,7 +292,7 @@ class RealmManager {
         do {
             let realm = try Realm()
             return Array(realm.objects(Memo.self)
-                .filter("noteID == %@ AND isDeleted == false")
+                .filter("noteID == %@ AND isDeleted == false", noteID)
                 .sorted(byKeyPath: "created_at", ascending: true))
         } catch {
             print("Error fetching memos by noteID: \(error)")

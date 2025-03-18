@@ -125,12 +125,12 @@ enum Weather: Int, CaseIterable {
         case .rainy: return LocalizedStrings.rainy
         }
     }
-    
-    var image: UIImage {
+
+    var icon: String {
         switch self {
-        case .sunny: return UIImage(named: "sunny")!
-        case .cloudy: return UIImage(named: "cloudy")!
-        case .rainy: return UIImage(named: "rainy")!
+        case .sunny: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rainy: return "cloud.rain.fill"
         }
     }
 }

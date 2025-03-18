@@ -42,20 +42,25 @@ struct LocalizedStrings {
     static let note = "note".localized
     static let practiceNote = "practiceNote".localized
     static let tournamentNote = "tournamentNote".localized
+    static let date = "date".localized
     static let weather = "weather".localized
     static let temperature = "temperature".localized
     static let sunny = "sunny".localized
     static let cloudy = "cloudy".localized
     static let rainy = "rainy".localized
-    
+    static let condition = "condition".localized
+    static let consciousness = "consciousness".localized
+    static let result = "result".localized
+    static let reflection = "reflection".localized
+    static let purpose = "purpose".localized
+    static let practiceDetail = "practiceDetail".localized
+    static let searchNotes = "searchNotes".localized
+    static let noNotesFound = "noNotesFound".localized
+
     // MARK: Target
     static let target = "target".localized
     static let yearlyTarget = "yearlyTarget".localized
     static let monthlyTarget = "monthlyTarget".localized
-    
-    // MARK: Search
-    static let searchNotes = "searchNotes".localized
-    static let noNotesFound = "noNotesFound".localized
 
     // MARK: Setting
     static let data = "data".localized

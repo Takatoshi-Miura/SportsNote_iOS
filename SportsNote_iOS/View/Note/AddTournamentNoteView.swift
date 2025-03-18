@@ -18,20 +18,21 @@ struct AddTournamentNoteView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Basic Information")) {
+                Section(header: Text(LocalizedStrings.basicInfo)) {
+                    // 日付
                     DatePicker(
-                        "Date",
+                        LocalizedStrings.date,
                         selection: $date,
                         displayedComponents: [.date]
                     )
-                    
+                    // 天気
                     HStack {
                         Text(LocalizedStrings.weather)
                         Spacer()
                         Picker("", selection: $selectedWeather) {
                             ForEach(Weather.allCases, id: \.self) { weather in
                                 HStack {
-                                    Image(systemName: weatherIcon(for: weather))
+                                    Image(systemName: weather.icon)
                                     Text(weather.title)
                                 }
                                 .tag(weather)
@@ -40,48 +41,49 @@ struct AddTournamentNoteView: View {
                         .pickerStyle(.menu)
                         .labelsHidden()
                     }
-                    
+                    // 気温
                     HStack {
                         Text(LocalizedStrings.temperature)
                         Spacer()
                         Stepper("\(temperature) °C", value: $temperature, in: -30...50)
                     }
                 }
-                
-                Section(header: Text("Target")) {
-                    TextEditor(text: $target)
-                        .frame(height: 100)
-                }
-                
-                Section(header: Text("Consciousness")) {
-                    TextEditor(text: $consciousness)
-                        .frame(height: 120)
-                }
-                
-                Section(header: Text("Condition")) {
+                // 体調
+                Section(header: Text(LocalizedStrings.condition)) {
                     TextEditor(text: $condition)
-                        .frame(height: 80)
+                        .frame(height: 50)
                 }
-                
-                Section(header: Text("Result")) {
+                // 目標
+                Section(header: Text(LocalizedStrings.target)) {
+                    TextEditor(text: $target)
+                        .frame(height: 50)
+                }
+                // 意識すること
+                Section(header: Text(LocalizedStrings.consciousness)) {
+                    TextEditor(text: $consciousness)
+                        .frame(height: 50)
+                }
+                // 結果
+                Section(header: Text(LocalizedStrings.result)) {
                     TextEditor(text: $result)
-                        .frame(height: 120)
+                        .frame(height: 50)
                 }
-                
-                Section(header: Text("Reflection")) {
+                // 反省
+                Section(header: Text(LocalizedStrings.reflection)) {
                     TextEditor(text: $reflection)
-                        .frame(height: 150)
+                        .frame(height: 50)
                 }
             }
             .navigationTitle(LocalizedStrings.tournamentNote)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // キャンセル
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(LocalizedStrings.cancel) {
                         dismiss()
                     }
                 }
-                
+                // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
                         saveNote()
@@ -109,17 +111,6 @@ struct AddTournamentNoteView: View {
         // Callback and dismiss
         onSave()
         dismiss()
-    }
-    
-    private func weatherIcon(for weather: Weather) -> String {
-        switch weather {
-        case .sunny:
-            return "sun.max.fill"
-        case .cloudy:
-            return "cloud.fill"
-        case .rainy:
-            return "cloud.rain.fill"
-        }
     }
 }
 

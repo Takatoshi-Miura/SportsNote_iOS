@@ -17,20 +17,21 @@ struct AddPracticeNoteView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Basic Information")) {
+                Section(header: Text(LocalizedStrings.basicInfo)) {
+                    // 日付
                     DatePicker(
-                        "Date",
+                        LocalizedStrings.date,
                         selection: $date,
                         displayedComponents: [.date]
                     )
-                    
+                    // 天気
                     HStack {
                         Text(LocalizedStrings.weather)
                         Spacer()
                         Picker("", selection: $selectedWeather) {
                             ForEach(Weather.allCases, id: \.self) { weather in
                                 HStack {
-                                    Image(systemName: weatherIcon(for: weather))
+                                    Image(systemName: weather.icon)
                                     Text(weather.title)
                                 }
                                 .tag(weather)
@@ -39,43 +40,44 @@ struct AddPracticeNoteView: View {
                         .pickerStyle(.menu)
                         .labelsHidden()
                     }
-                    
+                    // 気温
                     HStack {
                         Text(LocalizedStrings.temperature)
                         Spacer()
                         Stepper("\(temperature) °C", value: $temperature, in: -30...50)
                     }
                 }
-                
-                Section(header: Text("Purpose")) {
-                    TextEditor(text: $purpose)
-                        .frame(height: 100)
-                }
-                
-                Section(header: Text("Detail")) {
-                    TextEditor(text: $detail)
-                        .frame(height: 150)
-                }
-                
-                Section(header: Text("Condition")) {
+                // 体調
+                Section(header: Text(LocalizedStrings.condition)) {
                     TextEditor(text: $condition)
-                        .frame(height: 80)
+                        .frame(height: 50)
                 }
-                
-                Section(header: Text("Reflection")) {
+                // 練習の目的
+                Section(header: Text(LocalizedStrings.purpose)) {
+                    TextEditor(text: $purpose)
+                        .frame(height: 50)
+                }
+                // 練習内容
+                Section(header: Text(LocalizedStrings.practiceDetail)) {
+                    TextEditor(text: $detail)
+                        .frame(height: 50)
+                }
+                // 反省
+                Section(header: Text(LocalizedStrings.reflection)) {
                     TextEditor(text: $reflection)
-                        .frame(height: 150)
+                        .frame(height: 50)
                 }
             }
             .navigationTitle(LocalizedStrings.practiceNote)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // キャンセル
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(LocalizedStrings.cancel) {
                         dismiss()
                     }
                 }
-                
+                // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
                         saveNote()
@@ -102,17 +104,6 @@ struct AddPracticeNoteView: View {
         // Callback and dismiss
         onSave()
         dismiss()
-    }
-    
-    private func weatherIcon(for weather: Weather) -> String {
-        switch weather {
-        case .sunny:
-            return "sun.max.fill"
-        case .cloudy:
-            return "cloud.fill"
-        case .rainy:
-            return "cloud.rain.fill"
-        }
     }
 }
 
