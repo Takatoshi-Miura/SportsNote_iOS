@@ -154,7 +154,7 @@ struct EditTournamentNoteView: View {
                         Picker("", selection: $selectedWeather) {
                             ForEach(Weather.allCases, id: \.self) { weather in
                                 HStack {
-                                    Image(systemName: weatherIcon(for: weather))
+                                    Image(systemName: weather.icon)
                                     Text(weather.title)
                                 }
                                 .tag(weather)
@@ -229,17 +229,6 @@ struct EditTournamentNoteView: View {
             }
         } catch {
             print("Error updating note: \(error)")
-        }
-    }
-    
-    private func weatherIcon(for weather: Weather) -> String {
-        switch weather {
-        case .sunny:
-            return "sun.max.fill"
-        case .cloudy:
-            return "cloud.fill"
-        case .rainy:
-            return "cloud.rain.fill"
         }
     }
 }
