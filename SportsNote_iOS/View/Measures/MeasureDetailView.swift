@@ -1,22 +1,33 @@
 import SwiftUI
+import Foundation
+import Combine
+import RealmSwift
 
 struct MeasureDetailView: View {
     let measure: Measures
+    @State private var title: String
     @State private var memo: String = ""
-    @StateObject private var viewModel = MeasureViewModel()
+    @ObservedObject private var viewModel: MeasureDetailViewModel
+    
+    init(measure: Measures) {
+        self.measure = measure
+        _title = State(initialValue: measure.title)
+        self.viewModel = MeasureDetailViewModel(measure: measure)
+    }
     
     var body: some View {
         VStack {
             List {
-                Section(header: Text("Details")) {
-                    Text(measure.title)
-                        .font(.headline)
-                        .padding(.vertical, 4)
+                Section(header: Text(LocalizedStrings.title)) {
+                    TextField(LocalizedStrings.title, text: $title)
+                        .onChange(of: title) { newValue in
+                            viewModel.updateTitle(newValue)
+                        }
                 }
                 
-                Section(header: Text("Memos")) {
+                Section(header: Text(LocalizedStrings.note)) {
                     if viewModel.memos.isEmpty {
-                        Text("No memos yet")
+                        Text("No notes yet")
                             .foregroundColor(.gray)
                             .italic()
                     } else {
@@ -33,47 +44,9 @@ struct MeasureDetailView: View {
                     }
                 }
             }
-            
-            // Add memo input
-            VStack {
-                TextField("Add a memo", text: $memo)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                
-                Button(action: {
-                    addMemo()
-                }) {
-                    Text("Add Memo")
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 30)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .padding(.bottom)
-                .disabled(memo.isEmpty)
-            }
-            .padding(.vertical, 8)
         }
-        .navigationTitle("Measure Detail")
+        .navigationTitle(LocalizedStrings.measuresDetail)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            viewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)
-        }
-    }
-    
-    private func addMemo() {
-        guard !memo.isEmpty else { return }
-        
-        viewModel.addMemo(
-            detail: memo,
-            measuresID: measure.measuresID,
-            noteID: ""
-        )
-        
-        memo = ""
     }
 }
 
@@ -101,29 +74,62 @@ struct MemoRow: View {
     }
 }
 
-class MeasureViewModel: ObservableObject {
+class MeasureDetailViewModel: ObservableObject {
     @Published var memos: [Memo] = []
+    private let measure: Measures
+    private var autoSaveTimer: Timer?
     
-    func fetchMemosByMeasuresID(measuresID: String) {
-        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+    init(measure: Measures) {
+        self.measure = measure
+        fetchMemosByMeasuresID()
     }
     
-    func addMemo(detail: String, measuresID: String, noteID: String) {
+    func updateTitle(_ newTitle: String) {
+        // Cancel previous timer if it exists
+        autoSaveTimer?.invalidate()
+        
+        // Set new timer for auto-save with 0.5 second delay
+        autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            self.saveTitle(newTitle)
+        }
+    }
+    
+    private func saveTitle(_ title: String) {
+        do {
+            let realm = try Realm()
+            if let measures = realm.object(ofType: Measures.self, forPrimaryKey: measure.measuresID) {
+                try realm.write {
+                    measures.title = title
+                    measures.updated_at = Date()
+                }
+            }
+        } catch {
+            print("Error updating title: \(error)")
+        }
+    }
+    
+    func fetchMemosByMeasuresID() {
+        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measure.measuresID)
+    }
+    
+    func addMemo(detail: String, noteID: String) {
         let memo = Memo(
-            measuresID: measuresID,
+            measuresID: measure.measuresID,
             noteID: noteID,
             detail: detail
         )
         
         RealmManager.shared.saveItem(memo)
-        fetchMemosByMeasuresID(measuresID: measuresID)
+        fetchMemosByMeasuresID()
     }
     
     func deleteMemo(id: String) {
-        if let memo = memos.first(where: { $0.memoID == id }) {
-            let measuresID = memo.measuresID
-            RealmManager.shared.logicalDelete(id: id, type: Memo.self)
-            fetchMemosByMeasuresID(measuresID: measuresID)
-        }
+        RealmManager.shared.logicalDelete(id: id, type: Memo.self)
+        fetchMemosByMeasuresID()
+    }
+    
+    deinit {
+        autoSaveTimer?.invalidate()
     }
 }

@@ -32,9 +32,12 @@
 // MARK: Task
 "task" = "課題";
 "cause" = "原因";
+"taskDetail" = "課題の詳細";
+
+// MARK: Measures
 "measures" = "対策";
 "measuresPriority" = "対策(優先度が高い順)";
-"taskDetail" = "課題の詳細";
+"measuresDetail" = "対策の詳細";
 
 // MARK: Note
 "note" = "ノート";

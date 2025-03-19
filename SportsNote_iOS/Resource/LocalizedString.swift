@@ -39,9 +39,12 @@ struct LocalizedStrings {
     // MARK: Task
     static let task = "task".localized
     static let cause = "cause".localized
+    static let taskDetail = "taskDetail".localized
+    
+    // MARK: Measures
     static let measures = "measures".localized
     static let measuresPriority = "measuresPriority".localized
-    static let taskDetail = "taskDetail".localized
+    static let measuresDetail = "measuresDetail".localized
     
     // MARK: Note
     static let note = "note".localized
