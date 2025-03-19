@@ -47,6 +47,7 @@ struct LocalizedStrings {
     static let note = "note".localized
     static let practiceNote = "practiceNote".localized
     static let tournamentNote = "tournamentNote".localized
+    static let freeNote = "freeNote".localized
     static let date = "date".localized
     static let weather = "weather".localized
     static let temperature = "temperature".localized
@@ -61,6 +62,7 @@ struct LocalizedStrings {
     static let practiceDetail = "practiceDetail".localized
     static let searchNotes = "searchNotes".localized
     static let noNotesFound = "noNotesFound".localized
+    static let detail = "detail".localized
 
     // MARK: Target
     static let target = "target".localized

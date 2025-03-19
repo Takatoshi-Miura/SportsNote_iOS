@@ -40,6 +40,7 @@
 "note" = "ノート";
 "practiceNote" = "練習ノート";
 "tournamentNote" = "大会ノート";
+"freeNote" = "フリーノート";
 "date" = "日付";
 "weather" = "天気";
 "temperature" = "気温";
@@ -54,6 +55,7 @@
 "practiceDetail" = "練習内容";
 "searchNotes" = "ノートを検索...";
 "noNotesFound" = "ノートが見つかりません";
+"detail" = "詳細";
 
 // MARK: Target
 "target" = "目標";

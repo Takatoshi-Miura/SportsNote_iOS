@@ -161,11 +161,11 @@ struct NoteRow: View {
     private func getTitle(note: Note) -> String {
         switch NoteType(rawValue: note.noteType) {
         case .free:
-            return note.detail.isEmpty ? "" : note.detail
+            return note.title.isEmpty ? LocalizedStrings.freeNote : note.title
         case .practice:
-            return note.detail.isEmpty ? note.reflection : note.detail
+            return note.detail.isEmpty ? LocalizedStrings.practiceNote : note.detail
         case .tournament:
-            return note.result.isEmpty ? note.reflection : note.result
+            return note.result.isEmpty ? LocalizedStrings.tournamentNote : note.result
         case .none:
             return ""
         }
