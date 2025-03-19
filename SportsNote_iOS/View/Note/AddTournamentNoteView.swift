@@ -50,28 +50,23 @@ struct AddTournamentNoteView: View {
                 }
                 // 体調
                 Section(header: Text(LocalizedStrings.condition)) {
-                    TextEditor(text: $condition)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $condition, placeholder: LocalizedStrings.condition, minHeight: 50)
                 }
                 // 目標
                 Section(header: Text(LocalizedStrings.target)) {
-                    TextEditor(text: $target)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $target, placeholder: LocalizedStrings.target, minHeight: 50)
                 }
                 // 意識すること
                 Section(header: Text(LocalizedStrings.consciousness)) {
-                    TextEditor(text: $consciousness)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $consciousness, placeholder: LocalizedStrings.consciousness, minHeight: 50)
                 }
                 // 結果
                 Section(header: Text(LocalizedStrings.result)) {
-                    TextEditor(text: $result)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $result, placeholder: LocalizedStrings.result, minHeight: 50)
                 }
                 // 反省
                 Section(header: Text(LocalizedStrings.reflection)) {
-                    TextEditor(text: $reflection)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
                 }
             }
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.tournamentNote))
@@ -177,28 +172,23 @@ struct EditTournamentNoteView: View {
                 }
                 
                 Section(header: Text("Target")) {
-                    TextEditor(text: $target)
-                        .frame(height: 100)
+                    AutoResizingTextEditor(text: $target, placeholder: "Target", minHeight: 100)
                 }
                 
                 Section(header: Text("Consciousness")) {
-                    TextEditor(text: $consciousness)
-                        .frame(height: 120)
+                    AutoResizingTextEditor(text: $consciousness, placeholder: "Consciousness", minHeight: 120)
                 }
                 
                 Section(header: Text("Condition")) {
-                    TextEditor(text: $condition)
-                        .frame(height: 80)
+                    AutoResizingTextEditor(text: $condition, placeholder: "Condition", minHeight: 80)
                 }
                 
                 Section(header: Text("Result")) {
-                    TextEditor(text: $result)
-                        .frame(height: 120)
+                    AutoResizingTextEditor(text: $result, placeholder: "Result", minHeight: 120)
                 }
                 
                 Section(header: Text("Reflection")) {
-                    TextEditor(text: $reflection)
-                        .frame(height: 150)
+                    AutoResizingTextEditor(text: $reflection, placeholder: "Reflection", minHeight: 150)
                 }
             }
             .navigationTitle("Edit Tournament Note")

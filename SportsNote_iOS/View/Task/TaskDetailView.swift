@@ -10,8 +10,6 @@ struct TaskDetailView: View {
     @State private var newMeasureTitle = ""
     @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
-    @State private var causeTextHeight: CGFloat = 50  // Default height for TextEditor
-    @State private var textEditorWidth: CGFloat = 0   // TextEditorの幅を保存するための変数
     
     let taskData: TaskData
     
@@ -26,25 +24,14 @@ struct TaskDetailView: View {
             }
             // 原因
             Section(header: Text(LocalizedStrings.cause)) {
-                TextEditor(text: $cause)
-                    .frame(height: max(50, causeTextHeight))  // Use dynamic height with a minimum of 50
-                    .cornerRadius(8)
-                    .onChange(of: cause) { _ in
-                        updateTask()
-                        calculateTextHeight()
-                    }
-                    .background(
-                        GeometryReader { geometry in
-                            Color.clear.onAppear {
-                                textEditorWidth = geometry.size.width
-                                calculateTextHeight()
-                            }
-                            .onChange(of: geometry.size.width) { newWidth in
-                                textEditorWidth = newWidth
-                                calculateTextHeight()
-                            }
-                        }
-                    )
+                AutoResizingTextEditor(
+                    text: $cause, 
+                    placeholder: LocalizedStrings.cause,
+                    minHeight: 50
+                )
+                .onChange(of: cause) { _ in
+                    updateTask()
+                }
             }
             // グループ
             Section(header: Text(LocalizedStrings.group)) {
@@ -150,46 +137,6 @@ struct TaskDetailView: View {
             loadData()
         }
         .environment(\.editMode, .constant(isReorderingMeasures ? .active : .inactive))
-    }
-    
-    // TextEditorの高さを計算する改良版
-    private func calculateTextHeight() {
-        guard !cause.isEmpty else {
-            causeTextHeight = 50 // 空の場合はデフォルト高さ
-            return
-        }
-        
-        // 1文字あたりの平均幅（ポイント単位）
-        let averageCharWidth: CGFloat = 8.0
-        
-        // 1行あたりの高さ（ポイント単位）
-        let lineHeight: CGFloat = 25.0
-        
-        // TextEditorの内部パディング
-        let padding: CGFloat = 16.0
-        
-        // 利用可能な幅（TextEditor内でテキストが表示される実際の幅）
-        // TextEditorのパディングを考慮
-        let availableWidth = max(textEditorWidth - 10, 1) // 0除算を避けるため最小値を1とする
-        
-        var totalLines = 0
-        
-        // 各段落（改行で区切られたテキスト）を処理
-        let paragraphs = cause.components(separatedBy: "\n")
-        for paragraph in paragraphs {
-            if paragraph.isEmpty {
-                // 空の段落は1行としてカウント
-                totalLines += 1
-            } else {
-                // 段落内の文字数から推定される行数を計算
-                let charactersPerLine = availableWidth / averageCharWidth
-                let estimatedLines = max(1, ceil(CGFloat(paragraph.count) / charactersPerLine))
-                totalLines += Int(estimatedLines)
-            }
-        }
-        
-        // 最終的な高さを計算（最低1行分を確保）
-        causeTextHeight = CGFloat(max(1, totalLines)) * lineHeight + padding
     }
     
     private func loadData() {

@@ -18,9 +18,11 @@ struct AddTaskView: View {
                 }
                 // 原因
                 Section(header: Text(LocalizedStrings.cause)) {
-                    TextEditor(text: $cause)
-                        .frame(height: 80)
-                        .cornerRadius(8)
+                    AutoResizingTextEditor(
+                        text: $cause, 
+                        placeholder: LocalizedStrings.cause,
+                        minHeight: 50
+                    )
                 }
                 // グループ
                 Section(header: Text(LocalizedStrings.group)) {
@@ -54,7 +56,7 @@ struct AddTaskView: View {
                     }
                 }
                 // 対策
-                Section(header: Text(LocalizedStrings.measuresPriority)) {
+                Section(header: Text(LocalizedStrings.measures)) {
                     TextField(LocalizedStrings.measures, text: $measuresTitle)
                 }
             }

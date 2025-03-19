@@ -49,23 +49,19 @@ struct AddPracticeNoteView: View {
                 }
                 // 体調
                 Section(header: Text(LocalizedStrings.condition)) {
-                    TextEditor(text: $condition)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $condition, placeholder: LocalizedStrings.condition, minHeight: 50)
                 }
                 // 練習の目的
                 Section(header: Text(LocalizedStrings.purpose)) {
-                    TextEditor(text: $purpose)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $purpose, placeholder: LocalizedStrings.purpose, minHeight: 50)
                 }
                 // 練習内容
                 Section(header: Text(LocalizedStrings.practiceDetail)) {
-                    TextEditor(text: $detail)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $detail, placeholder: LocalizedStrings.practiceDetail, minHeight: 50)
                 }
                 // 反省
                 Section(header: Text(LocalizedStrings.reflection)) {
-                    TextEditor(text: $reflection)
-                        .frame(height: 50)
+                    AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
                 }
             }
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.practiceNote))
@@ -168,23 +164,19 @@ struct EditPracticeNoteView: View {
                 }
                 
                 Section(header: Text("Purpose")) {
-                    TextEditor(text: $purpose)
-                        .frame(height: 100)
+                    AutoResizingTextEditor(text: $purpose, placeholder: "Purpose", minHeight: 100)
                 }
                 
                 Section(header: Text("Detail")) {
-                    TextEditor(text: $detail)
-                        .frame(height: 150)
+                    AutoResizingTextEditor(text: $detail, placeholder: "Detail", minHeight: 150)
                 }
                 
                 Section(header: Text("Condition")) {
-                    TextEditor(text: $condition)
-                        .frame(height: 80)
+                    AutoResizingTextEditor(text: $condition, placeholder: "Condition", minHeight: 80)
                 }
                 
                 Section(header: Text("Reflection")) {
-                    TextEditor(text: $reflection)
-                        .frame(height: 150)
+                    AutoResizingTextEditor(text: $reflection, placeholder: "Reflection", minHeight: 150)
                 }
             }
             .navigationTitle("Edit Practice Note")
