@@ -6,9 +6,12 @@
 "delete" = "削除";
 "addTitle" = "%@の追加";
 "addPrompt" = "何を追加しますか？";
+"inputTitle" = "%@を入力してください";
 "title" = "タイトル";
 "basicInfo" = "基本情報";
 "select" = "選択";
+"complete" = "完了";
+"sort" = "並び替え";
 
 // MARK: - Color
 "color" = "カラー";
@@ -31,6 +34,7 @@
 "cause" = "原因";
 "measures" = "対策";
 "measuresPriority" = "対策(優先度が高い順)";
+"taskDetail" = "課題の詳細";
 
 // MARK: Note
 "note" = "ノート";

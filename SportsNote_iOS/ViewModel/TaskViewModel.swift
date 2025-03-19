@@ -209,4 +209,30 @@ class TaskViewModel: ObservableObject {
             print("Error deleting measure: \(error)")
         }
     }
+    
+    /// 対策の並び順を更新
+    /// - Parameter measures: 並び替え後の対策リスト
+    func updateMeasuresOrder(measures: [Measures]) {
+        guard !measures.isEmpty else { return }
+        
+        do {
+            let realm = try Realm()
+            try realm.write {
+                // 各対策のorderプロパティを更新
+                for (index, measure) in measures.enumerated() {
+                    if let measureToUpdate = realm.object(ofType: Measures.self, forPrimaryKey: measure.measuresID) {
+                        measureToUpdate.order = index
+                        measureToUpdate.updated_at = Date()
+                    }
+                }
+            }
+            
+            // 対策の並び替えが完了したら、詳細画面を更新
+            if let detail = taskDetail {
+                fetchTaskDetail(taskID: detail.task.taskID)
+            }
+        } catch {
+            print("Error updating measures order: \(error)")
+        }
+    }
 }
