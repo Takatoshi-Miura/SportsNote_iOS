@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import RealmSwift
 
+@MainActor
 class TaskViewModel: ObservableObject {
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []

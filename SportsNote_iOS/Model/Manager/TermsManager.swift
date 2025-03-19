@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 class TermsManager: ObservableObject {
     static let shared = TermsManager()
     @Published var termsDialogShown = false

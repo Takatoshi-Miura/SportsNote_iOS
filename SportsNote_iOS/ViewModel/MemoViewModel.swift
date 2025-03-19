@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import RealmSwift
 
-/// メモ管理用ViewModel
+@MainActor
 class MemoViewModel: ObservableObject {
     @Published var memoList: [Memo] = []
     @Published var measuresMemoList: [MeasuresMemo] = []

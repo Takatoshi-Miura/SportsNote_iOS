@@ -16,7 +16,6 @@ open class Target: Object {
     override init() {
         super.init()
         targetID = UUID().uuidString
-        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         title = ""
         year = 2020
         month = 1
@@ -24,6 +23,13 @@ open class Target: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
+        
+        // UserDefaultsから同期的に値を取得
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            self.userID = userID
+        } else {
+            self.userID = ""
+        }
     }
     
     convenience init(

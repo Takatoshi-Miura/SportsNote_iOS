@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class UserDefaultsManager {
     /// キー一覧
     struct Keys {

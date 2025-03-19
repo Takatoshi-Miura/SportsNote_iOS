@@ -1,6 +1,7 @@
 import SwiftUI
 import RealmSwift
 
+@MainActor
 class NoteViewModel: ObservableObject {
     @Published var notes: [Note] = []
     @Published var selectedNote: Note?

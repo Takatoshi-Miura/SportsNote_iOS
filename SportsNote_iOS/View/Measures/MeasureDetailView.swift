@@ -7,12 +7,12 @@ struct MeasureDetailView: View {
     let measure: Measures
     @State private var title: String
     @State private var memo: String = ""
-    @ObservedObject private var viewModel: MeasureDetailViewModel
+    @StateObject private var viewModel: MeasuresViewModel
     
     init(measure: Measures) {
         self.measure = measure
         _title = State(initialValue: measure.title)
-        self.viewModel = MeasureDetailViewModel(measure: measure)
+        _viewModel = StateObject(wrappedValue: MeasuresViewModel())
     }
     
     var body: some View {
@@ -21,7 +21,9 @@ struct MeasureDetailView: View {
                 Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $title)
                         .onChange(of: title) { newValue in
-                            viewModel.updateTitle(newValue)
+                            Task {
+                                await viewModel.updateTitle(newValue, for: measure)
+                            }
                         }
                 }
                 
@@ -35,7 +37,7 @@ struct MeasureDetailView: View {
                             MemoRow(memo: memo)
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        viewModel.deleteMemo(id: memo.memoID)
+                                        viewModel.deleteMemo(id: memo.memoID, measuresID: measure.measuresID)
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -47,6 +49,9 @@ struct MeasureDetailView: View {
         }
         .navigationTitle(LocalizedStrings.measuresDetail)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            viewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)
+        }
     }
 }
 
@@ -71,65 +76,5 @@ struct MemoRow: View {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: date)
-    }
-}
-
-class MeasureDetailViewModel: ObservableObject {
-    @Published var memos: [Memo] = []
-    private let measure: Measures
-    private var autoSaveTimer: Timer?
-    
-    init(measure: Measures) {
-        self.measure = measure
-        fetchMemosByMeasuresID()
-    }
-    
-    func updateTitle(_ newTitle: String) {
-        // Cancel previous timer if it exists
-        autoSaveTimer?.invalidate()
-        
-        // Set new timer for auto-save with 0.5 second delay
-        autoSaveTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-            self.saveTitle(newTitle)
-        }
-    }
-    
-    private func saveTitle(_ title: String) {
-        do {
-            let realm = try Realm()
-            if let measures = realm.object(ofType: Measures.self, forPrimaryKey: measure.measuresID) {
-                try realm.write {
-                    measures.title = title
-                    measures.updated_at = Date()
-                }
-            }
-        } catch {
-            print("Error updating title: \(error)")
-        }
-    }
-    
-    func fetchMemosByMeasuresID() {
-        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measure.measuresID)
-    }
-    
-    func addMemo(detail: String, noteID: String) {
-        let memo = Memo(
-            measuresID: measure.measuresID,
-            noteID: noteID,
-            detail: detail
-        )
-        
-        RealmManager.shared.saveItem(memo)
-        fetchMemosByMeasuresID()
-    }
-    
-    func deleteMemo(id: String) {
-        RealmManager.shared.logicalDelete(id: id, type: Memo.self)
-        fetchMemosByMeasuresID()
-    }
-    
-    deinit {
-        autoSaveTimer?.invalidate()
     }
 }

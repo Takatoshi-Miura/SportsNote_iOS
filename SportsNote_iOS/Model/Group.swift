@@ -15,13 +15,19 @@ class Group: Object {
     override init() {
         super.init()
         groupID = UUID().uuidString
-        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         title = ""
         color = GroupColor.red.rawValue
         order = 0
         isDeleted = false
         created_at = Date()
         updated_at = Date()
+        
+        // UserDefaultsから同期的に値を取得
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            self.userID = userID
+        } else {
+            self.userID = ""
+        }
     }
     
     convenience init(

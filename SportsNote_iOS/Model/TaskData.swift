@@ -17,7 +17,6 @@ open class TaskData: Object {
     override init() {
         super.init()
         taskID = UUID().uuidString
-        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         groupID = ""
         title = ""
         cause = ""
@@ -26,6 +25,13 @@ open class TaskData: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
+        
+        // UserDefaultsから同期的に値を取得
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            self.userID = userID
+        } else {
+            self.userID = ""
+        }
     }
     
     convenience init(

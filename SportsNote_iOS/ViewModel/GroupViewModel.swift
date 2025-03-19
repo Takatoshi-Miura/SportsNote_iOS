@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 class GroupViewModel: ObservableObject {
     @Published var groups: [Group] = []
     

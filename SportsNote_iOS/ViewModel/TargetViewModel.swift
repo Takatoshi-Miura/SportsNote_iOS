@@ -1,6 +1,7 @@
 import SwiftUI
 import RealmSwift
 
+@MainActor
 class TargetViewModel: ObservableObject {
     @Published var targets: [Target] = []
     @Published var selectedTarget: Target?

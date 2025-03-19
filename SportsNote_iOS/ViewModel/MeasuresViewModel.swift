@@ -2,9 +2,10 @@ import Foundation
 import SwiftUI
 import RealmSwift
 
-/// 対策管理用ViewModel
+@MainActor
 class MeasuresViewModel: ObservableObject {
     @Published var measuresList: [Measures] = []
+    @Published var memos: [Memo] = []
     
     init() {
         fetchAllMeasures()
@@ -91,5 +92,41 @@ class MeasuresViewModel: ObservableObject {
         self.objectWillChange.send()
         
         // Firebaseとの同期処理はiOS版の実装に基づいて必要に応じて追加
+    }
+    
+    // MARK: - Memo Management
+    func fetchMemosByMeasuresID(measuresID: String) {
+        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+    }
+    
+    func addMemo(measuresID: String, detail: String, noteID: String) {
+        let memo = Memo(
+            measuresID: measuresID,
+            noteID: noteID,
+            detail: detail
+        )
+        
+        RealmManager.shared.saveItem(memo)
+        fetchMemosByMeasuresID(measuresID: measuresID)
+    }
+    
+    func deleteMemo(id: String, measuresID: String) {
+        RealmManager.shared.logicalDelete(id: id, type: Memo.self)
+        fetchMemosByMeasuresID(measuresID: measuresID)
+    }
+    
+    // MARK: - Title Update
+    func updateTitle(_ newTitle: String, for measure: Measures) async {
+        do {
+            let realm = try await Realm()
+            if let measures = realm.object(ofType: Measures.self, forPrimaryKey: measure.measuresID) {
+                try realm.write {
+                    measures.title = newTitle
+                    measures.updated_at = Date()
+                }
+            }
+        } catch {
+            print("Error updating title: \(error)")
+        }
     }
 }

@@ -33,7 +33,6 @@ class Note: Object {
     override init() {
         super.init()
         self.noteID = UUID().uuidString
-        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         self.noteType = NoteType.free.rawValue
         self.isDeleted = false
         self.created_at = Date()
@@ -49,6 +48,13 @@ class Note: Object {
         self.target = ""
         self.consciousness = ""
         self.result = ""
+        
+        // UserDefaultsから同期的に値を取得
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            self.userID = userID
+        } else {
+            self.userID = ""
+        }
     }
 
     /// フリーノートのイニシャライザ

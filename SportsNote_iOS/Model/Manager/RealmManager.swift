@@ -6,7 +6,9 @@ struct RealmConstants {
     static let schemaVersion: UInt64 = 1
 }
 
-class RealmManager {
+/// Realmデータベースを管理するクラス
+@MainActor
+class RealmManager: Sendable {
     
     // シングルトンインスタンス
     static let shared = RealmManager()

@@ -15,13 +15,19 @@ class Measures: Object {
     override init() {
         super.init()
         measuresID = UUID().uuidString
-        userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
         taskID = ""
         title = ""
         order = 0
         isDeleted = false
         created_at = Date()
         updated_at = Date()
+        
+        // UserDefaultsから同期的に値を取得
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            self.userID = userID
+        } else {
+            self.userID = ""
+        }
     }
     
     convenience init(
