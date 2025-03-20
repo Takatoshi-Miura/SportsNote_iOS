@@ -25,8 +25,9 @@ struct TabTopView<Trailing: View, Content: View>: View {
     
     var body: some View {
         ZStack {
-            VStack {
+            VStack(alignment: .leading, spacing: 0) {
                 content()
+                Spacer()
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)

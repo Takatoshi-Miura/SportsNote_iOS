@@ -5,6 +5,8 @@ struct TaskView: View {
     @State private var isAddGroupPresented = false
     @State private var isAddTaskPresented = false
     @State private var selectedGroupID: String? = nil
+    @State private var selectedGroupForEdit: Group? = nil
+    @State private var navigateToGroupEdit = false
     @State private var showCompletedTasks = false
     @ObservedObject var viewModel = GroupViewModel()
     @ObservedObject var taskViewModel = TaskViewModel()
@@ -25,7 +27,6 @@ struct TaskView: View {
             },
             content: {
                 VStack(spacing: 0) {
-                    // Group list horizontal scroll
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(viewModel.groups, id: \.groupID) { group in
@@ -46,22 +47,26 @@ struct TaskView: View {
                                         } else {
                                             taskViewModel.fetchAllTasks()
                                         }
+                                    },
+                                    onEditTap: {
+                                        selectedGroupForEdit = group
+                                        navigateToGroupEdit = true
                                     }
                                 )
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.vertical, 10)
                     }
                     .background(Color(.systemGroupedBackground))
                     
                     // Task list
                     List {
-                        ForEach(taskViewModel.taskListData.filter { task in
-                            showCompletedTasks || !(taskViewModel.tasks.first(where: { $0.taskID == task.taskID })?.isComplete ?? false)
-                        }, id: \.taskID) { taskList in
-                            NavigationLink(destination: TaskDetailView(taskData: taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })!)) {
-                                TaskRow(taskList: taskList, isComplete: taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false)
+                        ForEach(filteredTaskListData(), id: \.taskID) { taskList in
+                            NavigationLink(destination: getTaskDetailView(for: taskList)) {
+                                TaskRow(
+                                    taskList: taskList,
+                                    isComplete: isTaskComplete(taskID: taskList.taskID)
+                                )
                             }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
@@ -74,11 +79,13 @@ struct TaskView: View {
                                 Button {
                                     taskViewModel.toggleTaskCompletion(taskID: taskList.taskID)
                                 } label: {
-                                    let isComplete = taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false
-                                    Label(isComplete ? "Incomplete" : "Complete", 
-                                          systemImage: isComplete ? "xmark.circle" : "checkmark.circle")
+                                    let isComplete = isTaskComplete(taskID: taskList.taskID)
+                                    Label(
+                                        isComplete ? "Incomplete" : "Complete",
+                                        systemImage: isComplete ? "xmark.circle" : "checkmark.circle"
+                                    )
                                 }
-                                .tint(taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID })?.isComplete ?? false ? .orange : .green)
+                                .tint(isTaskComplete(taskID: taskList.taskID) ? .orange : .green)
                             }
                         }
                     }
@@ -98,6 +105,11 @@ struct TaskView: View {
                 (LocalizedStrings.task, { isAddTaskPresented = true })
             ]
         )
+        .navigationDestination(isPresented: $navigateToGroupEdit) {
+            if let group = selectedGroupForEdit {
+                GroupView(group: group, viewModel: viewModel)
+            }
+        }
         .overlay(TermsDialogView())
         .sheet(isPresented: $isAddGroupPresented) {
             AddGroupView(viewModel: viewModel)
@@ -111,6 +123,27 @@ struct TaskView: View {
         }
     }
     
+    // MARK: - Helper Methods
+    
+    private func filteredTaskListData() -> [TaskListData] {
+        return taskViewModel.taskListData.filter { task in
+            showCompletedTasks || !isTaskComplete(taskID: task.taskID)
+        }
+    }
+    
+    private func isTaskComplete(taskID: String) -> Bool {
+        return taskViewModel.tasks.first(where: { $0.taskID == taskID })?.isComplete ?? false
+    }
+    
+    private func getTaskDetailView(for taskList: TaskListData) -> AnyView {
+        if let task = taskViewModel.tasks.first(where: { $0.taskID == taskList.taskID }) {
+            return TaskDetailView(taskData: task).eraseToAnyView()
+        } else {
+            // フォールバック（理論的にはここには達しない）
+            return Text("Task not found").eraseToAnyView()
+        }
+    }
+    
     private func getGroupColor(for groupID: String) -> Color {
         if let group = viewModel.groups.first(where: { $0.groupID == groupID }) {
             return Color(GroupColor.allCases[Int(group.color)].color)
@@ -119,10 +152,17 @@ struct TaskView: View {
     }
 }
 
+extension View {
+    func eraseToAnyView() -> AnyView {
+        return AnyView(self)
+    }
+}
+
 struct GroupChip: View {
     let group: Group
     let isSelected: Bool
     let onTap: () -> Void
+    let onEditTap: () -> Void
     
     var body: some View {
         Button(action: onTap) {
@@ -139,19 +179,34 @@ struct GroupChip: View {
             .padding(.vertical, 8)
             .background(
                 Capsule()
-                    .fill(isSelected ? 
-                          Color(GroupColor.allCases[Int(group.color)].color).opacity(0.2) : 
-                          Color(.tertiarySystemBackground))
+                    .fill(chipBackgroundColor())
             )
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? 
-                            Color(GroupColor.allCases[Int(group.color)].color) : 
-                            Color(.systemGray4), 
-                            lineWidth: 1)
+                    .stroke(chipStrokeColor(), lineWidth: 1)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .contextMenu {
+            Button(action: onEditTap) {
+                Label("編集", systemImage: "pencil")
+            }
+        }
+    }
+    
+    private func chipBackgroundColor() -> Color {
+        if isSelected {
+            return Color(GroupColor.allCases[Int(group.color)].color).opacity(0.2)
+        } else {
+            return Color(.tertiarySystemBackground)
+        }
+    }
+    
+    private func chipStrokeColor() -> Color {
+        if isSelected {
+            return Color(GroupColor.allCases[Int(group.color)].color)
+        } else {
+            return Color(.systemGray4)
+        }
     }
 }
 
