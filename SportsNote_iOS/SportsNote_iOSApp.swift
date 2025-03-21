@@ -1,10 +1,17 @@
 import SwiftUI
+import Firebase
 
 @main
 struct SportsNote_iOSApp: App {
     init() {
-        // Realmの初期化
+        // 初期化
+        FirebaseApp.configure()
         RealmManager.shared.initRealm()
+        
+        // CrashlyticsにuserID情報を付加
+        if let userID = UserDefaults.standard.string(forKey: "userID") {
+            Crashlytics.crashlytics().setUserID(userID)
+        }
         
         // Setup app for first launch if needed
         setupFirstLaunch()

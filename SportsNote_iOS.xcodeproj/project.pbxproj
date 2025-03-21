@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F72D85171600AC19C1 /* RealmSwift */; };
+		8D8F87352D8CECDA00899E68 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87342D8CECDA00899E68 /* FirebaseAnalytics */; };
+		8D8F87372D8CECDA00899E68 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87362D8CECDA00899E68 /* FirebaseAuth */; };
+		8D8F87392D8CECDA00899E68 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87382D8CECDA00899E68 /* FirebaseCore */; };
+		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
+		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +61,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D8F87352D8CECDA00899E68 /* FirebaseAnalytics in Frameworks */,
+				8D8F87372D8CECDA00899E68 /* FirebaseAuth in Frameworks */,
+				8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */,
+				8D8F87392D8CECDA00899E68 /* FirebaseCore in Frameworks */,
 				8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */,
+				8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +129,11 @@
 			packageProductDependencies = (
 				8D4EF5F52D85171600AC19C1 /* Realm */,
 				8D4EF5F72D85171600AC19C1 /* RealmSwift */,
+				8D8F87342D8CECDA00899E68 /* FirebaseAnalytics */,
+				8D8F87362D8CECDA00899E68 /* FirebaseAuth */,
+				8D8F87382D8CECDA00899E68 /* FirebaseCore */,
+				8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */,
+				8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */,
 			);
 			productName = SportsNote_iOS;
 			productReference = 8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */;
@@ -205,6 +220,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */,
+				8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8D79F2D92D80660200D5D685 /* Products */;
@@ -612,6 +628,14 @@
 				minimumVersion = 10.54.3;
 			};
 		};
+		8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.10.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -624,6 +648,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */;
 			productName = RealmSwift;
+		};
+		8D8F87342D8CECDA00899E68 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		8D8F87362D8CECDA00899E68 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		8D8F87382D8CECDA00899E68 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
