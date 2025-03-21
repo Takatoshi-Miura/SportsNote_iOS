@@ -47,7 +47,7 @@ struct MeasureDetailView: View {
                 }
             }
         }
-        .navigationTitle(LocalizedStrings.measuresDetail)
+        .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)

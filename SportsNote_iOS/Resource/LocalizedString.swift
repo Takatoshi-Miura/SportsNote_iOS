@@ -12,6 +12,7 @@ struct LocalizedStrings {
     static let save = "save".localized
     static let delete = "delete".localized
     static let addTitle = "addTitle".localized
+    static let detailTitle = "detailTitle".localized
     static let addPrompt = "addPrompt".localized
     static let inputTitle = "inputTitle".localized
     static let title = "title".localized
@@ -19,6 +20,7 @@ struct LocalizedStrings {
     static let select = "select".localized
     static let complete = "complete".localized
     static let sort = "sort".localized
+    static let edit = "edit".localized
     
     // MARK: Color
     static let color = "color".localized
@@ -35,11 +37,11 @@ struct LocalizedStrings {
     
     // MARK: Group
     static let group = "group".localized
+    static let uncategorized = "uncategorized".localized
     
     // MARK: Task
     static let task = "task".localized
     static let cause = "cause".localized
-    static let taskDetail = "taskDetail".localized
     
     // MARK: Measures
     static let measures = "measures".localized

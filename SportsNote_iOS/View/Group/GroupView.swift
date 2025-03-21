@@ -1,5 +1,6 @@
 import UIKit
 import SwiftUI
+import RealmSwift
 
 struct GroupView: View {
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +22,9 @@ struct GroupView: View {
         Form {
             Section(header: Text(LocalizedStrings.title)) {
                 TextField(LocalizedStrings.title, text: $title)
+                    .onChange(of: title) { _ in
+                        updateGroup()
+                    }
             }
             Section(header: Text(LocalizedStrings.color)) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 10) {
@@ -35,28 +39,22 @@ struct GroupView: View {
                             )
                             .onTapGesture {
                                 selectedColor = color
+                                updateGroup()
                             }
                     }
                 }
             }
         }
         .background(Color(UIColor.systemBackground))
-        .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.group))
+        .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.group))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(LocalizedStrings.save) {
-                    // グループオブジェクトを更新
-                    let updatedGroup = group
-                    updatedGroup.title = title
-                    updatedGroup.color = selectedColor.rawValue
-                    updatedGroup.updated_at = Date()
-                    
-                    viewModel.updateGroup(group: updatedGroup)
-                    presentationMode.wrappedValue.dismiss()
-                }
-                .disabled(title.isEmpty)
-            }
-        }
+    }
+    
+    private func updateGroup() {
+        viewModel.updateExistingGroup(
+            id: group.groupID,
+            title: title,
+            color: selectedColor.rawValue
+        )
     }
 }

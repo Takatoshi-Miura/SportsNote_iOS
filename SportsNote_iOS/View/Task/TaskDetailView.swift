@@ -131,7 +131,7 @@ struct TaskDetailView: View {
                 }
             }
         }
-        .navigationTitle(LocalizedStrings.taskDetail)
+        .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.task))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             loadData()

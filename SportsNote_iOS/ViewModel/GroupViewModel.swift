@@ -1,4 +1,5 @@
 import SwiftUI
+import RealmSwift
 
 @MainActor
 class GroupViewModel: ObservableObject {
@@ -31,6 +32,22 @@ class GroupViewModel: ObservableObject {
     func updateGroup(group: Group) {
         RealmManager.shared.saveItem(group)
         fetchGroups()
+    }
+    
+    func updateExistingGroup(id: String, title: String, color: Int) {
+        do {
+            let realm = try Realm()
+            if let groupToUpdate = realm.object(ofType: Group.self, forPrimaryKey: id) {
+                try realm.write {
+                    groupToUpdate.title = title
+                    groupToUpdate.color = color
+                    groupToUpdate.updated_at = Date()
+                }
+                fetchGroups()
+            }
+        } catch {
+            print("Error updating group: \(error)")
+        }
     }
     
     func deleteGroup(id: String) {

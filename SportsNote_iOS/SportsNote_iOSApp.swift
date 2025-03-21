@@ -37,11 +37,11 @@ struct SportsNote_iOSApp: App {
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
             
             // フリーノート作成
-            let freeNote = Note(title: "Free Note")
+            let freeNote = Note(title: LocalizedStrings.freeNote)
             RealmManager.shared.saveItem(freeNote)
             
             // 未分類グループ作成
-            let uncategorizedGroup = Group(title: "未分類", color: GroupColor.gray.rawValue, order: 0, created_at: Date())
+            let uncategorizedGroup = Group(title: LocalizedStrings.uncategorized, color: GroupColor.gray.rawValue, order: 0, created_at: Date())
             RealmManager.shared.saveItem(uncategorizedGroup)
         }
     }

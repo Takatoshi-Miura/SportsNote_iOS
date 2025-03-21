@@ -5,6 +5,7 @@
 "save" = "保存";
 "delete" = "削除";
 "addTitle" = "%@の追加";
+"detailTitle" = "%@の詳細";
 "addPrompt" = "何を追加しますか？";
 "inputTitle" = "%@を入力してください";
 "title" = "タイトル";
@@ -12,6 +13,7 @@
 "select" = "選択";
 "complete" = "完了";
 "sort" = "並び替え";
+"edit" = "編集";
 
 // MARK: - Color
 "color" = "カラー";
@@ -28,11 +30,11 @@
 
 // MARK: Group
 "group" = "グループ";
+"uncategorized" = "未分類";
 
 // MARK: Task
 "task" = "課題";
 "cause" = "原因";
-"taskDetail" = "課題の詳細";
 
 // MARK: Measures
 "measures" = "対策";

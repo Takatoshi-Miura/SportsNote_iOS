@@ -57,6 +57,7 @@ struct TaskView: View {
                         }
                         .padding(.horizontal)
                     }
+                    .padding(.vertical, 10)
                     .background(Color(.systemGroupedBackground))
                     
                     // Task list
@@ -188,7 +189,7 @@ struct GroupChip: View {
         }
         .contextMenu {
             Button(action: onEditTap) {
-                Label("編集", systemImage: "pencil")
+                Label(LocalizedStrings.edit, systemImage: "pencil")
             }
         }
     }
@@ -227,13 +228,12 @@ struct TaskRow: View {
                     .strikethrough(isComplete)
                     .foregroundColor(isComplete ? .gray : .primary)
                 
-                // 対策を表示
-                Text("対策: \(taskList.measures)")
+                Text("\(LocalizedStrings.measures): \(taskList.measures)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 0)
     }
 }
