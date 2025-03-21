@@ -13,6 +13,7 @@
 		8D8F87392D8CECDA00899E68 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87382D8CECDA00899E68 /* FirebaseCore */; };
 		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
 		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
+		8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,7 @@
 				8D8F87392D8CECDA00899E68 /* FirebaseCore in Frameworks */,
 				8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */,
 				8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */,
+				8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +136,7 @@
 				8D8F87382D8CECDA00899E68 /* FirebaseCore */,
 				8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */,
 				8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */,
+				8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */,
 			);
 			productName = SportsNote_iOS;
 			productReference = 8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */;
@@ -673,6 +676,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFirestoreCombine-Community";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
