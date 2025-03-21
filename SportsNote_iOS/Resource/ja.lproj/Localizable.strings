@@ -67,6 +67,9 @@
 "yearlyTarget" = "年間目標";
 "monthlyTarget" = "月間目標";
 "period" = "期間";
+"year" = "年";
+"month" = "月";
+"notSet" = "未設定";
 
 // MARK: Setting
 "data" = "データ";

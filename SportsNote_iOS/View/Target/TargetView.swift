@@ -18,24 +18,19 @@ struct TargetView: View {
             },
             content: {
                 VStack(spacing: 0) {
-                    // 年間目標と月間目標のセクション
-                    TargetDisplaySection(
-                        yearlyTargets: viewModel.yearlyTargets,
-                        monthlyTargets: viewModel.monthlyTargets,
-                        selectedYear: selectedYear,
-                        selectedMonth: selectedMonth
-                    )
-                    
                     // カレンダーセクション
                     CalendarSection(
                         selectedYear: selectedYear,
                         selectedMonth: selectedMonth,
                         selectedDate: $selectedDate,
+                        yearlyTargets: viewModel.yearlyTargets,
+                        monthlyTargets: viewModel.monthlyTargets,
                         onDateSelected: { date in
                             selectedDate = date
                             noteViewModel.notes = noteViewModel.filterNotesByDate(date)
                         }
                     )
+                    .padding(.top, 16) // 上部にpaddingを追加
                     
                     // ノートリストセクション
                     if let date = selectedDate {
@@ -95,93 +90,111 @@ struct TargetView: View {
     }
 }
 
-// 目標表示セクション
-struct TargetDisplaySection: View {
-    let yearlyTargets: [Target]
-    let monthlyTargets: [Target]
-    let selectedYear: Int
-    let selectedMonth: Int
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // 年間目標セクション
-            if !yearlyTargets.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\(selectedYear) \(LocalizedStrings.yearlyTarget)")
-                        .font(.headline)
-                        .padding(.horizontal)
-                    
-                    ForEach(yearlyTargets, id: \.targetID) { target in
-                        TargetRow(target: target, viewModel: TargetViewModel())
-                    }
-                }
-                .padding(.top, 8)
-            }
-            
-            // 月間目標セクション
-            if !monthlyTargets.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\(selectedYear)/\(selectedMonth) \(LocalizedStrings.monthlyTarget)")
-                        .font(.headline)
-                        .padding(.horizontal)
-                    
-                    ForEach(monthlyTargets, id: \.targetID) { target in
-                        TargetRow(target: target, viewModel: TargetViewModel())
-                    }
-                }
-                .padding(.top, 8)
-            }
-            
-            // 目標が空の場合
-            if yearlyTargets.isEmpty && monthlyTargets.isEmpty {
-                VStack(spacing: 16) {
-                    Text("No targets set for this period")
-                        .font(.title3)
-                        .foregroundColor(.gray)                    
-                    Text("Tap + to add new targets")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-}
-
 // カレンダーセクション
 struct CalendarSection: View {
     let selectedYear: Int
     let selectedMonth: Int
     @Binding var selectedDate: Date?
+    let yearlyTargets: [Target]
+    let monthlyTargets: [Target]
     let onDateSelected: (Date) -> Void
     
     @State private var currentMonth: Date = Date()
+    @State private var currentDisplayedYearMonth: (year: Int, month: Int) = (
+        Calendar.current.component(.year, from: Date()),
+        Calendar.current.component(.month, from: Date())
+    )
+    
+    // TargetViewModelへの参照を追加
+    @StateObject private var targetViewModel = TargetViewModel()
     
     var body: some View {
         VStack {
-            Text("Calendar")
-                .font(.headline)
-                .padding(.horizontal)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // 目標表示セクション（コンパクト表示）
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top) {
+                    Text("\(LocalizedStrings.year)：")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .frame(width: 30, alignment: .leading)
+                    
+                    if (!targetViewModel.yearlyTargets.isEmpty) {
+                        Text(targetViewModel.yearlyTargets.first?.title ?? "")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text(LocalizedStrings.notSet)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(.horizontal, 8)
+                
+                HStack(alignment: .top) {
+                    Text("\(LocalizedStrings.month)：")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .frame(width: 30, alignment: .leading)
+                    
+                    if (!targetViewModel.monthlyTargets.isEmpty) {
+                        Text(targetViewModel.monthlyTargets.first?.title ?? "")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text(LocalizedStrings.notSet)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(.horizontal, 8)
+            }
+            .padding(.vertical, 8)
+            .background(Color(.tertiarySystemBackground))
+            .cornerRadius(10)
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
             
             CalendarView(
                 selectedDate: $selectedDate,
-                onDateSelected: onDateSelected
+                onDateSelected: onDateSelected,
+                onMonthChanged: { newDate in
+                    let year = Calendar.current.component(.year, from: newDate)
+                    let month = Calendar.current.component(.month, from: newDate)
+                    
+                    // 年月が変わったら目標を更新
+                    if year != currentDisplayedYearMonth.year || month != currentDisplayedYearMonth.month {
+                        currentDisplayedYearMonth = (year, month)
+                        targetViewModel.fetchTargets(year: year, month: month)
+                    }
+                }
             )
             .padding(.horizontal)
         }
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
         .padding(.horizontal)
+        .onAppear {
+            // 初期表示時にも目標を取得
+            targetViewModel.fetchTargets(
+                year: currentDisplayedYearMonth.year, 
+                month: currentDisplayedYearMonth.month
+            )
+        }
     }
 }
 
-// シンプルなカレンダービュー
 struct CalendarView: View {
     @Binding var selectedDate: Date?
     let onDateSelected: (Date) -> Void
+    // 月が変更された時のコールバックを追加
+    let onMonthChanged: (Date) -> Void
     
     @State private var currentMonth = Date()
     
@@ -192,6 +205,7 @@ struct CalendarView: View {
                 Button(action: {
                     withAnimation {
                         currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
+                        onMonthChanged(currentMonth)
                     }
                 }) {
                     Image(systemName: "chevron.left")
@@ -209,6 +223,7 @@ struct CalendarView: View {
                 Button(action: {
                     withAnimation {
                         currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+                        onMonthChanged(currentMonth)
                     }
                 }) {
                     Image(systemName: "chevron.right")
@@ -254,6 +269,10 @@ struct CalendarView: View {
             }
         }
         .padding(.bottom)
+        .onAppear {
+            // 初期表示時にもコールバックを呼び出し
+            onMonthChanged(currentMonth)
+        }
     }
     
     // 複雑な式を小さな関数に分解
