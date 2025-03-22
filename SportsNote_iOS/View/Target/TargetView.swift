@@ -17,31 +17,35 @@ struct TargetView: View {
             trailingItem: {
             },
             content: {
-                VStack(spacing: 0) {
-                    // カレンダーセクション
-                    CalendarSection(
-                        selectedYear: selectedYear,
-                        selectedMonth: selectedMonth,
-                        selectedDate: $selectedDate,
-                        yearlyTargets: viewModel.yearlyTargets,
-                        monthlyTargets: viewModel.monthlyTargets,
-                        onDateSelected: { date in
-                            selectedDate = date
-                            noteViewModel.notes = noteViewModel.filterNotesByDate(date)
-                        }
-                    )
-                    .padding(.top, 16) // 上部にpaddingを追加
-                    
-                    // ノートリストセクション
-                    if let date = selectedDate {
-                        NoteListSection(
-                            notes: noteViewModel.notes,
-                            date: date
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // カレンダーセクション
+                        CalendarSection(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            selectedDate: $selectedDate,
+                            yearlyTargets: viewModel.yearlyTargets,
+                            monthlyTargets: viewModel.monthlyTargets,
+                            onDateSelected: { date in
+                                selectedDate = date
+                                // 選択した日付に対応するノートを取得
+                                Task { @MainActor in
+                                    noteViewModel.notes = noteViewModel.filterNotesByDate(date)
+                                }
+                            }
                         )
                         .padding(.top, 16)
+                        
+                        // ノートリストセクション
+                        if let date = selectedDate {
+                            NoteListSection(
+                                notes: noteViewModel.notes,
+                                date: date
+                            )
+                            .padding(.top, 16)
+                            .padding(.bottom, 16)
+                        }
                     }
-                    
-                    Spacer()
                 }
             },
             actionItems: [
@@ -71,7 +75,37 @@ struct TargetView: View {
         }
         .onAppear {
             viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
-            noteViewModel.fetchNotes()
+            
+            // 初回だけ全ノートを読み込み
+            if noteViewModel.notes.isEmpty {
+                noteViewModel.fetchNotes()
+            } else if let date = selectedDate {
+                // 選択中の日付があれば、その日付のノートだけをフィルタリング
+                noteViewModel.notes = noteViewModel.filterNotesByDate(date)
+            }
+            
+            // 通知の登録 - weak selfを使わずにキャプチャリスト無しで実装
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("RefreshSelectedDateNotes"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                // 通知から日付を取得
+                if let date = notification.userInfo?["date"] as? Date {
+                    // 受け取った日付に対応するノートで再フィルタリング
+                    Task { @MainActor in
+                        self.noteViewModel.notes = self.noteViewModel.filterNotesByDate(date)
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            // 通知の解除
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSNotification.Name("RefreshSelectedDateNotes"),
+                object: nil
+            )
         }
     }
     
@@ -193,20 +227,24 @@ struct CalendarSection: View {
 struct CalendarView: View {
     @Binding var selectedDate: Date?
     let onDateSelected: (Date) -> Void
-    // 月が変更された時のコールバックを追加
     let onMonthChanged: (Date) -> Void
     
     @State private var currentMonth = Date()
+    @GestureState private var dragOffset: CGFloat = 0
+    @State private var slideDirection: CGFloat = 0 // スライド方向（-1: 左, 1: 右）
+    @State private var isAnimating: Bool = false   // アニメーション中かどうか
+    @StateObject private var noteViewModel = NoteViewModel() // 日付にノートがあるかの判定用
+    @State private var datesWithNotes: Set<Date> = [] // ノートがある日付のセット
+    
+    // 曜日の配列（日曜始まり）
+    private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
     var body: some View {
         VStack {
             // カレンダーヘッダー
             HStack {
                 Button(action: {
-                    withAnimation {
-                        currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
-                        onMonthChanged(currentMonth)
-                    }
+                    changeMonth(isPrevious: true)
                 }) {
                     Image(systemName: "chevron.left")
                 }
@@ -221,22 +259,124 @@ struct CalendarView: View {
                 Spacer()
                 
                 Button(action: {
-                    withAnimation {
-                        currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
-                        onMonthChanged(currentMonth)
-                    }
+                    changeMonth(isPrevious: false)
                 }) {
                     Image(systemName: "chevron.right")
                 }
             }
             .padding(.horizontal)
+            .padding(.bottom, 5)
             
+            // カレンダーコンテンツ（スワイプ可能）
+            ZStack {
+                calendarContent
+                    .offset(x: isAnimating ? -slideDirection * UIScreen.main.bounds.width : 0)
+                    .offset(x: dragOffset)
+                    .animation(isAnimating ? .easeInOut(duration: 0.3) : nil, value: isAnimating)
+                
+                if isAnimating {
+                    // 新しい月のカレンダーを表示（スライド方向に基づいて配置）
+                    calendarContent
+                        .offset(x: slideDirection * UIScreen.main.bounds.width - (slideDirection * dragOffset))
+                }
+            }
+            .clipped() // はみ出た部分を非表示にする
+            .gesture(
+                DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        if !isAnimating { // アニメーション中はドラッグを無視
+                            state = value.translation.width
+                        }
+                    }
+                    .onEnded { value in
+                        guard !isAnimating else { return } // アニメーション中はジェスチャーを処理しない
+                        
+                        let threshold: CGFloat = 50
+                        if value.translation.width > threshold {
+                            // 右スワイプ - 前月
+                            changeMonth(isPrevious: true)
+                        } else if value.translation.width < -threshold {
+                            // 左スワイプ - 翌月
+                            changeMonth(isPrevious: false)
+                        }
+                    }
+            )
+        }
+        .padding(.bottom)
+        .onAppear {
+            // 初期表示時にもコールバックを呼び出し
+            onMonthChanged(currentMonth)
+            
+            // 当月のノートがある日付を取得
+            updateDatesWithNotes()
+        }
+    }
+    
+    // 月の切り替えを行う関数
+    private func changeMonth(isPrevious: Bool) {
+        guard !isAnimating else { return } // 既にアニメーション中なら何もしない
+        
+        isAnimating = true
+        slideDirection = isPrevious ? -1 : 1 // 前月なら左から右へ、次月なら右から左へ
+        
+        // アニメーション完了後の処理
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // 月を実際に変更
+            withAnimation(nil) {
+                let newMonth = Calendar.current.date(
+                    byAdding: .month,
+                    value: isPrevious ? -1 : 1,
+                    to: currentMonth
+                ) ?? currentMonth
+                
+                currentMonth = newMonth
+                onMonthChanged(currentMonth)
+                
+                // アニメーションをリセット
+                isAnimating = false
+                slideDirection = 0
+                
+                // 新しい月のノートがある日付を取得
+                updateDatesWithNotes()
+            }
+        }
+    }
+    
+    // 表示中の月のノートがある日付を更新
+    private func updateDatesWithNotes() {
+        datesWithNotes.removeAll()
+        
+        // 表示している月の初日と末日を取得
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: currentMonth)
+        let month = calendar.component(.month, from: currentMonth)
+        
+        if let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+           let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate) {
+            
+            // 月の初日から末日までの間の全ての日のノートを確認
+            var date = startDate
+            while date <= endDate {
+                let notesForDate = noteViewModel.filterNotesByDate(date)
+                if !notesForDate.isEmpty {
+                    // この日にノートがある場合、セットに追加
+                    datesWithNotes.insert(calendar.startOfDay(for: date))
+                }
+                date = calendar.date(byAdding: .day, value: 1, to: date)!
+            }
+        }
+    }
+    
+    // カレンダーコンテンツ部分を分離
+    private var calendarContent: some View {
+        VStack {
             // 曜日ヘッダー
             HStack {
-                ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
-                    Text(day)
+                ForEach(0..<7, id: \.self) { index in
+                    Text(weekdays[index])
                         .font(.caption)
                         .fontWeight(.bold)
+                        .foregroundColor(colorForWeekdayHeader(index))
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -268,10 +408,29 @@ struct CalendarView: View {
                 }
             }
         }
-        .padding(.bottom)
-        .onAppear {
-            // 初期表示時にもコールバックを呼び出し
-            onMonthChanged(currentMonth)
+    }
+    
+    // 曜日ヘッダーの色を返す関数（0=Sunday, 6=Saturday）
+    private func colorForWeekdayHeader(_ weekday: Int) -> Color {
+        switch weekday {
+        case 0: // Sunday
+            return .red
+        case 6: // Saturday
+            return .blue
+        default:
+            return .primary
+        }
+    }
+    
+    // 曜日に応じた色を返す関数（日付セルの色）
+    private func colorForWeekday(_ weekday: Int) -> Color {
+        switch weekday {
+        case 0: // Sunday
+            return .red
+        case 6: // Saturday
+            return .blue
+        default:
+            return .primary
         }
     }
     
@@ -285,12 +444,17 @@ struct CalendarView: View {
         return Calendar.current.isDate(date, inSameDayAs: selectedDate)
     }
     
+    private func hasNoteForDate(_ date: Date) -> Bool {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        return datesWithNotes.contains(startOfDay)
+    }
+    
     private func foregroundColorFor(_ date: Date) -> Color {
         if isSelectedDate(date) {
             return .white
-        } else if date.get(.weekday) == 1 {
+        } else if date.get(.weekday) == 1 { // 日曜日は1
             return .red
-        } else if date.get(.weekday) == 7 {
+        } else if date.get(.weekday) == 7 { // 土曜日は7
             return .blue
         } else {
             return .primary
@@ -299,10 +463,14 @@ struct CalendarView: View {
     
     @ViewBuilder
     private func backgroundFor(_ date: Date) -> some View {
+        // 選択中の日付 > 今日 > ノートがある日付 の優先順位で背景を決定
         if isSelectedDate(date) {
             Circle().fill(Color.blue)
         } else if isToday(date) {
             Circle().stroke(Color.blue, lineWidth: 1)
+        } else if hasNoteForDate(date) {
+            // ノートがある日付は緑色の背景
+            Circle().fill(Color.green.opacity(0.3))
         } else {
             EmptyView()
         }
@@ -354,28 +522,29 @@ struct NoteListSection: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Notes (\(notes.count))")
+            Text("\(LocalizedStrings.note) (\(notes.count))")
                 .font(.headline)
                 .padding(.horizontal)
+                .padding(.top, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             if notes.isEmpty {
-                Text("No notes for this day")
+                Text("ノートがありません")
                     .foregroundColor(.gray)
                     .padding()
                     .frame(maxWidth: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack {
-                        ForEach(notes, id: \.noteID) { note in
-                            NavigationLink(destination: noteDestination(for: note)) {
-                                NoteRow(note: note)
-                            }
-                            .padding(.horizontal)
+                List {
+                    ForEach(notes, id: \.noteID) { note in
+                        NavigationLink(destination: noteDestination(for: note)) {
+                            NoteRow(note: note)
                         }
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
-                    .padding(.horizontal)
                 }
+                .listStyle(.plain)
+                .frame(minHeight: 200)
+                .padding(.horizontal, 8)
             }
         }
         .background(Color(.secondarySystemBackground))
@@ -387,74 +556,37 @@ struct NoteListSection: View {
     private func noteDestination(for note: Note) -> some View {
         switch NoteType(rawValue: note.noteType) {
         case .free:
-            Text("Free Note Detail") // Replace with actual free note view
+            FreeNoteView(noteID: note.noteID)
+                .onDisappear {
+                    // 詳細画面から戻ったときに日付で再フィルタリング
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        object: nil,
+                        userInfo: ["date": date]
+                    )
+                }
         case .practice:
-            Text("Practice Note Detail") // Replace with actual practice note view
+            PracticeNoteView(noteID: note.noteID)
+                .onDisappear {
+                    // 詳細画面から戻ったときに日付で再フィルタリング
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        object: nil,
+                        userInfo: ["date": date]
+                    )
+                }
         case .tournament:
-            Text("Tournament Note Detail") // Replace with actual tournament note view
+            TournamentNoteView(noteID: note.noteID)
+                .onDisappear {
+                    // 詳細画面から戻ったときに日付で再フィルタリング
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        object: nil,
+                        userInfo: ["date": date]
+                    )
+                }
         case .none:
-            Text("Unknown Note")
-        }
-    }
-}
-
-// 既存のTargetRow構造体はそのまま維持
-struct TargetRow: View {
-    let target: Target
-    let viewModel: TargetViewModel
-    
-    @State private var isEditing = false
-    @State private var showDeleteConfirmation = false
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(target.title)
-                        .font(.body)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                Spacer()
-                
-                HStack {
-                    Button(action: {
-                        isEditing = true
-                    }) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(.blue)
-                    }
-                    
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                    .alert(isPresented: $showDeleteConfirmation) {
-                        Alert(
-                            title: Text("Delete Target"),
-                            message: Text("Are you sure you want to delete this target?"),
-                            primaryButton: .destructive(Text("Delete")) {
-                                viewModel.deleteTarget(id: target.targetID)
-                            },
-                            secondaryButton: .cancel()
-                        )
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-        .padding(.horizontal)
-        .padding(.vertical, 4)
-        .sheet(isPresented: $isEditing) {
-            EditTargetView(target: target) {
-                // 編集後にデータを更新
-                viewModel.fetchTargets(year: target.year, month: target.month)
-            }
+            Text("なし")
         }
     }
 }

@@ -94,7 +94,8 @@ class NoteViewModel: ObservableObject {
     }
     
     func filterNotesByDate(_ date: Date) -> [Note] {
-        return notes.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        // RealmManagerに処理を委譲し、日付でのフィルタリングを確実に行う
+        return realmManager.getNotesByDate(selectedDate: date)
     }
     
     // MARK: - Note Detail Methods
