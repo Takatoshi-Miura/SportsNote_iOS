@@ -15,6 +15,30 @@ struct TargetView: View {
             title: LocalizedStrings.target,
             isMenuOpen: $isMenuOpen,
             trailingItem: {
+                Button(action: {
+                    // 現在の年月を更新
+                    let today = Date()
+                    selectedYear = Calendar.current.component(.year, from: today)
+                    selectedMonth = Calendar.current.component(.month, from: today)
+                    
+                    // 今日の日付を選択状態に
+                    selectedDate = today
+                    
+                    // カレンダービューを更新（通知で対応）
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("MoveToToday"),
+                        object: nil
+                    )
+                    
+                    // 今日の日付のノートをフィルタリング
+                    Task { @MainActor in
+                        noteViewModel.notes = noteViewModel.filterNotesByDate(today)
+                    }
+                }) {
+                    Text(LocalizedStrings.today)
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
             },
             content: {
                 ScrollView {
@@ -309,6 +333,40 @@ struct CalendarView: View {
             
             // 当月のノートがある日付を取得
             updateDatesWithNotes()
+            
+            // 「今日」ボタンの通知を受け取る
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("MoveToToday"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                Task { @MainActor in
+                    // 現在の月が今日の月と異なる場合は月を切り替える
+                    let today = Date()
+                    let calendar = Calendar.current
+                    let currentMonthValue = calendar.component(.month, from: self.currentMonth)
+                    let currentYearValue = calendar.component(.year, from: self.currentMonth)
+                    let todayMonthValue = calendar.component(.month, from: today)
+                    let todayYearValue = calendar.component(.year, from: today)
+                    
+                    if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
+                        // アニメーションなしで今日の月に直接移動
+                        self.currentMonth = calendar.date(from: DateComponents(year: todayYearValue, month: todayMonthValue, day: 1)) ?? today
+                        self.onMonthChanged(self.currentMonth)
+                        
+                        // ノートの更新
+                        self.updateDatesWithNotes()
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            // 通知の登録解除
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSNotification.Name("MoveToToday"),
+                object: nil
+            )
         }
     }
     
@@ -452,6 +510,9 @@ struct CalendarView: View {
     private func foregroundColorFor(_ date: Date) -> Color {
         if isSelectedDate(date) {
             return .white
+        } else if JapaneseHolidayChecker.isJapaneseHoliday(date) {
+            // 日本の祝日の場合は赤色で表示
+            return .red
         } else if date.get(.weekday) == 1 { // 日曜日は1
             return .red
         } else if date.get(.weekday) == 7 { // 土曜日は7

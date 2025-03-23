@@ -77,6 +77,7 @@ struct LocalizedStrings {
     static let year = "year".localized
     static let month = "month".localized
     static let notSet = "notSet".localized
+    static let today = "today".localized
 
     // MARK: Setting
     static let data = "data".localized

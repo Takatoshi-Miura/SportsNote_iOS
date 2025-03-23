@@ -70,6 +70,7 @@
 "year" = "年";
 "month" = "月";
 "notSet" = "未設定";
+"today" = "今日";
 
 // MARK: Setting
 "data" = "データ";
