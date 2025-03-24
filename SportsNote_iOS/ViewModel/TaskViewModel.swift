@@ -57,7 +57,8 @@ class TaskViewModel: ObservableObject {
                 measuresID: measures?.measuresID ?? "",
                 measures: measures?.title ?? "未設定",
                 memoID: nil,
-                order: task.order
+                order: task.order,
+                isComplete: task.isComplete
             )
             taskList.append(taskListItem)
         }
@@ -121,18 +122,13 @@ class TaskViewModel: ObservableObject {
                     taskToUpdate.updated_at = Date()
                 }
                 
-                // Update the local task list
-                if let index = tasks.firstIndex(where: { $0.taskID == taskID }) {
-                    tasks[index].isComplete = !tasks[index].isComplete
+                // Fetch the updated task from Realm to refresh local data
+                fetchAllTasks() // これにより tasks と taskListData が更新される
+                
+                // タスク詳細情報を表示している場合は、詳細情報も更新
+                if let detail = taskDetail, detail.task.taskID == taskID {
+                    fetchTaskDetail(taskID: taskID)
                 }
-                // Update the task list data
-                if let index = taskListData.firstIndex(where: { $0.taskID == taskID }) {
-                    // TaskListDataはstructなので新しいインスタンスを作る必要がある
-                    var updatedTask = taskListData[index]
-//                    updatedTask.isComplete = !updatedTask.isComplete
-                    taskListData[index] = updatedTask
-                }
-                self.objectWillChange.send()
             }
         } catch {
             print("Error toggling task completion: \(error)")

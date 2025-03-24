@@ -15,39 +15,37 @@ class GroupViewModel: ObservableObject {
         groups = RealmManager.shared.getDataList(clazz: Group.self)
     }
     
-    func saveGroup(title: String, color: GroupColor, order: Int? = nil) {
+    /// グループ保存処理(更新も兼ねる)
+    /// - Parameters:
+    ///   - groupID: グループID
+    ///   - title: タイトル
+    ///   - color: カラー
+    ///   - order: 並び順
+    ///   - created_at: 作成日時
+    func saveGroup(
+        groupID: String? = nil,
+        title: String,
+        color: GroupColor,
+        order: Int? = nil,
+        created_at: Date? = nil
+    ) {
+        let newGroupID = groupID ?? UUID().uuidString
         let newOrder = order ?? RealmManager.shared.getCount(clazz: Group.self)
-        
+        let newCreatedAt = created_at ?? Date()
+
         let group = Group(
+            groupID: newGroupID,
             title: title,
             color: color.rawValue,
             order: newOrder,
-            created_at: Date()
+            created_at: newCreatedAt
         )
         
         RealmManager.shared.saveItem(group)
+
+        // TODO: Firebaseへの同期
+
         fetchGroups()
-    }
-    
-    func updateGroup(group: Group) {
-        RealmManager.shared.saveItem(group)
-        fetchGroups()
-    }
-    
-    func updateExistingGroup(id: String, title: String, color: Int) {
-        do {
-            let realm = try Realm()
-            if let groupToUpdate = realm.object(ofType: Group.self, forPrimaryKey: id) {
-                try realm.write {
-                    groupToUpdate.title = title
-                    groupToUpdate.color = color
-                    groupToUpdate.updated_at = Date()
-                }
-                fetchGroups()
-            }
-        } catch {
-            print("Error updating group: \(error)")
-        }
     }
     
     func deleteGroup(id: String) {

@@ -2,43 +2,26 @@ import SwiftUI
 
 struct TargetView: View {
     @Binding var isMenuOpen: Bool
-    @StateObject private var viewModel = TargetViewModel()
     @StateObject private var noteViewModel = NoteViewModel()
     @State private var isAddYearlyTargetPresented = false
     @State private var isAddMonthlyTargetPresented = false
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
     @State private var selectedMonth = Calendar.current.component(.month, from: Date())
     @State private var selectedDate: Date?
-    
+    @ObservedObject var viewModel = TargetViewModel()
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.target,
             isMenuOpen: $isMenuOpen,
             trailingItem: {
-                Button(action: {
-                    // 現在の年月を更新
-                    let today = Date()
-                    selectedYear = Calendar.current.component(.year, from: today)
-                    selectedMonth = Calendar.current.component(.month, from: today)
-                    
-                    // 今日の日付を選択状態に
-                    selectedDate = today
-                    
-                    // カレンダービューを更新（通知で対応）
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("MoveToToday"),
-                        object: nil
-                    )
-                    
-                    // 今日の日付のノートをフィルタリング
-                    Task { @MainActor in
-                        noteViewModel.notes = noteViewModel.filterNotesByDate(today)
-                    }
-                }) {
-                    Text(LocalizedStrings.today)
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
-                }
+                //「今日」ボタン
+                TodayButton(
+                    selectedYear: $selectedYear,
+                    selectedMonth: $selectedMonth,
+                    selectedDate: $selectedDate,
+                    noteViewModel: noteViewModel
+                )
             },
             content: {
                 ScrollView {
@@ -66,8 +49,7 @@ struct TargetView: View {
                                 notes: noteViewModel.notes,
                                 date: date
                             )
-                            .padding(.top, 16)
-                            .padding(.bottom, 16)
+                            .padding(.vertical, 16)
                         }
                     }
                 }
@@ -78,23 +60,27 @@ struct TargetView: View {
             ]
         )
         .sheet(isPresented: $isAddYearlyTargetPresented) {
+            // 年間目標追加画面
             AddTargetView(
                 isYearly: true,
                 year: selectedYear,
                 month: selectedMonth,
                 onSave: {
                     viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
-                }
+                },
+                viewModel: viewModel
             )
         }
         .sheet(isPresented: $isAddMonthlyTargetPresented) {
+            // 月間目標追加画面
             AddTargetView(
                 isYearly: false,
                 year: selectedYear,
                 month: selectedMonth,
                 onSave: {
                     viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
-                }
+                },
+                viewModel: viewModel
             )
         }
         .onAppear {
@@ -104,11 +90,10 @@ struct TargetView: View {
             if noteViewModel.notes.isEmpty {
                 noteViewModel.fetchNotes()
             } else if let date = selectedDate {
-                // 選択中の日付があれば、その日付のノートだけをフィルタリング
                 noteViewModel.notes = noteViewModel.filterNotesByDate(date)
             }
             
-            // 通知の登録 - weak selfを使わずにキャプチャリスト無しで実装
+            // 通知の登録
             NotificationCenter.default.addObserver(
                 forName: NSNotification.Name("RefreshSelectedDateNotes"),
                 object: nil,
@@ -132,23 +117,39 @@ struct TargetView: View {
             )
         }
     }
-    
-    private func monthName(month: Int) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM"
-        
-        var dateComponents = DateComponents()
-        dateComponents.month = month
-        
-        if let date = Calendar.current.date(from: dateComponents) {
-            return dateFormatter.string(from: date)
+}
+
+///「今日」ボタン
+struct TodayButton: View {
+    @Binding var selectedYear: Int
+    @Binding var selectedMonth: Int
+    @Binding var selectedDate: Date?
+    @ObservedObject var noteViewModel: NoteViewModel
+
+    var body: some View {
+        Button {
+            let today = Date()
+            selectedYear = Calendar.current.component(.year, from: today)
+            selectedMonth = Calendar.current.component(.month, from: today)
+            selectedDate = today
+
+            NotificationCenter.default.post(
+                name: NSNotification.Name("MoveToToday"),
+                object: nil
+            )
+
+            Task { @MainActor in
+                noteViewModel.notes = noteViewModel.filterNotesByDate(today)
+            }
+        } label: {
+            Text(LocalizedStrings.today)
+                .font(.subheadline)
+                .foregroundColor(.blue)
         }
-        
-        return ""
     }
 }
 
-// カレンダーセクション
+/// カレンダーセクション
 struct CalendarSection: View {
     let selectedYear: Int
     let selectedMonth: Int
@@ -156,69 +157,21 @@ struct CalendarSection: View {
     let yearlyTargets: [Target]
     let monthlyTargets: [Target]
     let onDateSelected: (Date) -> Void
-    
     @State private var currentMonth: Date = Date()
     @State private var currentDisplayedYearMonth: (year: Int, month: Int) = (
         Calendar.current.component(.year, from: Date()),
         Calendar.current.component(.month, from: Date())
     )
-    
-    // TargetViewModelへの参照を追加
     @StateObject private var targetViewModel = TargetViewModel()
     
     var body: some View {
         VStack {
-            // 目標表示セクション（コンパクト表示）
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Text("\(LocalizedStrings.year)：")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .frame(width: 30, alignment: .leading)
-                    
-                    if (!targetViewModel.yearlyTargets.isEmpty) {
-                        Text(targetViewModel.yearlyTargets.first?.title ?? "")
-                            .font(.subheadline)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        Text(LocalizedStrings.notSet)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(.horizontal, 8)
-                
-                HStack(alignment: .top) {
-                    Text("\(LocalizedStrings.month)：")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .frame(width: 30, alignment: .leading)
-                    
-                    if (!targetViewModel.monthlyTargets.isEmpty) {
-                        Text(targetViewModel.monthlyTargets.first?.title ?? "")
-                            .font(.subheadline)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        Text(LocalizedStrings.notSet)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(.horizontal, 8)
-            }
-            .padding(.vertical, 8)
-            .background(Color(.tertiarySystemBackground))
-            .cornerRadius(10)
-            .padding(.horizontal)
-            .padding(.top, 8)
-            .padding(.bottom, 8)
-            
+            // 目標表示
+            TargetSummaryView(
+                yearlyTargets: targetViewModel.yearlyTargets,
+                monthlyTargets: targetViewModel.monthlyTargets
+            )
+            // カレンダー表示
             CalendarView(
                 selectedDate: $selectedDate,
                 onDateSelected: onDateSelected,
@@ -248,6 +201,67 @@ struct CalendarSection: View {
     }
 }
 
+/// 目標表示
+struct TargetSummaryView: View {
+    let yearlyTargets: [Target]
+    let monthlyTargets: [Target]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 年目標
+            HStack(alignment: .top) {
+                Text("\(LocalizedStrings.year)：")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .frame(width: 30, alignment: .leading)
+
+                if let title = yearlyTargets.first?.title {
+                    Text(title)
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(LocalizedStrings.notSet)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.horizontal, 8)
+
+            // 月目標
+            HStack(alignment: .top) {
+                Text("\(LocalizedStrings.month)：")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .frame(width: 30, alignment: .leading)
+
+                if let title = monthlyTargets.first?.title {
+                    Text(title)
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(LocalizedStrings.notSet)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.horizontal, 8)
+        }
+        .padding(.vertical, 8)
+        .background(Color(.tertiarySystemBackground))
+        .cornerRadius(10)
+        .padding(.horizontal)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+    }
+}
+
+/// カレンダー表示
 struct CalendarView: View {
     @Binding var selectedDate: Date?
     let onDateSelected: (Date) -> Void
@@ -491,8 +505,7 @@ struct CalendarView: View {
             return .primary
         }
     }
-    
-    // 複雑な式を小さな関数に分解
+
     private func isToday(_ date: Date) -> Bool {
         return Calendar.current.isDate(date, inSameDayAs: Date())
     }
@@ -583,6 +596,7 @@ struct NoteListSection: View {
     
     var body: some View {
         VStack(alignment: .leading) {
+            // ノート数を表示
             Text("\(LocalizedStrings.note) (\(notes.count))")
                 .font(.headline)
                 .padding(.horizontal)

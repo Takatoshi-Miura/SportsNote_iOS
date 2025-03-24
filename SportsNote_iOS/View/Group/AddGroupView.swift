@@ -1,51 +1,43 @@
 import UIKit
 import SwiftUI
 
+/// グループ追加画面
 struct AddGroupView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var title: String = ""
-    @State private var selectedColor: GroupColor = .red
     @ObservedObject var viewModel: GroupViewModel
-    
+    @State private var title: String
+    @State private var selectedColor: GroupColor
+
+    init(
+        title: String = "",
+        selectedColor: GroupColor = .red,
+        viewModel: GroupViewModel
+    ) {
+        self.viewModel = viewModel
+        _title = State(initialValue: title)
+        _selectedColor = State(initialValue: selectedColor)
+    }
+
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text(LocalizedStrings.title)) {
-                    TextField(LocalizedStrings.title, text: $title)
-                }
-                Section(header: Text(LocalizedStrings.color)) {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 10) {
-                        ForEach(GroupColor.allCases, id: \.self) { color in
-                            Circle()
-                                .fill(Color(color.color))
-                                .frame(width: 30, height: 30)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.primary, lineWidth: selectedColor == color ? 3 : 0)
-                                        .padding(1)
-                                )
-                                .onTapGesture {
-                                    selectedColor = color
-                                }
+            GroupForm(title: $title, selectedColor: $selectedColor)
+                .background(Color(UIColor.systemBackground))
+                .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.group))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // キャンセル
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(LocalizedStrings.cancel) { dismiss() }
+                    }
+                    // 保存
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(LocalizedStrings.save) {
+                            viewModel.saveGroup(title: title, color: selectedColor)
+                            dismiss()
                         }
+                        .disabled(title.isEmpty)
                     }
                 }
-            }
-            .background(Color(UIColor.systemBackground))
-            .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.group))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(LocalizedStrings.cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(LocalizedStrings.save) {
-                        viewModel.saveGroup(title: title, color: selectedColor)
-                        dismiss()
-                    }
-                    .disabled(title.isEmpty)
-                }
-            }
         }
     }
 }

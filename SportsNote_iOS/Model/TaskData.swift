@@ -68,7 +68,7 @@ struct AddTaskData {
 }
 
 // 課題一覧用データ
-struct TaskListData {
+struct TaskListData: Hashable {
     let taskID: String
     let groupID: String
     let groupColor: GroupColor
@@ -77,6 +77,17 @@ struct TaskListData {
     let measures: String
     var memoID: String?
     let order: Int
+    var isComplete: Bool
+    
+    // Hashableプロトコルの実装
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(taskID)
+    }
+    
+    // Equatableプロトコルの実装
+    static func == (lhs: TaskListData, rhs: TaskListData) -> Bool {
+        return lhs.taskID == rhs.taskID
+    }
 }
 
 // 課題詳細用データ

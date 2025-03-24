@@ -31,12 +31,14 @@ class Group: Object {
     }
     
     convenience init(
+        groupID: String,
         title: String,
         color: Int,
         order: Int,
         created_at: Date
     ) {
         self.init()
+        self.groupID = groupID
         self.title = title
         self.color = color
         self.order = order

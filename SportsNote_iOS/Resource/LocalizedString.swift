@@ -42,12 +42,14 @@ struct LocalizedStrings {
     // MARK: Task
     static let task = "task".localized
     static let cause = "cause".localized
+    static let completeMessage = "completeMessage".localized
+    static let inCompleteMessage = "inCompleteMessage".localized
     
     // MARK: Measures
     static let measures = "measures".localized
     static let measuresPriority = "measuresPriority".localized
     static let measuresDetail = "measuresDetail".localized
-    
+        
     // MARK: Note
     static let note = "note".localized
     static let practiceNote = "practiceNote".localized
@@ -68,6 +70,10 @@ struct LocalizedStrings {
     static let searchNotes = "searchNotes".localized
     static let noNotesFound = "noNotesFound".localized
     static let detail = "detail".localized
+    static let taskReflection = "taskReflection".localized
+    static let noTasksAvailable = "noTasksAvailable".localized
+    static let selectTask = "selectTask".localized
+    static let deleteTaskFromNote = "deleteTaskFromNote".localized
 
     // MARK: Target
     static let target = "target".localized

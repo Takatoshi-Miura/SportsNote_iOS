@@ -8,15 +8,13 @@ class TargetViewModel: ObservableObject {
     @Published var yearlyTargets: [Target] = []
     @Published var monthlyTargets: [Target] = []
     
-    private let realmManager = RealmManager.shared
-    
     init() {
     }
     
     // MARK: - Fetch Methods
     
     func fetchTargets(year: Int, month: Int) {
-        targets = realmManager.getDataList(clazz: Target.self).filter { $0.year == year && $0.month == month }
+        targets = RealmManager.shared.getDataList(clazz: Target.self).filter { $0.year == year && $0.month == month }
         updateFilteredTargets()
     }
     
@@ -27,34 +25,32 @@ class TargetViewModel: ObservableObject {
     
     // MARK: - CRUD Operations
     
-    func createTarget(title: String, year: Int, month: Int, isYearlyTarget: Bool = false) {
-        let target = Target()
-        target.title = title
-        target.year = year
-        target.month = month
-        target.isYearlyTarget = isYearlyTarget
-        
-        realmManager.saveItem(target)
-    }
-    
-    func updateTarget(_ target: Target, title: String, year: Int, month: Int, isYearlyTarget: Bool = false) {
-        target.title = title
-        target.year = year
-        target.month = month
-        target.isYearlyTarget = isYearlyTarget
-        
-        realmManager.saveItem(target)
+    /// 目標保存処理
+    /// - Parameters:
+    ///   - title: タイトル
+    ///   - year: 年
+    ///   - month: 月
+    ///   - isYearlyTarget: 年間目標かどうか
+    func saveTarget(
+        title: String,
+        year: Int,
+        month: Int,
+        isYearlyTarget: Bool = false
+    ) {
+        let target = Target(
+            title: title,
+            year: year,
+            month: month,
+            isYearlyTarget: isYearlyTarget
+        )
+        RealmManager.shared.saveItem(target)
+
+        // TODO: Firebaseにも保存する
     }
     
     func deleteTarget(id: String) {
-        realmManager.logicalDelete(id: id, type: Target.self)
+        RealmManager.shared.logicalDelete(id: id, type: Target.self)
         targets.removeAll(where: { $0.targetID == id })
         updateFilteredTargets()
-    }
-    
-    // MARK: - Target Detail Methods
-    
-    func loadTarget(id: String) {
-        selectedTarget = realmManager.getObjectById(id: id, type: Target.self)
     }
 }

@@ -35,6 +35,8 @@
 // MARK: Task
 "task" = "課題";
 "cause" = "原因";
+"completeMessage" = "課題を完了にしますか？";
+"inCompleteMessage" = "課題を未完了に戻しますか？";
 
 // MARK: Measures
 "measures" = "対策";
@@ -61,6 +63,10 @@
 "searchNotes" = "ノートを検索...";
 "noNotesFound" = "ノートが見つかりません";
 "detail" = "詳細";
+"taskReflection" = "取り組んだ課題";
+"noTasksAvailable" = "追加可能な課題がありません";
+"selectTask" = "ノートに追加する課題を選択";
+"deleteTaskFromNote" = "ノートから課題を削除しますか？";
 
 // MARK: Target
 "target" = "目標";

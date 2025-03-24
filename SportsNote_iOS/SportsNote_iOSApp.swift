@@ -48,8 +48,11 @@ struct SportsNote_iOSApp: App {
             RealmManager.shared.saveItem(freeNote)
             
             // 未分類グループ作成
-            let uncategorizedGroup = Group(title: LocalizedStrings.uncategorized, color: GroupColor.gray.rawValue, order: 0, created_at: Date())
-            RealmManager.shared.saveItem(uncategorizedGroup)
+            let groupViewModel = GroupViewModel()
+            groupViewModel.saveGroup(
+                title: LocalizedStrings.uncategorized,
+                color: GroupColor.gray
+            )
         }
     }
     

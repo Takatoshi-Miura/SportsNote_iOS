@@ -10,6 +10,7 @@ struct TaskDetailView: View {
     @State private var newMeasureTitle = ""
     @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
+    @State private var showCompletionToggleAlert = false
     
     let taskData: TaskData
     
@@ -133,6 +134,28 @@ struct TaskDetailView: View {
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.task))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // 完了状態切り替えアラート
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showCompletionToggleAlert = true
+                }) {
+                    Image(systemName: "checkmark.circle.fill")
+                }
+                .alert(isPresented: $showCompletionToggleAlert) {
+                    let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete) ? 
+                    LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
+                    return Alert(
+                        title: Text(title),
+                        primaryButton: .default(Text("OK")) {
+                            viewModel.toggleTaskCompletion(taskID: taskData.taskID)
+                            dismiss()
+                        },
+                        secondaryButton: .cancel(Text(LocalizedStrings.cancel))
+                    )
+                }
+            }
+        }
         .onAppear {
             loadData()
         }
