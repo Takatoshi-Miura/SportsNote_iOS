@@ -26,33 +26,11 @@ struct AddTaskView: View {
                 }
                 // グループ
                 Section(header: Text(LocalizedStrings.group)) {
-                    HStack {
-                        Circle()
-                            .fill(getGroupColor(for: selectedGroupIndex))
-                            .frame(width: 16, height: 16)
-                        Text(groups[selectedGroupIndex].title)
-                        Spacer()
-                        Menu {
-                            ForEach(0..<groups.count, id: \.self) { index in
-                                Button(action: {
-                                    selectedGroupIndex = index
-                                }) {
-                                    HStack {
-                                        Circle()
-                                            .fill(getGroupColor(for: index))
-                                            .frame(width: 16, height: 16)
-                                        Text(groups[index].title)
-                                        if selectedGroupIndex == index {
-                                            Spacer()
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            Text(LocalizedStrings.select)
-                                .foregroundColor(.blue)
-                        }
+                    if !groups.isEmpty {
+                        GroupSelectorView(
+                            selectedGroupIndex: $selectedGroupIndex,
+                            groups: groups
+                        )
                     }
                 }
                 // 対策
@@ -75,20 +53,6 @@ struct AddTaskView: View {
                     .disabled(taskTitle.isEmpty || groups.isEmpty)
                 }
             }
-        }
-    }
-    
-    /// グループの色を取得
-    /// - Parameter index: Index
-    /// - Returns: グループの色
-    private func getGroupColor(for index: Int) -> Color {
-        guard index < groups.count else { return Color.gray }
-        let colorIndex = Int(groups[index].color)
-        
-        if GroupColor.allCases.indices.contains(colorIndex) {
-            return Color(GroupColor.allCases[colorIndex].color)
-        } else {
-            return Color.gray
         }
     }
     

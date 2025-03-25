@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 import RealmSwift
 
 /// ノート
@@ -116,6 +117,61 @@ enum NoteType: Int, CaseIterable {
     case free
     case practice
     case tournament
+
+    var icon: String {
+        switch self {
+        case .free: return "pin.fill"
+        case .practice: return "figure.run"
+        case .tournament: return "trophy"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .free: return .blue
+        case .practice: return .green
+        case .tournament: return .orange
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .free: return LocalizedStrings.freeNote
+        case .practice: return LocalizedStrings.practiceNote
+        case .tournament: return LocalizedStrings.tournamentNote
+        }
+    }
+
+    func displayTitle(from note: Note) -> String {
+        if self == .free && !note.title.isEmpty {
+            return note.title
+        }
+        return title
+    }
+
+    func content(from note: Note) -> String {
+        switch self {
+        case .free:
+            return note.detail
+        case .practice:
+            return note.detail.isEmpty ? note.purpose : note.detail
+        case .tournament:
+            return note.result.isEmpty ? note.target : note.result
+        }
+    }
+
+    @MainActor
+    @ViewBuilder
+    func destinationView(noteID: String) -> some View {
+        switch self {
+        case .free:
+            FreeNoteView(noteID: noteID)
+        case .practice:
+            PracticeNoteView(noteID: noteID)
+        case .tournament:
+            TournamentNoteView(noteID: noteID)
+        }
+    }
 }
 
 /// 天気
