@@ -9,6 +9,7 @@ class NoteViewModel: ObservableObject {
     @Published var tournamentNotes: [Note] = []
     @Published var freeNotes: [Note] = []
     @Published var memos: [Memo] = []
+    @Published var isLoadingNote: Bool = false
     
     private let realmManager = RealmManager.shared
     
@@ -101,15 +102,19 @@ class NoteViewModel: ObservableObject {
     // MARK: - Note Detail Methods
     
     func loadNote(id: String) {
+        isLoadingNote = true
         selectedNote = realmManager.getObjectById(id: id, type: Note.self)
         loadMemos()
+        isLoadingNote = false
     }
     
     func loadNote() {
+        isLoadingNote = true
         if let id = selectedNote?.noteID {
             selectedNote = realmManager.getObjectById(id: id, type: Note.self)
             loadMemos()
         }
+        isLoadingNote = false
     }
     
     func loadMemos() {

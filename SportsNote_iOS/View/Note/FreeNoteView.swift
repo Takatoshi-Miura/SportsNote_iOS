@@ -1,18 +1,18 @@
 import SwiftUI
 import RealmSwift
+import Combine
 
 struct FreeNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
     @State private var title: String = ""
     @State private var detail: String = ""
-    @State private var isLoading: Bool = true
     @State private var detailMinHeight: CGFloat = 150
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if isLoading {
+                if viewModel.isLoadingNote {
                     VStack {
                         Text("Loading note...")
                             .foregroundColor(.gray)
@@ -52,24 +52,27 @@ struct FreeNoteView: View {
         .onAppear {
             loadData()
         }
+        .onChange(of: viewModel.selectedNote) { newNote in
+            if let note = newNote {
+                self.title = note.title
+                self.detail = note.detail
+            }
+        }
     }
     
     /// フリーノート読み込み
     private func loadData() {
         viewModel.loadNote(id: noteID)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if let note = viewModel.selectedNote {
-                self.title = note.title
-                self.detail = note.detail
-            }
-            self.isLoading = false
+        if let note = viewModel.selectedNote {
+            self.title = note.title
+            self.detail = note.detail
         }
     }
     
     /// フリーノート更新
     private func updateNote() {
-        guard !isLoading, let note = viewModel.selectedNote else { return }
+        guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
         do {
             let realm = try Realm()

@@ -14,11 +14,10 @@ struct PracticeNoteView: View {
     @State private var date: Date = Date()
     @State private var selectedWeather: Weather = .sunny
     @State private var temperature: Int = 20
-    @State private var isLoading: Bool = true
     
     var body: some View {
         ZStack {
-            if isLoading {
+            if viewModel.isLoadingNote {
                 VStack {
                     Text("Loading note...")
                         .foregroundColor(.gray)
@@ -109,16 +108,8 @@ struct PracticeNoteView: View {
         .onAppear {
             loadData()
         }
-    }
-    
-    private func loadData() {
-        // データロード
-        viewModel.loadNote(id: noteID)
-        viewModel.loadMemos()
-        
-        // ノートデータが取得できたらUIに反映
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if let note = viewModel.selectedNote {
+        .onChange(of: viewModel.selectedNote) { newNote in
+            if let note = newNote {
                 self.purpose = note.purpose
                 self.detail = note.detail
                 self.reflection = note.reflection
@@ -127,8 +118,12 @@ struct PracticeNoteView: View {
                 self.selectedWeather = Weather(rawValue: note.weather) ?? .sunny
                 self.temperature = note.temperature
             }
-            self.isLoading = false
         }
+    }
+    
+    private func loadData() {
+        viewModel.loadNote(id: noteID)
+        viewModel.loadMemos()
     }
     
     // メモ追加機能
@@ -150,7 +145,7 @@ struct PracticeNoteView: View {
     
     // ノート更新処理
     private func updateNote() {
-        guard !isLoading, let note = viewModel.selectedNote else { return }
+        guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
         do {
             let realm = try Realm()
