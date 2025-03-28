@@ -4,7 +4,9 @@ import RealmSwift
 struct PracticeNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
+    @StateObject private var taskViewModel = TaskViewModel()
     @State private var memo = ""
+    @State private var taskReflections: [TaskListData: String] = [:]
     
     // 編集用の状態変数
     @State private var purpose: String = ""
@@ -93,6 +95,14 @@ struct PracticeNoteView: View {
                             }
                     }
                     
+                    // 取り組んだ課題
+                    Section(header: Text(LocalizedStrings.taskReflection)) {
+                        TaskListSection(
+                            taskReflections: $taskReflections,
+                            unaddedTasks: getUnaddedTasks()
+                        )
+                    }
+                    
                     // 反省
                     Section(header: Text(LocalizedStrings.reflection)) {
                         AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
@@ -117,6 +127,7 @@ struct PracticeNoteView: View {
                 self.date = note.date
                 self.selectedWeather = Weather(rawValue: note.weather) ?? .sunny
                 self.temperature = note.temperature
+                loadTaskReflections(note: note)
             }
         }
     }
@@ -124,6 +135,13 @@ struct PracticeNoteView: View {
     private func loadData() {
         viewModel.loadNote(id: noteID)
         viewModel.loadMemos()
+        taskViewModel.fetchAllTasks()
+    }
+    
+    /// 未追加のタスクを取得
+    private func getUnaddedTasks() -> [TaskListData] {
+        let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
+        return taskViewModel.taskListData.filter { !$0.isComplete && !addedTaskIds.contains($0.taskID) }
     }
     
     // メモ追加機能
@@ -141,6 +159,20 @@ struct PracticeNoteView: View {
         viewModel.loadMemos()
         
         memo = ""
+    }
+    
+    // タスクのリフレクションをロードする
+    private func loadTaskReflections(note: Note) {
+        taskReflections.removeAll()
+        
+        // ノートに関連するメモを取得して、taskReflectionsに設定
+        let memos = viewModel.memos.filter { $0.noteID == note.noteID }
+        for memo in memos {
+            // measuresIDに課題IDが保存されている場合の処理
+            if let task = taskViewModel.taskListData.first(where: { $0.taskID == memo.measuresID }) {
+                taskReflections[task] = memo.detail
+            }
+        }
     }
     
     // ノート更新処理
@@ -161,8 +193,43 @@ struct PracticeNoteView: View {
                     noteToUpdate.updated_at = Date()
                 }
             }
+            
+            // タスクリフレクションを更新
+            updateTaskReflections(noteID: note.noteID)
         } catch {
             print("Error updating note: \(error)")
+        }
+    }
+    
+    // タスクリフレクションを更新
+    private func updateTaskReflections(noteID: String) {
+        do {
+            let realm = try Realm()
+            
+            // 既存のメモをいったん削除（課題関連のメモのみ）
+            let existingMemos = realm.objects(Memo.self).filter("noteID == %@ AND measuresID != ''", noteID)
+            try realm.write {
+                realm.delete(existingMemos)
+            }
+            
+            // 新しいメモを保存
+            for (task, reflectionText) in taskReflections {
+                if !reflectionText.isEmpty {
+                    let memo = Memo(
+                        measuresID: task.taskID, // 課題のIDをmeasuresIDに保存
+                        noteID: noteID,
+                        detail: reflectionText
+                    )
+                    memo.noteDate = date
+                    
+                    RealmManager.shared.saveItem(memo)
+                }
+            }
+            
+            // メモを再読み込み
+            viewModel.loadMemos()
+        } catch {
+            print("Error updating task reflections: \(error)")
         }
     }
 }
