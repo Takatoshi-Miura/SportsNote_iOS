@@ -34,8 +34,9 @@ struct ItemData {
 struct MenuView: View {
     @Binding var isMenuOpen: Bool
     
-    @State private var isDialogVisible: Bool = false
-    @State private var dialogType: DialogType = .none
+    // シートの表示状態を親Viewとは分離して管理
+    @State private var isLoginDialogVisible: Bool = false
+    @State private var isTutorialDialogVisible: Bool = false
     @State private var appVersion: String = "1.0.0"
     
     var onDismiss: () -> Void
@@ -50,9 +51,7 @@ struct MenuView: View {
                     subTitle: "",
                     iconRes: "cloud",
                     onClick: {
-                        // ログイン画面を表示
-                        dialogType = .login
-                        isDialogVisible = true
+                        isLoginDialogVisible = true
                     }
                 )
             ]
@@ -67,8 +66,7 @@ struct MenuView: View {
                     iconRes: "questionmark.circle",
                     onClick: {
                         // チュートリアル画面を表示
-                        dialogType = .tutorial
-                        isDialogVisible = true
+                        isTutorialDialogVisible = true
                     }
                 ),
                 ItemData(
@@ -133,6 +131,7 @@ struct MenuView: View {
                                         .foregroundColor(.gray)
                                 }
                             }
+                            .contentShape(Rectangle())
                             .onTapGesture {
                                 item.onClick()
                             }
@@ -142,30 +141,15 @@ struct MenuView: View {
             }
             .frame(width: geometry.size.width * 0.8)
             .offset(x: 0)
-            .sheet(isPresented: $isDialogVisible) {
-                if dialogType == .login {
-                    LoginScreen(onDismiss: {
-                        isDialogVisible = false
-                        onDismiss()
-                    })
-                } else if dialogType == .tutorial {
-                    TutorialScreen(onDismiss: {
-                        isDialogVisible = false
-                    })
-                }
+            .fullScreenCover(isPresented: $isLoginDialogVisible) {
+                LoginView(onDismiss: {
+                    isLoginDialogVisible = false
+                })
             }
-        }
-    }
-}
-
-struct LoginScreen: View {
-    var onDismiss: () -> Void
-    
-    var body: some View {
-        VStack {
-            Text("Login Screen")
-            Button("Close") {
-                onDismiss()
+            .sheet(isPresented: $isTutorialDialogVisible) {
+                TutorialScreen(onDismiss: {
+                    isTutorialDialogVisible = false
+                })
             }
         }
     }

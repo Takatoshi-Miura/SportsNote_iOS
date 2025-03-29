@@ -21,6 +21,8 @@ struct LocalizedStrings {
     static let complete = "complete".localized
     static let sort = "sort".localized
     static let edit = "edit".localized
+    static let notice = "notice".localized
+    static let ok = "ok".localized
     
     // MARK: Color
     static let color = "color".localized
@@ -99,5 +101,23 @@ struct LocalizedStrings {
     static let termsOfServiceMessage = "TermsOfServiceMessage".localized
     static let checkTermsOfService = "checkTermsOfService".localized
     static let agree = "agree".localized
+    
+    // MARK: Login/Auth
+    static let login = "login".localized
+    static let logout = "logout".localized
+    static let email = "email".localized
+    static let password = "password".localized
+    static let resetPassword = "resetPassword".localized
+    static let createAccount = "createAccount".localized
+    static let deleteAccount = "deleteAccount".localized
+    static let loggedIn = "loggedIn".localized
+    static let notLoggedIn = "notLoggedIn".localized
+    static let loginSuccessful = "loginSuccessful".localized
+    static let logoutSuccessful = "logoutSuccessful".localized
+    static let pleaseEnterEmailAndPassword = "pleaseEnterEmailAndPassword".localized
+    static let pleaseEnterEmail = "pleaseEnterEmail".localized
+    static let passwordResetEmailSent = "passwordResetEmailSent".localized
+    static let accountCreated = "accountCreated".localized
+    static let accountDeleted = "accountDeleted".localized
 }
 

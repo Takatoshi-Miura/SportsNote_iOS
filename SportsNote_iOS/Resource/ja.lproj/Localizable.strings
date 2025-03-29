@@ -14,6 +14,8 @@
 "complete" = "完了";
 "sort" = "並び替え";
 "edit" = "編集";
+"notice" = "お知らせ";
+"ok" = "OK";
 
 // MARK: - Color
 "color" = "カラー";
@@ -92,3 +94,21 @@
 "TermsOfServiceMessage" = "このアプリを使用するには、利用規約に同意する必要があります。";
 "checkTermsOfService" = "利用規約を確認";
 "agree" = "同意";
+
+// MARK: Login/Auth
+"login" = "ログイン";
+"logout" = "ログアウト";
+"email" = "メールアドレス";
+"password" = "パスワード";
+"resetPassword" = "パスワードをリセット";
+"createAccount" = "アカウントを作成";
+"deleteAccount" = "アカウントを削除";
+"loggedIn" = "ログイン済み";
+"notLoggedIn" = "未ログイン";
+"loginSuccessful" = "ログインに成功しました";
+"logoutSuccessful" = "ログアウトしました";
+"pleaseEnterEmailAndPassword" = "メールアドレスとパスワードを入力してください";
+"pleaseEnterEmail" = "メールアドレスを入力してください";
+"passwordResetEmailSent" = "パスワードリセットのメールを送信しました";
+"accountCreated" = "アカウントを作成しました";
+"accountDeleted" = "アカウントを削除しました";

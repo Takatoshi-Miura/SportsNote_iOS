@@ -1,1 +1,114 @@
-// 英語用
+// English
+
+// MARK: Common
+"cancel" = "Cancel";
+"save" = "Save";
+"delete" = "Delete";
+"addTitle" = "Add %@";
+"detailTitle" = "%@ Details";
+"addPrompt" = "What would you like to add?";
+"inputTitle" = "Enter %@";
+"title" = "Title";
+"basicInfo" = "Basic Information";
+"select" = "Select";
+"complete" = "Complete";
+"sort" = "Sort";
+"edit" = "Edit";
+"notice" = "Notice";
+"ok" = "OK";
+
+// MARK: Color
+"color" = "Color";
+"red" = "Red";
+"pink" = "Pink";
+"orange" = "Orange";
+"yellow" = "Yellow";
+"green" = "Green";
+"blue" = "Blue";
+"purple" = "Purple";
+"gray" = "Gray";
+"white" = "White";
+"black" = "Black";
+
+// MARK: Group
+"group" = "Group";
+"uncategorized" = "Uncategorized";
+
+// MARK: Task
+"task" = "Task";
+"cause" = "Cause";
+"completeMessage" = "Mark this task as complete?";
+"inCompleteMessage" = "Mark this task as incomplete?";
+
+// MARK: Measures
+"measures" = "Measures";
+"measuresPriority" = "Measures (High Priority First)";
+"measuresDetail" = "Measure Details";
+
+// MARK: Note
+"note" = "Note";
+"practiceNote" = "Practice Note";
+"tournamentNote" = "Tournament Note";
+"freeNote" = "Free Note";
+"date" = "Date";
+"weather" = "Weather";
+"temperature" = "Temperature";
+"sunny" = "Sunny";
+"cloudy" = "Cloudy";
+"rainy" = "Rainy";
+"condition" = "Physical Condition";
+"consciousness" = "Points to Focus";
+"result" = "Result";
+"reflection" = "Reflection";
+"purpose" = "Practice Purpose";
+"practiceDetail" = "Practice Details";
+"searchNotes" = "Search notes...";
+"noNotesFound" = "No notes found";
+"detail" = "Detail";
+"taskReflection" = "Tasks Worked On";
+"noTasksAvailable" = "No tasks available to add";
+"selectTask" = "Select tasks to add to note";
+"deleteTaskFromNote" = "Remove task from this note?";
+
+// MARK: Target
+"target" = "Target";
+"yearlyTarget" = "Yearly Target";
+"monthlyTarget" = "Monthly Target";
+"period" = "Period";
+"year" = "Year";
+"month" = "Month";
+"notSet" = "Not Set";
+"today" = "Today";
+
+// MARK: Setting
+"data" = "Data";
+"dataTransfer" = "Data Transfer";
+"help" = "Help";
+"howToUseThisApp" = "How to Use This App";
+"inquiry" = "Inquiry";
+"other" = "Other";
+"termsOfService" = "Terms of Service";
+"privacyPolicy" = "Privacy Policy";
+"appVersion" = "App Version";
+"TermsOfServiceTitle" = "Do you agree to the Terms of Service?";
+"TermsOfServiceMessage" = "You must agree to the Terms of Service to use this app.";
+"checkTermsOfService" = "View Terms of Service";
+"agree" = "Agree";
+
+// MARK: Login/Auth
+"login" = "Login";
+"logout" = "Logout";
+"email" = "Email";
+"password" = "Password";
+"resetPassword" = "Reset Password";
+"createAccount" = "Create Account";
+"deleteAccount" = "Delete Account";
+"loggedIn" = "Logged In";
+"notLoggedIn" = "Not Logged In";
+"loginSuccessful" = "Login successful";
+"logoutSuccessful" = "Logged out successfully";
+"pleaseEnterEmailAndPassword" = "Please enter email and password";
+"pleaseEnterEmail" = "Please enter your email";
+"passwordResetEmailSent" = "Password reset email sent";
+"accountCreated" = "Account created successfully";
+"accountDeleted" = "Account deleted successfully";
