@@ -14,6 +14,11 @@
 		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
 		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
 		8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */; };
+		8D8F89852D99845000899E68 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D8F89842D99845000899E68 /* WidgetKit.framework */; };
+		8D8F89872D99845000899E68 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D8F89862D99845000899E68 /* SwiftUI.framework */; };
+		8D8F89992D99845200899E68 /* SportsNoteWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8D8F89822D99845000899E68 /* SportsNoteWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8D8F89AF2D99F45B00899E68 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F89AE2D99F45B00899E68 /* RealmSwift */; };
+		8D8F89B02D99F45B00899E68 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F89AE2D99F45B00899E68 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,17 +36,75 @@
 			remoteGlobalIDString = 8D79F2D72D80660200D5D685;
 			remoteInfo = SportsNote_iOS;
 		};
+		8D8F89962D99845200899E68 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8D79F2D02D80660200D5D685 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D8F89812D99845000899E68;
+			remoteInfo = SportsNoteWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8D8F89982D99845200899E68 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8D8F89992D99845200899E68 /* SportsNoteWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D8F89AB2D998BA200899E68 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				8D8F89B02D99F45B00899E68 /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SportsNote_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D79F2E92D80660300D5D685 /* SportsNote_iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsNote_iOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsNote_iOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D8F89822D99845000899E68 /* SportsNoteWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SportsNoteWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D8F89842D99845000899E68 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		8D8F89862D99845000899E68 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8D8F899A2D99845200899E68 /* Exceptions for "SportsNoteWidget" folder in "SportsNoteWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8D8F89812D99845000899E68 /* SportsNoteWidgetExtension */;
+		};
+		8D8F89A62D9988B300899E68 /* Exceptions for "SportsNote_iOS" folder in "SportsNoteWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Model/Group.swift,
+				Model/Measures.swift,
+				Model/TaskData.swift,
+				Resource/LocalizedString.swift,
+			);
+			target = 8D8F89812D99845000899E68 /* SportsNoteWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8D79F2DA2D80660200D5D685 /* SportsNote_iOS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8D8F89A62D9988B300899E68 /* Exceptions for "SportsNote_iOS" folder in "SportsNoteWidgetExtension" target */,
+			);
 			path = SportsNote_iOS;
 			sourceTree = "<group>";
 		};
@@ -53,6 +116,14 @@
 		8D79F2F62D80660300D5D685 /* SportsNote_iOSUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = SportsNote_iOSUITests;
+			sourceTree = "<group>";
+		};
+		8D8F89882D99845000899E68 /* SportsNoteWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8D8F899A2D99845200899E68 /* Exceptions for "SportsNoteWidget" folder in "SportsNoteWidgetExtension" target */,
+			);
+			path = SportsNoteWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -86,6 +157,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8D8F897F2D99845000899E68 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D8F89AF2D99F45B00899E68 /* RealmSwift in Frameworks */,
+				8D8F89872D99845000899E68 /* SwiftUI.framework in Frameworks */,
+				8D8F89852D99845000899E68 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -95,6 +176,8 @@
 				8D79F2DA2D80660200D5D685 /* SportsNote_iOS */,
 				8D79F2EC2D80660300D5D685 /* SportsNote_iOSTests */,
 				8D79F2F62D80660300D5D685 /* SportsNote_iOSUITests */,
+				8D8F89882D99845000899E68 /* SportsNoteWidget */,
+				8D8F89832D99845000899E68 /* Frameworks */,
 				8D79F2D92D80660200D5D685 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -105,8 +188,18 @@
 				8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */,
 				8D79F2E92D80660300D5D685 /* SportsNote_iOSTests.xctest */,
 				8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */,
+				8D8F89822D99845000899E68 /* SportsNoteWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8D8F89832D99845000899E68 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8D8F89842D99845000899E68 /* WidgetKit.framework */,
+				8D8F89862D99845000899E68 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -119,10 +212,12 @@
 				8D79F2D42D80660200D5D685 /* Sources */,
 				8D79F2D52D80660200D5D685 /* Frameworks */,
 				8D79F2D62D80660200D5D685 /* Resources */,
+				8D8F89982D99845200899E68 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8D8F89972D99845200899E68 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8D79F2DA2D80660200D5D685 /* SportsNote_iOS */,
@@ -188,6 +283,30 @@
 			productReference = 8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		8D8F89812D99845000899E68 /* SportsNoteWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8D8F899B2D99845200899E68 /* Build configuration list for PBXNativeTarget "SportsNoteWidgetExtension" */;
+			buildPhases = (
+				8D8F897E2D99845000899E68 /* Sources */,
+				8D8F897F2D99845000899E68 /* Frameworks */,
+				8D8F89802D99845000899E68 /* Resources */,
+				8D8F89AB2D998BA200899E68 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8D8F89882D99845000899E68 /* SportsNoteWidget */,
+			);
+			name = SportsNoteWidgetExtension;
+			packageProductDependencies = (
+				8D8F89AE2D99F45B00899E68 /* RealmSwift */,
+			);
+			productName = SportsNoteWidgetExtension;
+			productReference = 8D8F89822D99845000899E68 /* SportsNoteWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -208,6 +327,9 @@
 					8D79F2F22D80660300D5D685 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 8D79F2D72D80660200D5D685;
+					};
+					8D8F89812D99845000899E68 = {
+						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
@@ -233,6 +355,7 @@
 				8D79F2D72D80660200D5D685 /* SportsNote_iOS */,
 				8D79F2E82D80660300D5D685 /* SportsNote_iOSTests */,
 				8D79F2F22D80660300D5D685 /* SportsNote_iOSUITests */,
+				8D8F89812D99845000899E68 /* SportsNoteWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -253,6 +376,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8D79F2F12D80660300D5D685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D8F89802D99845000899E68 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -283,6 +413,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8D8F897E2D99845000899E68 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -295,6 +432,11 @@
 			isa = PBXTargetDependency;
 			target = 8D79F2D72D80660200D5D685 /* SportsNote_iOS */;
 			targetProxy = 8D79F2F42D80660300D5D685 /* PBXContainerItemProxy */;
+		};
+		8D8F89972D99845200899E68 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D8F89812D99845000899E68 /* SportsNoteWidgetExtension */;
+			targetProxy = 8D8F89962D99845200899E68 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -581,6 +723,65 @@
 			};
 			name = Release;
 		};
+		8D8F899C2D99845200899E68 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9YB68MR5FL;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SportsNoteWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SportsNoteWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp.SportsNoteWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8D8F899D2D99845200899E68 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9YB68MR5FL;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SportsNoteWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SportsNoteWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp.SportsNoteWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -616,6 +817,15 @@
 			buildConfigurations = (
 				8D79F3042D80660300D5D685 /* Debug */,
 				8D79F3052D80660300D5D685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8D8F899B2D99845200899E68 /* Build configuration list for PBXNativeTarget "SportsNoteWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D8F899C2D99845200899E68 /* Debug */,
+				8D8F899D2D99845200899E68 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -681,6 +891,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		8D8F89AE2D99F45B00899E68 /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
