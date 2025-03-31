@@ -3,7 +3,8 @@ import RealmSwift
 
 struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = TaskViewModel()
+    // 親から渡されたViewModelを使う
+    @ObservedObject var viewModel: TaskViewModel
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
@@ -81,6 +82,10 @@ struct TaskDetailView: View {
         .onAppear {
             loadData()
         }
+        .onDisappear {
+            // 画面が閉じるときに確実に更新通知を送信して親ビューの更新を促す
+            viewModel.taskUpdatedPublisher.send()
+        }
         .environment(\.editMode, .constant(isReorderingMeasures ? .active : .inactive))
     }
 
@@ -121,8 +126,11 @@ struct TaskDetailView: View {
                     taskToUpdate.updated_at = Date()
                 }
 
-                // 詳細情報を更新
-                viewModel.fetchTaskDetail(taskID: taskData.taskID)
+                // タスク情報を更新
+                viewModel.refreshTasks()
+                
+                // 更新通知を送信（TaskViewのリフレッシュトリガー用）
+                viewModel.taskUpdatedPublisher.send()
             }
         } catch {
             print("Error updating task: \(error)")

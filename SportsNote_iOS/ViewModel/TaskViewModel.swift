@@ -1,12 +1,16 @@
 import Foundation
 import SwiftUI
 import RealmSwift
+import Combine
 
 @MainActor
 class TaskViewModel: ObservableObject {
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []
     @Published var taskDetail: TaskDetailData?
+    
+    // タスク更新通知パブリッシャー
+    let taskUpdatedPublisher = PassthroughSubject<Void, Never>()
     
     init() {
         fetchAllTasks()
@@ -230,6 +234,26 @@ class TaskViewModel: ObservableObject {
             }
         } catch {
             print("Error updating measures order: \(error)")
+        }
+    }
+    
+    /// 現在の表示状態に合わせてタスク一覧を更新
+    func refreshTasks() {
+        // タスク詳細情報の更新が必要な場合
+        if let detail = taskDetail {
+            fetchTaskDetail(taskID: detail.task.taskID)
+        }
+        
+        // タスク一覧の更新
+        // 最後に更新したタスクのgroupIDがtasksに含まれているか確認
+        if let lastTask = taskDetail?.task,
+           !tasks.isEmpty,
+           tasks.first(where: { $0.groupID == lastTask.groupID }) != nil {
+            // 同じグループのタスクを表示中なら、そのグループのタスクだけ更新
+            fetchTasksByGroupID(groupID: lastTask.groupID)
+        } else {
+            // それ以外の場合は全タスク更新
+            fetchAllTasks()
         }
     }
 }

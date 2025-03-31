@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct TaskView: View {
     @Binding var isMenuOpen: Bool
@@ -10,6 +11,10 @@ struct TaskView: View {
     @State private var showCompletedTasks = false
     @ObservedObject var viewModel = GroupViewModel()
     @ObservedObject var taskViewModel = TaskViewModel()
+    // ViewModelの変更を強制的に反映させるためのトリガー
+    @State private var refreshTrigger: Bool = false
+    // Combine購読のキャンセル保持用
+    @State private var cancellables = Set<AnyCancellable>()
     
     var body: some View {
         TabTopView(
@@ -26,6 +31,7 @@ struct TaskView: View {
                 }
             },
             content: {
+                // refreshTriggerの変更で強制的に再構築させる
                 VStack(spacing: 0) {
                     // グループセクション
                     GroupListView(
@@ -61,9 +67,11 @@ struct TaskView: View {
                             } else {
                                 taskViewModel.fetchAllTasks()
                             }
-                        }
+                        },
+                        taskViewModel: taskViewModel
                     )
                 }
+                .id(refreshTrigger) // IDを変更することでViewを強制的に再構築
             },
             actionItems: [
                 (LocalizedStrings.group, { isAddGroupPresented = true }),
@@ -83,9 +91,39 @@ struct TaskView: View {
             AddTaskView(viewModel: taskViewModel, groups: viewModel.groups)
         }
         .onAppear {
+            // 画面が表示されるたびに最新データを取得
             viewModel.fetchGroups()
-            taskViewModel.fetchAllTasks()
+            if let id = selectedGroupID {
+                taskViewModel.fetchTasksByGroupID(groupID: id)
+            } else {
+                taskViewModel.fetchAllTasks()
+            }
+            
+            // 画面表示のたびにタスク更新通知を購読し直す
+            setupSubscriptions()
         }
+        .onDisappear {
+            // 画面が非表示になるときに購読をキャンセル
+            cancellables.removeAll()
+        }
+    }
+    
+    // パブリッシャーの購読処理を行う関数に切り出し
+    private func setupSubscriptions() {
+        taskViewModel.taskUpdatedPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                // 強制的に画面を再構築するためにトリガーを切り替え
+                refreshTrigger.toggle()
+                
+                // データも明示的に更新
+                if let id = selectedGroupID {
+                    taskViewModel.fetchTasksByGroupID(groupID: id)
+                } else {
+                    taskViewModel.fetchAllTasks()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func filteredTaskListData() -> [TaskListData] {
@@ -196,6 +234,8 @@ private struct TaskListView: View {
     let onDelete: (String) -> Void
     let onToggleCompletion: (String) -> Void
     let refreshAction: () async -> Void
+    // TaskViewModelを受け取るように追加
+    let taskViewModel: TaskViewModel
 
     var body: some View {
         List {
@@ -239,7 +279,8 @@ private struct TaskListView: View {
 
     private func getTaskDetailView(for taskList: TaskListData) -> AnyView {
         if let task = tasks.first(where: { $0.taskID == taskList.taskID }) {
-            return TaskDetailView(taskData: task).eraseToAnyView()
+            // シンプルに共有ViewModelを渡すのみで良い
+            return TaskDetailView(viewModel: taskViewModel, taskData: task).eraseToAnyView()
         } else {
             return Text("Task not found").eraseToAnyView()
         }
