@@ -4,7 +4,6 @@ import RealmSwift
 struct RealmConstants {
     static let databaseName = "sportsnote.realm"
     static let schemaVersion: UInt64 = 1
-    static let appGroupIdentifier = "group.com.sportsnote" // App Groupの識別子
 }
 
 /// Realmデータベースを管理するクラス
@@ -19,27 +18,16 @@ class RealmManager: Sendable {
     /// Realmを初期化(起動準備)
     func initRealm() {
         let config = Realm.Configuration(
-            fileURL: getSharedRealmURL(), // App Group共有パスを使用
+            fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent().appendingPathComponent(RealmConstants.databaseName),
             schemaVersion: RealmConstants.schemaVersion,
             deleteRealmIfMigrationNeeded: true // マイグレーションが必要な場合、データ削除
         )
         Realm.Configuration.defaultConfiguration = config
     }
     
-    /// App Groupで共有されたRealmファイルのURLを取得
-    func getSharedRealmURL() -> URL? {
-        // App Groupのコンテナディレクトリを取得
-        if let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: RealmConstants.appGroupIdentifier) {
-            return containerURL.appendingPathComponent(RealmConstants.databaseName)
-        } else {
-            // App Groupが使用できない場合はデフォルトの場所を使用
-            return Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent().appendingPathComponent(RealmConstants.databaseName)
-        }
-    }
-    
     /// Realmファイルのパスを出力
     func printRealmFilePath() {
-        if let realmFile = getSharedRealmURL() {
+        if let realmFile = Realm.Configuration.defaultConfiguration.fileURL {
             print("Realm file path: \(realmFile)")
         }
     }
