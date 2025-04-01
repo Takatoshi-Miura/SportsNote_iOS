@@ -63,7 +63,7 @@ struct TaskDetailView: View {
                 Button(action: {
                     showCompletionToggleAlert = true
                 }) {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: "checkmark.circle")
                 }
                 .alert(isPresented: $showCompletionToggleAlert) {
                     let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete) ?

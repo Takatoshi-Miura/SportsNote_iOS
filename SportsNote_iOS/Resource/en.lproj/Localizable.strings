@@ -39,6 +39,8 @@
 "cause" = "Cause";
 "completeMessage" = "Mark this task as complete?";
 "inCompleteMessage" = "Mark this task as incomplete?";
+"showCompletedTasks" = "Show Completed Tasks";
+"hideCompletedTasks" = "Hide Completed Tasks";
 
 // MARK: Measures
 "measures" = "Measures";

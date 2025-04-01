@@ -39,6 +39,8 @@
 "cause" = "原因";
 "completeMessage" = "課題を完了にしますか？";
 "inCompleteMessage" = "課題を未完了に戻しますか？";
+"showCompletedTasks" = "完了した課題を表示";
+"hideCompletedTasks" = "完了した課題を非表示";
 
 // MARK: Measures
 "measures" = "対策";

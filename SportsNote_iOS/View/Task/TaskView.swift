@@ -23,10 +23,10 @@ struct TaskView: View {
             trailingItem: {
                 Menu {
                     Toggle(isOn: $showCompletedTasks) {
-                        Text(showCompletedTasks ? "Hide Completed Tasks" : "Show Completed Tasks")
+                        Text(LocalizedStrings.showCompletedTasks)
                     }
                 } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
+                    Image(systemName: showCompletedTasks ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                         .imageScale(.large)
                 }
             },

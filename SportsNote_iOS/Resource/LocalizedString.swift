@@ -24,6 +24,10 @@ struct LocalizedStrings {
     static let notice = "notice".localized
     static let ok = "ok".localized
     
+    // MARK: Task View
+    static let showCompletedTasks = "showCompletedTasks".localized
+    static let hideCompletedTasks = "hideCompletedTasks".localized
+    
     // MARK: Color
     static let color = "color".localized
     static let red = "red".localized
