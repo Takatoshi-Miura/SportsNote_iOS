@@ -37,6 +37,21 @@ class TargetViewModel: ObservableObject {
         month: Int,
         isYearlyTarget: Bool = false
     ) {
+        // 重複する目標を削除
+        let fetchedTargets = RealmManager.shared.fetchTargetsByYearMonth(year: year, month: month)
+        if isYearlyTarget {
+            let yearlyTargets = fetchedTargets.filter { $0.isYearlyTarget == true }
+            yearlyTargets.forEach {
+                deleteTarget(id: $0.targetID)
+            }
+        } else {
+            let monthlyTargets = fetchedTargets.filter { $0.isYearlyTarget == false }
+            monthlyTargets.forEach {
+                deleteTarget(id: $0.targetID)
+            }
+        }
+        
+        // 保存
         let target = Target(
             title: title,
             year: year,
@@ -48,7 +63,9 @@ class TargetViewModel: ObservableObject {
         // TODO: Firebaseにも保存する
     }
     
-    func deleteTarget(id: String) {
+    /// 目標を削除
+    /// - Parameter id: targetID
+    private func deleteTarget(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Target.self)
         targets.removeAll(where: { $0.targetID == id })
         updateFilteredTargets()
