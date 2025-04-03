@@ -31,14 +31,18 @@ class Measures: Object {
     }
     
     convenience init(
+        measuresID: String,
         taskID: String,
         title: String,
-        order: Int
+        order: Int,
+        created_at: Date
     ) {
         self.init()
+        self.measuresID = measuresID
         self.taskID = taskID
         self.title = title
         self.order = order
+        self.created_at = created_at
     }
     
     override static func primaryKey() -> String? {

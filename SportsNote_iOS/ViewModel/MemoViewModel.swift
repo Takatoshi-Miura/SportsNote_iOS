@@ -41,60 +41,41 @@ class MemoViewModel: ObservableObject {
         return measuresMemoList.sorted { $0.date > $1.date }
     }
     
-    /// メモをIDで取得
-    /// - Parameter memoID: メモID
-    /// - Returns: メモオブジェクト (見つからない場合はnil)
-    func getMemoById(memoID: String) -> Memo? {
-        return RealmManager.shared.getObjectById(id: memoID, type: Memo.self)
-    }
-    
     /// メモを保存する
     /// - Parameters:
     ///   - memoID: メモID (新規作成時はnil)
     ///   - measuresID: 対策ID
     ///   - noteID: ノートID
     ///   - detail: メモ内容
+    ///   - created_at: 作成日時
     /// - Returns: 保存したメモ
-    @discardableResult
     func saveMemo(
         memoID: String? = nil,
         measuresID: String,
         noteID: String,
-        detail: String
+        detail: String,
+        created_at: Date? = nil
     ) -> Memo {
-        // メモオブジェクトの作成
-        let memo: Memo
-        if let id = memoID, let existingMemo = getMemoById(memoID: id) {
-            // 更新の場合
-            do {
-                let realm = try Realm()
-                try realm.write {
-                    existingMemo.detail = detail
-                    existingMemo.updated_at = Date()
-                }
-            } catch {
-                print("Error updating memo: \(error)")
-            }
-            memo = existingMemo
-        } else {
-            // 新規作成の場合
-            memo = Memo(
-                measuresID: measuresID,
-                noteID: noteID,
-                detail: detail
-            )
-            
-            // Realmに保存
-            RealmManager.shared.saveItem(memo)
-        }
+        let newMemoID = memoID ?? UUID().uuidString
+        let newCreatedAt = created_at ?? Date()
         
-        // Firebaseとの同期処理はiOS版の実装に基づいて必要に応じて追加
+        // 保存
+        let memo = Memo(
+            memoID: newMemoID,
+            measuresID: measuresID,
+            noteID: noteID,
+            detail: detail,
+            created_at: newCreatedAt
+        )
+        RealmManager.shared.saveItem(memo)
+        
+        // TODO: Firebaseの処理を追加
         
         // リストを更新
         fetchAllMemos()
         
         // 対策に関連するメモリストを更新
-        self.measuresMemoList = getMemosByMeasuresID(measuresID: measuresID)
+        measuresMemoList = getMemosByMeasuresID(measuresID: measuresID)
         
         return memo
     }
@@ -102,25 +83,13 @@ class MemoViewModel: ObservableObject {
     /// メモを論理削除
     /// - Parameter memoID: メモID
     func deleteMemo(memoID: String) {
-        // 削除前に関連する対策IDを取得
-        var measuresID: String?
-        if let memo = getMemoById(memoID: memoID) {
-            measuresID = memo.measuresID
-        }
-        
-        // メモを論理削除
         RealmManager.shared.logicalDelete(id: memoID, type: Memo.self)
+        
+        // TODO: Firebaseの処理を追加
         
         // リストから削除したメモを除外
         memoList.removeAll(where: { $0.memoID == memoID })
         
-        // 対策に関連するメモリストを更新
-        if let id = measuresID {
-            self.measuresMemoList = getMemosByMeasuresID(measuresID: id)
-        }
-        
         self.objectWillChange.send()
-        
-        // Firebaseとの同期処理はiOS版の実装に基づいて必要に応じて追加
     }
 }

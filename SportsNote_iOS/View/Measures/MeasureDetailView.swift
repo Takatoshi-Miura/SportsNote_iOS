@@ -21,9 +21,13 @@ struct MeasureDetailView: View {
                 Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $title)
                         .onChange(of: title) { newValue in
-                            Task {
-                                await viewModel.updateTitle(newValue, for: measure)
-                            }
+                            viewModel.saveMeasures(
+                                measuresID: measure.measuresID,
+                                taskID: measure.taskID,
+                                title: newValue,
+                                order: measure.order,
+                                created_at: measure.created_at
+                            )
                         }
                 }
                 
@@ -35,13 +39,6 @@ struct MeasureDetailView: View {
                     } else {
                         ForEach(viewModel.memos, id: \.memoID) { memo in
                             MemoRow(memo: memo)
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        viewModel.deleteMemo(id: memo.memoID, measuresID: measure.measuresID)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
                         }
                     }
                 }

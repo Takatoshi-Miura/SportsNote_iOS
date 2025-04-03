@@ -62,21 +62,21 @@ struct AddTaskView: View {
         
         let groupID = groups[selectedGroupIndex].groupID
         
-        // タスクを保存
-        viewModel.saveTask(
+        // 課題を保存
+        let newTask = viewModel.saveTask(
             title: taskTitle,
             cause: cause,
             groupID: groupID
         )
         
-        // 対策がある場合、最新のタスクに対策を追加
+        // 対策を保存
         if !measuresTitle.isEmpty {
-            // タスク一覧を最新化
             viewModel.fetchAllTasks()
-            // 直前に追加したタスクを最後のタスクと想定
-            if let latestTask = viewModel.tasks.last {
-                viewModel.addMeasure(title: measuresTitle, taskID: latestTask.taskID)
-            }
+            let measuresViewModel = MeasuresViewModel()
+            measuresViewModel.saveMeasures(
+                taskID: newTask.taskID,
+                title: measuresTitle
+            )
         }
         
         dismiss()

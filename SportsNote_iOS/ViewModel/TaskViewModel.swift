@@ -105,12 +105,11 @@ class TaskViewModel: ObservableObject {
         isComplete: Bool = false,
         order: Int? = nil,
         created_at: Date? = nil
-    ) {
+    ) -> TaskData {
         let newTaskID = taskID ?? UUID().uuidString
         let newOrder = order ?? RealmManager.shared.getCount(clazz: TaskData.self)
         let newCreatedAt = created_at ?? Date()
         
-        // Create task
         let task = TaskData(
             title: title,
             cause: cause,
@@ -120,8 +119,6 @@ class TaskViewModel: ObservableObject {
         task.taskID = newTaskID
         task.order = newOrder
         task.created_at = newCreatedAt
-        
-        // Save to Realm
         RealmManager.shared.saveItem(task)
         
         // TODO: Firebaseへの同期
@@ -136,6 +133,8 @@ class TaskViewModel: ObservableObject {
         
         // タスク更新通知を送信
         taskUpdatedPublisher.send()
+        
+        return task
     }
     
     /// 課題の完了状態を切り替え
@@ -201,31 +200,6 @@ class TaskViewModel: ObservableObject {
     }
     
     // MARK: - Measures
-    
-    /// 対策を追加
-    /// - Parameters:
-    ///   - title: 対策タイトル
-    ///   - taskID: 対象の課題ID
-    ///   - order: 表示順序
-    func addMeasure(title: String, taskID: String, order: Int? = nil) {
-        // Calculate order if not provided
-        let newOrder = order ?? RealmManager.shared.getMeasuresByTaskID(taskID: taskID).count
-        
-        // Create measures
-        let measures = Measures(
-            taskID: taskID,
-            title: title,
-            order: newOrder
-        )
-        
-        // Save to Realm
-        RealmManager.shared.saveItem(measures)
-        
-        // Update task detail if viewing
-        if let detail = taskDetail, detail.task.taskID == taskID {
-            fetchTaskDetail(taskID: taskID)
-        }
-    }
     
     /// 対策を削除
     /// - Parameter measuresID: 対策ID

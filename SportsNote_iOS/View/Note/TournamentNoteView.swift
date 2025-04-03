@@ -136,23 +136,6 @@ struct TournamentNoteView: View {
         viewModel.loadMemos()
     }
     
-    // メモ追加機能
-    private func addMemo() {
-        guard !memo.isEmpty, let note = viewModel.selectedNote else { return }
-        
-        let newMemo = Memo(
-            measuresID: "",
-            noteID: note.noteID,
-            detail: memo
-        )
-        newMemo.noteDate = note.date
-        
-        RealmManager.shared.saveItem(newMemo)
-        viewModel.loadMemos()
-        
-        memo = ""
-    }
-    
     // ノート更新処理
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }

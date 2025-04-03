@@ -144,23 +144,6 @@ struct PracticeNoteView: View {
         return taskViewModel.taskListData.filter { !$0.isComplete && !addedTaskIds.contains($0.taskID) }
     }
     
-    // メモ追加機能
-    private func addMemo() {
-        guard !memo.isEmpty, let note = viewModel.selectedNote else { return }
-        
-        let newMemo = Memo(
-            measuresID: "",
-            noteID: note.noteID,
-            detail: memo
-        )
-        newMemo.noteDate = note.date
-        
-        RealmManager.shared.saveItem(newMemo)
-        viewModel.loadMemos()
-        
-        memo = ""
-    }
-    
     // タスクのリフレクションをロードする
     private func loadTaskReflections(note: Note) {
         taskReflections.removeAll()
@@ -203,33 +186,24 @@ struct PracticeNoteView: View {
     
     // タスクリフレクションを更新
     private func updateTaskReflections(noteID: String) {
-        do {
-            let realm = try Realm()
-            
-            // 既存のメモをいったん削除（課題関連のメモのみ）
-            let existingMemos = realm.objects(Memo.self).filter("noteID == %@ AND measuresID != ''", noteID)
-            try realm.write {
-                realm.delete(existingMemos)
+        // 既存のメモを削除
+        let memoViewModel = MemoViewModel()
+        viewModel.memos
+            .filter { $0.noteID == noteID && !$0.measuresID.isEmpty }
+            .forEach { memoViewModel.deleteMemo(memoID: $0.memoID) }
+        
+        // 新しいメモを保存
+        for (task, reflectionText) in taskReflections {
+            if !reflectionText.isEmpty {
+                _ = memoViewModel.saveMemo(
+                    measuresID: task.taskID,
+                    noteID: noteID,
+                    detail: reflectionText
+                )
             }
-            
-            // 新しいメモを保存
-            for (task, reflectionText) in taskReflections {
-                if !reflectionText.isEmpty {
-                    let memo = Memo(
-                        measuresID: task.taskID, // 課題のIDをmeasuresIDに保存
-                        noteID: noteID,
-                        detail: reflectionText
-                    )
-                    memo.noteDate = date
-                    
-                    RealmManager.shared.saveItem(memo)
-                }
-            }
-            
-            // メモを再読み込み
-            viewModel.loadMemos()
-        } catch {
-            print("Error updating task reflections: \(error)")
         }
+        
+        // メモを再読み込み
+        viewModel.loadMemos()
     }
 }

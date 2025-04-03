@@ -16,11 +16,10 @@ class MeasuresViewModel: ObservableObject {
         measuresList = RealmManager.shared.getDataList(clazz: Measures.self)
     }
     
-    /// 対策をIDで取得
+    /// 対策に紐づくメモを取得
     /// - Parameter measuresID: 対策ID
-    /// - Returns: 対策オブジェクト (見つからない場合はnil)
-    func getMeasuresById(measuresID: String) -> Measures? {
-        return RealmManager.shared.getObjectById(id: measuresID, type: Measures.self)
+    func fetchMemosByMeasuresID(measuresID: String) {
+        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
     }
     
     /// 課題IDに紐づく対策を取得
@@ -36,50 +35,32 @@ class MeasuresViewModel: ObservableObject {
     ///   - taskID: 課題ID
     ///   - title: 対策タイトル
     ///   - order: 並び順 (指定しない場合は自動計算)
+    ///   - created_at: 作成日時
     /// - Returns: 保存した対策
-    @discardableResult
     func saveMeasures(
         measuresID: String? = nil,
         taskID: String,
         title: String,
-        order: Int? = nil
-    ) -> Measures {
-        // 並び順が指定されていない場合は自動計算
+        order: Int? = nil,
+        created_at: Date? = nil
+    ) {
+        let newMeasuresID = measuresID ?? UUID().uuidString
         let newOrder = order ?? RealmManager.shared.getMeasuresByTaskID(taskID: taskID).count
+        let newCreatedAt = created_at ?? Date()
         
-        // 対策オブジェクトの作成
-        let measures: Measures
-        if let id = measuresID, let existingMeasures = getMeasuresById(measuresID: id) {
-            // 更新の場合
-            do {
-                let realm = try Realm()
-                try realm.write {
-                    existingMeasures.title = title
-                    existingMeasures.order = newOrder
-                    existingMeasures.updated_at = Date()
-                }
-            } catch {
-                print("Error updating measures: \(error)")
-            }
-            measures = existingMeasures
-        } else {
-            // 新規作成の場合
-            measures = Measures(
-                taskID: taskID,
-                title: title,
-                order: newOrder
-            )
-            
-            // Realmに保存
-            RealmManager.shared.saveItem(measures)
-        }
+        let measures = Measures(
+            measuresID: newMeasuresID,
+            taskID: taskID,
+            title: title,
+            order: newOrder,
+            created_at: newCreatedAt
+        )
+        RealmManager.shared.saveItem(measures)
         
-        // Firebaseとの同期処理はiOS版の実装に基づいて必要に応じて追加
+        // TODO: Firebaseに保存
         
         // リストを更新
         fetchAllMeasures()
-        
-        return measures
     }
     
     /// 対策を論理削除
@@ -87,46 +68,10 @@ class MeasuresViewModel: ObservableObject {
     func deleteMeasures(measuresID: String) {
         RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
         
+        // TODO: Firebaseに保存
+        
         // リストから削除した対策を除外
         measuresList.removeAll(where: { $0.measuresID == measuresID })
         self.objectWillChange.send()
-        
-        // Firebaseとの同期処理はiOS版の実装に基づいて必要に応じて追加
-    }
-    
-    // MARK: - Memo Management
-    func fetchMemosByMeasuresID(measuresID: String) {
-        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
-    }
-    
-    func addMemo(measuresID: String, detail: String, noteID: String) {
-        let memo = Memo(
-            measuresID: measuresID,
-            noteID: noteID,
-            detail: detail
-        )
-        
-        RealmManager.shared.saveItem(memo)
-        fetchMemosByMeasuresID(measuresID: measuresID)
-    }
-    
-    func deleteMemo(id: String, measuresID: String) {
-        RealmManager.shared.logicalDelete(id: id, type: Memo.self)
-        fetchMemosByMeasuresID(measuresID: measuresID)
-    }
-    
-    // MARK: - Title Update
-    func updateTitle(_ newTitle: String, for measure: Measures) async {
-        do {
-            let realm = try await Realm()
-            if let measures = realm.object(ofType: Measures.self, forPrimaryKey: measure.measuresID) {
-                try realm.write {
-                    measures.title = newTitle
-                    measures.updated_at = Date()
-                }
-            }
-        } catch {
-            print("Error updating title: \(error)")
-        }
     }
 }

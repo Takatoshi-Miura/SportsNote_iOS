@@ -34,14 +34,18 @@ class Memo: Object {
     }
 
     convenience init(
+        memoID: String,
         measuresID: String,
         noteID: String,
-        detail: String
+        detail: String,
+        created_at: Date
     ) {
         self.init()
+        self.memoID = memoID
         self.measuresID = measuresID
         self.noteID = noteID
         self.detail = detail
+        self.created_at = created_at
     }
 
     override static func primaryKey() -> String? {

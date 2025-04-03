@@ -3,7 +3,6 @@ import RealmSwift
 
 struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    // 親から渡されたViewModelを使う
     @ObservedObject var viewModel: TaskViewModel
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
@@ -128,15 +127,19 @@ struct TaskDetailView: View {
         )
     }
     
+    /// 対策追加処理
     private func addMeasure() {
         guard !newMeasureTitle.isEmpty else { return }
-
-        viewModel.addMeasure(
-            title: newMeasureTitle,
-            taskID: taskData.taskID
+        
+        let measuresViewModel = MeasuresViewModel()
+        measuresViewModel.saveMeasures(
+            taskID: taskData.taskID,
+            title: newMeasureTitle
         )
+        
+        // Viewを更新
+        viewModel.fetchTaskDetail(taskID: taskData.taskID)
 
-        // Clear input field
         newMeasureTitle = ""
     }
 }
