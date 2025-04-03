@@ -88,16 +88,27 @@ class TaskViewModel: ObservableObject {
         return measuresList.min { $0.order < $1.order }
     }
     
-    /// 課題を保存
+    /// 課題保存処理(更新も兼ねる)
     /// - Parameters:
+    ///   - taskID: 課題ID（新規作成時はnil）
     ///   - title: 課題タイトル
     ///   - cause: 原因
     ///   - groupID: グループID
     ///   - isComplete: 完了状態
-    ///   - order: 表示順序
-    func saveTask(title: String, cause: String, groupID: String, isComplete: Bool = false, order: Int? = nil) {
-        // Calculate order if not provided
+    ///   - order: 表示順序（指定がない場合は自動計算）
+    ///   - created_at: 作成日時（指定がない場合は現在時刻）
+    func saveTask(
+        taskID: String? = nil,
+        title: String,
+        cause: String,
+        groupID: String,
+        isComplete: Bool = false,
+        order: Int? = nil,
+        created_at: Date? = nil
+    ) {
+        let newTaskID = taskID ?? UUID().uuidString
         let newOrder = order ?? RealmManager.shared.getCount(clazz: TaskData.self)
+        let newCreatedAt = created_at ?? Date()
         
         // Create task
         let task = TaskData(
@@ -106,36 +117,54 @@ class TaskViewModel: ObservableObject {
             groupID: groupID,
             isComplete: isComplete
         )
+        task.taskID = newTaskID
         task.order = newOrder
+        task.created_at = newCreatedAt
         
         // Save to Realm
         RealmManager.shared.saveItem(task)
         
+        // TODO: Firebaseへの同期
+        
         // Refresh task list
         fetchAllTasks()
+        
+        // タスク詳細情報を表示している場合は、詳細情報も更新
+        if let detail = taskDetail, detail.task.taskID == newTaskID {
+            fetchTaskDetail(taskID: newTaskID)
+        }
+        
+        // タスク更新通知を送信
+        taskUpdatedPublisher.send()
     }
     
     /// 課題の完了状態を切り替え
-    /// - Parameter task: 対象の課題
+    /// - Parameter taskID: 課題ID
     func toggleTaskCompletion(taskID: String) {
-        do {
-            let realm = try Realm()
-            if let taskToUpdate = realm.object(ofType: TaskData.self, forPrimaryKey: taskID) {
-                try realm.write {
-                    taskToUpdate.isComplete = !taskToUpdate.isComplete
-                    taskToUpdate.updated_at = Date()
-                }
-                
-                // Fetch the updated task from Realm to refresh local data
-                fetchAllTasks() // これにより tasks と taskListData が更新される
-                
-                // タスク詳細情報を表示している場合は、詳細情報も更新
-                if let detail = taskDetail, detail.task.taskID == taskID {
-                    fetchTaskDetail(taskID: taskID)
-                }
+        if let taskToUpdate = RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
+            let updatedTask = TaskData(
+                title: taskToUpdate.title,
+                cause: taskToUpdate.cause,
+                groupID: taskToUpdate.groupID,
+                isComplete: !taskToUpdate.isComplete
+            )
+            updatedTask.taskID = taskToUpdate.taskID
+            updatedTask.order = taskToUpdate.order
+            updatedTask.created_at = taskToUpdate.created_at
+            
+            // Save to Realm
+            RealmManager.shared.saveItem(updatedTask)
+            
+            // Fetch the updated task from Realm to refresh local data
+            fetchAllTasks() // これにより tasks と taskListData が更新される
+            
+            // タスク詳細情報を表示している場合は、詳細情報も更新
+            if let detail = taskDetail, detail.task.taskID == taskID {
+                fetchTaskDetail(taskID: taskID)
             }
-        } catch {
-            print("Error toggling task completion: \(error)")
+            
+            // タスク更新通知を送信
+            taskUpdatedPublisher.send()
         }
     }
     
@@ -148,6 +177,14 @@ class TaskViewModel: ObservableObject {
         tasks.removeAll(where: { $0.taskID == id })
         taskListData.removeAll(where: { $0.taskID == id })
         self.objectWillChange.send()
+        
+        // タスク更新通知を送信
+        taskUpdatedPublisher.send()
+    }
+    
+    /// タスク一覧を更新する（外部からの呼び出し用）
+    func refreshTasks() {
+        fetchAllTasks()
     }
     
     // MARK: - Task Detail
@@ -234,26 +271,6 @@ class TaskViewModel: ObservableObject {
             }
         } catch {
             print("Error updating measures order: \(error)")
-        }
-    }
-    
-    /// 現在の表示状態に合わせてタスク一覧を更新
-    func refreshTasks() {
-        // タスク詳細情報の更新が必要な場合
-        if let detail = taskDetail {
-            fetchTaskDetail(taskID: detail.task.taskID)
-        }
-        
-        // タスク一覧の更新
-        // 最後に更新したタスクのgroupIDがtasksに含まれているか確認
-        if let lastTask = taskDetail?.task,
-           !tasks.isEmpty,
-           tasks.first(where: { $0.groupID == lastTask.groupID }) != nil {
-            // 同じグループのタスクを表示中なら、そのグループのタスクだけ更新
-            fetchTasksByGroupID(groupID: lastTask.groupID)
-        } else {
-            // それ以外の場合は全タスク更新
-            fetchAllTasks()
         }
     }
 }

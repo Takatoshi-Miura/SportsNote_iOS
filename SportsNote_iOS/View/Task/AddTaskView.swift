@@ -62,15 +62,19 @@ struct AddTaskView: View {
         
         let groupID = groups[selectedGroupIndex].groupID
         
+        // タスクを保存
         viewModel.saveTask(
             title: taskTitle,
             cause: cause,
             groupID: groupID
         )
         
+        // 対策がある場合、最新のタスクに対策を追加
         if !measuresTitle.isEmpty {
-            let tasks = RealmManager.shared.getDataList(clazz: TaskData.self)
-            if let latestTask = tasks.last {
+            // タスク一覧を最新化
+            viewModel.fetchAllTasks()
+            // 直前に追加したタスクを最後のタスクと想定
+            if let latestTask = viewModel.tasks.last {
                 viewModel.addMeasure(title: measuresTitle, taskID: latestTask.taskID)
             }
         }

@@ -116,25 +116,16 @@ struct TaskDetailView: View {
 
         let groupID = groups[selectedGroupIndex].groupID
 
-        do {
-            let realm = try Realm()
-            if let taskToUpdate = realm.object(ofType: TaskData.self, forPrimaryKey: taskData.taskID) {
-                try realm.write {
-                    taskToUpdate.title = taskTitle
-                    taskToUpdate.cause = cause
-                    taskToUpdate.groupID = groupID
-                    taskToUpdate.updated_at = Date()
-                }
-
-                // タスク情報を更新
-                viewModel.refreshTasks()
-                
-                // 更新通知を送信（TaskViewのリフレッシュトリガー用）
-                viewModel.taskUpdatedPublisher.send()
-            }
-        } catch {
-            print("Error updating task: \(error)")
-        }
+        // ViewModelのsaveTaskメソッドを使用して更新
+        viewModel.saveTask(
+            taskID: taskData.taskID,
+            title: taskTitle,
+            cause: cause,
+            groupID: groupID,
+            isComplete: taskData.isComplete,
+            order: taskData.order,
+            created_at: taskData.created_at
+        )
     }
     
     private func addMeasure() {
