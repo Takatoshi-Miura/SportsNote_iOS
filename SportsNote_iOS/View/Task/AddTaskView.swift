@@ -71,7 +71,6 @@ struct AddTaskView: View {
         
         // 対策を保存
         if !measuresTitle.isEmpty {
-            viewModel.fetchAllTasks()
             let measuresViewModel = MeasuresViewModel()
             measuresViewModel.saveMeasures(
                 taskID: newTask.taskID,

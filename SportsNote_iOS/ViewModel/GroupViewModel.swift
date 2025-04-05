@@ -50,6 +50,9 @@ class GroupViewModel: ObservableObject {
     
     func deleteGroup(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Group.self)
+        
+        // TODO: Firebaseへの同期
+        
         fetchGroups()
     }
 }

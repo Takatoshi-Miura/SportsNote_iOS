@@ -5,7 +5,7 @@ import Firebase
 struct SportsNote_iOSApp: App {
     init() {
         // 初期化
-        FirebaseApp.configure()
+//        FirebaseApp.configure()
         RealmManager.shared.initRealm()
         
         // CrashlyticsにuserID情報を付加

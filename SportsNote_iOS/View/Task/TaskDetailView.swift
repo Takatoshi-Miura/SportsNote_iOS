@@ -115,14 +115,13 @@ struct TaskDetailView: View {
 
         let groupID = groups[selectedGroupIndex].groupID
 
-        // ViewModelのsaveTaskメソッドを使用して更新
         viewModel.saveTask(
             taskID: taskData.taskID,
             title: taskTitle,
             cause: cause,
             groupID: groupID,
-            isComplete: taskData.isComplete,
             order: taskData.order,
+            isComplete: taskData.isComplete,
             created_at: taskData.created_at
         )
     }
@@ -204,7 +203,7 @@ struct MeasuresListView: View {
     }
 }
 
-// 対策追加コンポーネント
+/// 対策追加コンポーネント
 struct AddMeasureView: View {
     @Binding var newMeasureTitle: String
     let onAddAction: () -> Void

@@ -5,9 +5,9 @@ import RealmSwift
 open class TaskData: Object {
     @Persisted(primaryKey: true) var taskID: String
     @Persisted var userID: String
-    @Persisted var groupID: String
     @Persisted var title: String
     @Persisted var cause: String
+    @Persisted var groupID: String
     @Persisted var order: Int
     @Persisted var isComplete: Bool
     @Persisted var isDeleted: Bool
@@ -35,16 +35,22 @@ open class TaskData: Object {
     }
     
     convenience init(
+        taskID: String = UUID().uuidString,
         title: String,
         cause: String,
         groupID: String,
-        isComplete: Bool = false
+        order: Int,
+        isComplete: Bool = false,
+        created_at: Date = Date()
     ) {
         self.init()
+        self.taskID = taskID
         self.title = title
         self.cause = cause
         self.groupID = groupID
+        self.order = order
         self.isComplete = isComplete
+        self.created_at = created_at
     }
     
     public override static func primaryKey() -> String? {

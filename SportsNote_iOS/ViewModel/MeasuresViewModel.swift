@@ -16,6 +16,13 @@ class MeasuresViewModel: ObservableObject {
         measuresList = RealmManager.shared.getDataList(clazz: Measures.self)
     }
     
+    /// 対策をIDで取得
+    /// - Parameter measuresID: 対策ID
+    /// - Returns: 対策オブジェクト (見つからない場合はnil)
+    func getMeasuresById(measuresID: String) -> Measures? {
+        return RealmManager.shared.getObjectById(id: measuresID, type: Measures.self)
+    }
+    
     /// 対策に紐づくメモを取得
     /// - Parameter measuresID: 対策ID
     func fetchMemosByMeasuresID(measuresID: String) {
@@ -64,14 +71,30 @@ class MeasuresViewModel: ObservableObject {
     }
     
     /// 対策を論理削除
-    /// - Parameter measuresID: 対策ID
-    func deleteMeasures(measuresID: String) {
-        RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
+    /// - Parameter id: 対策ID
+    func deleteMeasures(id: String) {
+        RealmManager.shared.logicalDelete(id: id, type: Measures.self)
         
         // TODO: Firebaseに保存
         
         // リストから削除した対策を除外
-        measuresList.removeAll(where: { $0.measuresID == measuresID })
+        measuresList.removeAll(where: { $0.measuresID == id })
         self.objectWillChange.send()
+    }
+    
+    /// 対策の並び順を更新
+    /// - Parameter measures: 並び替え後の対策リスト
+    func updateMeasuresOrder(measures: [Measures]) {
+        guard !measures.isEmpty else { return }
+        
+        for (index, measure) in measures.enumerated() {
+            saveMeasures(
+                measuresID: measure.measuresID,
+                taskID: measure.taskID,
+                title: measure.title,
+                order: index,
+                created_at: measure.created_at
+            )
+        }
     }
 }
