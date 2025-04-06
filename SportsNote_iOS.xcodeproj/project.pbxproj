@@ -14,6 +14,7 @@
 		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
 		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
 		8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */; };
+		8DF53A4E2DA28DD8004ED22E /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F72D85171600AC19C1 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,20 @@
 			remoteInfo = SportsNote_iOS;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8DF53A4F2DA28DD8004ED22E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				8DF53A4E2DA28DD8004ED22E /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SportsNote_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +134,7 @@
 				8D79F2D42D80660200D5D685 /* Sources */,
 				8D79F2D52D80660200D5D685 /* Frameworks */,
 				8D79F2D62D80660200D5D685 /* Resources */,
+				8DF53A4F2DA28DD8004ED22E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -441,7 +457,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				MARKETING_VERSION = 1.8.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -480,7 +496,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				MARKETING_VERSION = 1.8.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.it6210.Takatoshi.Miura.SportsNoteApp2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
