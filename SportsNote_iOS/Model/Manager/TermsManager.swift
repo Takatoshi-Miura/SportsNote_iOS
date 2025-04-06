@@ -26,13 +26,13 @@ class TermsManager: ObservableObject {
     }
 
     /// 利用規約ページに遷移
-    func navigateToTermsOfService() {
+    static func navigateToTermsOfService() {
         guard let url = URL(string: TermsURL.termsOfService) else { return }
         UIApplication.shared.open(url)
     }
 
     /// プライバシーポリシーページに遷移
-    func navigateToPrivacyPolicy() {
+    static func navigateToPrivacyPolicy() {
         guard let url = URL(string: TermsURL.privacyPolicy) else { return }
         UIApplication.shared.open(url)
     }

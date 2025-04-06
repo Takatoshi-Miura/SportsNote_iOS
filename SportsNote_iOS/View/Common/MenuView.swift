@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct MenuButton: View {
     @Binding var isMenuOpen: Bool
@@ -19,12 +20,14 @@ enum DialogType {
     case none, login, tutorial
 }
 
-struct SectionData {
+struct SectionData: Identifiable {
+    let id = UUID()
     let title: String
     let items: [ItemData]
 }
 
-struct ItemData {
+struct ItemData: Identifiable {
+    let id = UUID()
     let title: String
     let subTitle: String
     let iconRes: String
@@ -33,108 +36,98 @@ struct ItemData {
 
 struct MenuView: View {
     @Binding var isMenuOpen: Bool
-    
-    // シートの表示状態を親Viewとは分離して管理
     @State private var isLoginDialogVisible: Bool = false
     @State private var isTutorialDialogVisible: Bool = false
-    @State private var appVersion: String = "1.0.0"
+    private let appVersion: String
+    private let appName: String
+    
+    // セクションデータ
+    @State private var sections: [SectionData] = []
     
     var onDismiss: () -> Void
     
-    var sections: [SectionData] { [
-        // データ
-        SectionData(
-            title: LocalizedStrings.data,
-            items: [
-                ItemData(
-                    title: LocalizedStrings.dataTransfer,
-                    subTitle: "",
-                    iconRes: "cloud",
-                    onClick: {
-                        isLoginDialogVisible = true
-                    }
-                )
-            ]
-        ),
-        // ヘルプ
-        SectionData(
-            title: LocalizedStrings.help,
-            items: [
-                ItemData(
-                    title: LocalizedStrings.howToUseThisApp,
-                    subTitle: "",
-                    iconRes: "questionmark.circle",
-                    onClick: {
-                        // チュートリアル画面を表示
-                        isTutorialDialogVisible = true
-                    }
-                ),
-                ItemData(
-                    title: LocalizedStrings.inquiry,
-                    subTitle: "",
-                    iconRes: "envelope",
-                    onClick: {
-                        // メーラーを表示 (例: メーラーを開くコードは後で追加)
-                    }
-                )
-            ]
-        ),
-        // その他
-        SectionData(
-            title: LocalizedStrings.other,
-            items: [
-                ItemData(
-                    title: LocalizedStrings.termsOfService,
-                    subTitle: "",
-                    iconRes: "doc.text",
-                    onClick: {
-                        // 利用規約画面に遷移
-                    }
-                ),
-                ItemData(
-                    title: LocalizedStrings.privacyPolicy,
-                    subTitle: "",
-                    iconRes: "lock.shield",
-                    onClick: {
-                        // プライバシーポリシー画面に遷移
-                    }
-                ),
-                ItemData(
-                    title: LocalizedStrings.appVersion,
-                    subTitle: appVersion,
-                    iconRes: "info.circle",
-                    onClick: {}
-                )
-            ]
-        )
-    ]}
+    init(isMenuOpen: Binding<Bool>, onDismiss: @escaping () -> Void) {
+        self._isMenuOpen = isMenuOpen
+        self.onDismiss = onDismiss
+        self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "不明"
+        self.appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? "不明"
+    }
+    
+    /// メーラーを表示する処理
+    private func openMailer() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            Mailer.openInquiry(from: rootViewController)
+        }
+    }
+    
+    /// セクションデータを作成
+    private func createSections() -> [SectionData] {
+        return [
+            // データ
+            SectionData(
+                title: LocalizedStrings.data,
+                items: [
+                    ItemData(
+                        title: LocalizedStrings.login,
+                        subTitle: "",
+                        iconRes: "person.circle",
+                        onClick: { isLoginDialogVisible = true }
+                    )
+                ]
+            ),
+            // ヘルプ
+            SectionData(
+                title: LocalizedStrings.help,
+                items: [
+                    ItemData(
+                        title: LocalizedStrings.howToUseThisApp,
+                        subTitle: "",
+                        iconRes: "questionmark.circle",
+                        onClick: { isTutorialDialogVisible = true }
+                    ),
+                    ItemData(
+                        title: LocalizedStrings.inquiry,
+                        subTitle: "",
+                        iconRes: "envelope",
+                        onClick: { openMailer() }
+                    )
+                ]
+            ),
+            // その他
+            SectionData(
+                title: LocalizedStrings.other,
+                items: [
+                    ItemData(
+                        title: LocalizedStrings.termsOfService,
+                        subTitle: "",
+                        iconRes: "doc.text",
+                        onClick: { TermsManager.navigateToTermsOfService() }
+                    ),
+                    ItemData(
+                        title: LocalizedStrings.privacyPolicy,
+                        subTitle: "",
+                        iconRes: "lock.shield",
+                        onClick: { TermsManager.navigateToPrivacyPolicy() }
+                    ),
+                    ItemData(
+                        title: LocalizedStrings.appVersion,
+                        subTitle: appVersion,
+                        iconRes: "info.circle",
+                        onClick: {}
+                    )
+                ]
+            )
+        ]
+    }
     
     var body: some View {
         GeometryReader { geometry in
             List {
-                ForEach(sections, id: \.title) { section in
+                ForEach(sections) { section in
                     Section(header: Text(section.title)) {
-                        ForEach(section.items, id: \.title) { item in
-                            HStack {
-                                Image(systemName: item.iconRes)
-                                VStack(alignment: .leading) {
-                                    Text(item.title)
-                                    
-                                }
-                                Spacer()
-                                if !item.subTitle.isEmpty {
-                                    Text(item.subTitle)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                } else {
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                item.onClick()
-                            }
+                        ForEach(section.items) { item in
+                            MenuItemView(item: item)
                         }
                     }
                 }
@@ -151,6 +144,39 @@ struct MenuView: View {
                     isTutorialDialogVisible = false
                 })
             }
+            .onAppear {
+                // 画面表示時にセクションを作成
+                if sections.isEmpty {
+                    sections = createSections()
+                }
+            }
+        }
+    }
+}
+
+/// メニュー項目のビュー
+struct MenuItemView: View {
+    let item: ItemData
+    
+    var body: some View {
+        HStack {
+            Image(systemName: item.iconRes)
+            VStack(alignment: .leading) {
+                Text(item.title)
+            }
+            Spacer()
+            if !item.subTitle.isEmpty {
+                Text(item.subTitle)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.gray)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            item.onClick()
         }
     }
 }
