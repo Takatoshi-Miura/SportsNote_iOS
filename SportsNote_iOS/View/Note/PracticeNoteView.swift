@@ -28,7 +28,7 @@ struct PracticeNoteView: View {
                 }
             } else {
                 Form {
-                    // Basic Information Section
+                    // 基本情報
                     Section(header: Text(LocalizedStrings.basicInfo)) {
                         // 日付
                         DatePicker(
@@ -162,26 +162,20 @@ struct PracticeNoteView: View {
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
-        do {
-            let realm = try Realm()
-            if let noteToUpdate = realm.object(ofType: Note.self, forPrimaryKey: note.noteID) {
-                try realm.write {
-                    noteToUpdate.purpose = purpose
-                    noteToUpdate.detail = detail
-                    noteToUpdate.reflection = reflection
-                    noteToUpdate.condition = condition
-                    noteToUpdate.date = date
-                    noteToUpdate.weather = selectedWeather.rawValue
-                    noteToUpdate.temperature = temperature
-                    noteToUpdate.updated_at = Date()
-                }
-            }
-            
-            // タスクリフレクションを更新
-            updateTaskReflections(noteID: note.noteID)
-        } catch {
-            print("Error updating note: \(error)")
-        }
+        viewModel.savePracticeNote(
+            noteID: note.noteID,
+            purpose: purpose,
+            detail: detail,
+            reflection: reflection,
+            condition: condition,
+            date: date,
+            weather: selectedWeather,
+            temperature: temperature,
+            created_at: note.created_at
+        )
+        
+        // タスクリフレクションを更新
+        updateTaskReflections(noteID: note.noteID)
     }
     
     // タスクリフレクションを更新

@@ -74,17 +74,11 @@ struct FreeNoteView: View {
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
-        do {
-            let realm = try Realm()
-            if let noteToUpdate = realm.object(ofType: Note.self, forPrimaryKey: note.noteID) {
-                try realm.write {
-                    noteToUpdate.title = title
-                    noteToUpdate.detail = detail
-                    noteToUpdate.updated_at = Date()
-                }
-            }
-        } catch {
-            print("Error updating free note: \(error)")
-        }
+        viewModel.saveFreeNote(
+            noteID: note.noteID,
+            title: title,
+            detail: detail,
+            created_at: note.created_at
+        )
     }
 }

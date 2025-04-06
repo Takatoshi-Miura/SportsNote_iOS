@@ -4,6 +4,7 @@ import RealmSwift
 struct AddPracticeNoteView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var taskViewModel = TaskViewModel()
+    @StateObject private var noteViewModel = NoteViewModel()
     
     var onSave: () -> Void
     
@@ -109,35 +110,31 @@ struct AddPracticeNoteView: View {
     
     /// 保存処理
     private func saveNote() {
-        let note = Note()
-        note.noteType = NoteType.practice.rawValue
-        note.purpose = purpose
-        note.detail = detail
-        note.reflection = reflection
-        note.condition = condition
-        note.date = date
-        note.weather = selectedWeather.rawValue
-        note.temperature = temperature
-        
-        // Save note to Realm
-        RealmManager.shared.saveItem(note)
+        noteViewModel.savePracticeNote(
+            purpose: purpose,
+            detail: detail,
+            reflection: reflection,
+            condition: condition,
+            date: date,
+            weather: selectedWeather,
+            temperature: temperature
+        )
         
         // Save task reflections
-        saveTaskReflections(note: note)
+        saveTaskReflections(noteID: noteViewModel.notes.first?.noteID ?? "")
         
-        // Callback and dismiss
         onSave()
         dismiss()
     }
     
     /// 課題のメモを保存
-    private func saveTaskReflections(note: Note) {
+    private func saveTaskReflections(noteID: String) {
         for (task, reflectionText) in taskReflections {
             if !reflectionText.isEmpty {
                 // TODO: Save memo to Realm
 //                let memo = Memo()
 //                memo.taskID = task.taskID
-//                memo.noteID = note.noteID
+//                memo.noteID = noteID
 //                memo.text = reflectionText
 //                RealmManager.shared.saveItem(memo)
             }

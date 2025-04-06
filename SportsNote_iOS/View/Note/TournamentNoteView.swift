@@ -140,23 +140,17 @@ struct TournamentNoteView: View {
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
-        do {
-            let realm = try Realm()
-            if let noteToUpdate = realm.object(ofType: Note.self, forPrimaryKey: note.noteID) {
-                try realm.write {
-                    noteToUpdate.target = target
-                    noteToUpdate.consciousness = consciousness
-                    noteToUpdate.result = result
-                    noteToUpdate.reflection = reflection
-                    noteToUpdate.condition = condition
-                    noteToUpdate.date = date
-                    noteToUpdate.weather = selectedWeather.rawValue
-                    noteToUpdate.temperature = temperature
-                    noteToUpdate.updated_at = Date()
-                }
-            }
-        } catch {
-            print("Error updating note: \(error)")
-        }
+        viewModel.saveTournamentNote(
+            noteID: note.noteID,
+            target: target,
+            consciousness: consciousness,
+            result: result,
+            reflection: reflection,
+            condition: condition,
+            date: date,
+            weather: selectedWeather,
+            temperature: temperature,
+            created_at: note.created_at
+        )
     }
 }
