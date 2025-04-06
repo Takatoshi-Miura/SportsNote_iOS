@@ -110,34 +110,18 @@ struct AddPracticeNoteView: View {
     
     /// 保存処理
     private func saveNote() {
-        noteViewModel.savePracticeNote(
+        noteViewModel.savePracticeNoteWithReflections(
             purpose: purpose,
             detail: detail,
             reflection: reflection,
             condition: condition,
             date: date,
             weather: selectedWeather,
-            temperature: temperature
+            temperature: temperature,
+            taskReflections: taskReflections
         )
-        
-        // Save task reflections
-        saveTaskReflections(noteID: noteViewModel.notes.first?.noteID ?? "")
         
         onSave()
         dismiss()
-    }
-    
-    /// 課題のメモを保存
-    private func saveTaskReflections(noteID: String) {
-        for (task, reflectionText) in taskReflections {
-            if !reflectionText.isEmpty {
-                // TODO: Save memo to Realm
-//                let memo = Memo()
-//                memo.taskID = task.taskID
-//                memo.noteID = noteID
-//                memo.text = reflectionText
-//                RealmManager.shared.saveItem(memo)
-            }
-        }
     }
 }

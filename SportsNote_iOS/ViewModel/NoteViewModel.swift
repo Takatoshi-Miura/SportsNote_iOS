@@ -62,6 +62,7 @@ class NoteViewModel: ObservableObject {
     ///   - weather: 天気
     ///   - temperature: 気温
     ///   - created_at: 作成日時
+    /// - Returns: 保存したノート
     func saveNote(
         noteID: String? = nil,
         noteType: NoteType,
@@ -77,7 +78,7 @@ class NoteViewModel: ObservableObject {
         weather: Weather? = nil,
         temperature: Int? = nil,
         created_at: Date? = nil
-    ) {
+    ) -> Note {
         // 新しいNoteオブジェクトを作成または既存のIDを再利用
         let note = Note()
         
@@ -167,6 +168,8 @@ class NoteViewModel: ObservableObject {
         } else {
             loadNote(id: note.noteID)
         }
+        
+        return note
     }
     
     func deleteNote(id: String) {
@@ -182,7 +185,7 @@ class NoteViewModel: ObservableObject {
     }
     
     /// 練習ノートの保存処理
-    func savePracticeNote(
+    private func savePracticeNote(
         noteID: String? = nil,
         purpose: String,
         detail: String,
@@ -192,8 +195,8 @@ class NoteViewModel: ObservableObject {
         weather: Weather = .sunny,
         temperature: Int = 0,
         created_at: Date? = nil
-    ) {
-        saveNote(
+    ) -> Note {
+        return saveNote(
             noteID: noteID,
             noteType: .practice,
             purpose: purpose,
@@ -205,6 +208,67 @@ class NoteViewModel: ObservableObject {
             temperature: temperature,
             created_at: created_at
         )
+    }
+    
+    /// 練習ノートの保存処理とタスクリフレクションの更新
+    /// - Parameters:
+    ///   - noteID: ノートID（更新時に指定、新規作成時はnil）
+    ///   - purpose: 目的
+    ///   - detail: 詳細
+    ///   - reflection: 振り返り
+    ///   - condition: コンディション
+    ///   - date: 日付
+    ///   - weather: 天気
+    ///   - temperature: 気温
+    ///   - created_at: 作成日時
+    ///   - taskReflections: タスクの振り返り（キー: TaskListData, 値: 振り返りテキスト）
+    func savePracticeNoteWithReflections(
+        noteID: String? = nil,
+        purpose: String,
+        detail: String,
+        reflection: String? = nil,
+        condition: String? = nil,
+        date: Date = Date(),
+        weather: Weather = .sunny,
+        temperature: Int = 0,
+        created_at: Date? = nil,
+        taskReflections: [TaskListData: String] = [:]
+    ) {
+        // ノートを保存
+        let note = savePracticeNote(
+            noteID: noteID,
+            purpose: purpose,
+            detail: detail,
+            reflection: reflection,
+            condition: condition,
+            date: date,
+            weather: weather,
+            temperature: temperature,
+            created_at: created_at
+        )
+        
+        // タスクリフレクションを更新
+        updateTaskReflections(noteID: note.noteID, taskReflections: taskReflections)
+    }
+    
+    /// 課題の振り返りメモを保存・更新
+    /// - Parameters:
+    ///   - noteID: ノートID
+    ///   - taskReflections: タスクの振り返り（キー: TaskListData, 値: 振り返りテキスト）
+    private func updateTaskReflections(noteID: String, taskReflections: [TaskListData: String]) {
+        for (task, reflectionText) in taskReflections {
+            if reflectionText.isEmpty { continue }
+            
+            let memo = Memo()
+            memo.memoID = task.memoID ?? UUID().uuidString
+            memo.measuresID = task.measuresID
+            memo.noteID = noteID
+            memo.detail = reflectionText
+            realmManager.saveItem(memo)
+        }
+        
+        // メモを再読み込み
+        loadMemos()
     }
     
     /// 大会ノートの保存処理
@@ -219,8 +283,8 @@ class NoteViewModel: ObservableObject {
         weather: Weather = .sunny,
         temperature: Int = 0,
         created_at: Date? = nil
-    ) {
-        saveNote(
+    ) -> Note {
+        return saveNote(
             noteID: noteID,
             noteType: .tournament,
             target: target,
@@ -241,8 +305,8 @@ class NoteViewModel: ObservableObject {
         title: String,
         detail: String,
         created_at: Date? = nil
-    ) {
-        saveNote(
+    ) -> Note {
+        return saveNote(
             noteID: noteID,
             noteType: .free,
             title: title,

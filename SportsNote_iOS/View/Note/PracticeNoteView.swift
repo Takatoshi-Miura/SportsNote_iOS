@@ -5,17 +5,16 @@ struct PracticeNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
     @StateObject private var taskViewModel = TaskViewModel()
-    @State private var memo = ""
-    @State private var taskReflections: [TaskListData: String] = [:]
     
     // 編集用の状態変数
-    @State private var purpose: String = ""
-    @State private var detail: String = ""
-    @State private var reflection: String = ""
-    @State private var condition: String = ""
     @State private var date: Date = Date()
     @State private var selectedWeather: Weather = .sunny
     @State private var temperature: Int = 20
+    @State private var condition: String = ""
+    @State private var purpose: String = ""
+    @State private var detail: String = ""
+    @State private var reflection: String = ""
+    @State private var taskReflections: [TaskListData: String] = [:]
     
     var body: some View {
         ZStack {
@@ -97,10 +96,10 @@ struct PracticeNoteView: View {
                     
                     // 取り組んだ課題
                     Section(header: Text(LocalizedStrings.taskReflection)) {
-                        TaskListSection(
-                            taskReflections: $taskReflections,
-                            unaddedTasks: getUnaddedTasks()
-                        )
+                        TaskListSection(taskReflections: $taskReflections, unaddedTasks: getUnaddedTasks())
+                            .onChange(of: taskReflections) { _ in
+                                updateNote()
+                            }
                     }
                     
                     // 反省
@@ -148,12 +147,31 @@ struct PracticeNoteView: View {
     private func loadTaskReflections(note: Note) {
         taskReflections.removeAll()
         
-        // ノートに関連するメモを取得して、taskReflectionsに設定
-        let memos = viewModel.memos.filter { $0.noteID == note.noteID }
-        for memo in memos {
-            // measuresIDに課題IDが保存されている場合の処理
-            if let task = taskViewModel.taskListData.first(where: { $0.taskID == memo.measuresID }) {
-                taskReflections[task] = memo.detail
+        // ノートに関連するメモを取得
+        let noteMemos = viewModel.memos.filter { $0.noteID == note.noteID }
+        
+        // 各メモをタスクに関連付け
+        for memo in noteMemos {
+            // TaskListDataをmeasuresIDで検索
+            if let taskIndex = taskViewModel.taskListData.firstIndex(where: { $0.measuresID == memo.measuresID }) {
+                // 元のタスクを取得
+                let task = taskViewModel.taskListData[taskIndex]
+                
+                // TaskListDataを変更するためにカスタムTaskListDataを作成
+                let taskWithMemo = TaskListData(
+                    taskID: task.taskID,
+                    groupID: task.groupID,
+                    groupColor: task.groupColor,
+                    title: task.title,
+                    measuresID: task.measuresID,
+                    measures: task.measures,
+                    memoID: memo.memoID,
+                    order: task.order,
+                    isComplete: task.isComplete
+                )
+                taskReflections[taskWithMemo] = memo.detail
+            } else {
+                print("No matching task found for memo.measuresID: \(memo.measuresID)")
             }
         }
     }
@@ -162,7 +180,7 @@ struct PracticeNoteView: View {
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         
-        viewModel.savePracticeNote(
+        viewModel.savePracticeNoteWithReflections(
             noteID: note.noteID,
             purpose: purpose,
             detail: detail,
@@ -171,33 +189,7 @@ struct PracticeNoteView: View {
             date: date,
             weather: selectedWeather,
             temperature: temperature,
-            created_at: note.created_at
+            taskReflections: taskReflections
         )
-        
-        // タスクリフレクションを更新
-        updateTaskReflections(noteID: note.noteID)
-    }
-    
-    // タスクリフレクションを更新
-    private func updateTaskReflections(noteID: String) {
-        // 既存のメモを削除
-        let memoViewModel = MemoViewModel()
-        viewModel.memos
-            .filter { $0.noteID == noteID && !$0.measuresID.isEmpty }
-            .forEach { memoViewModel.deleteMemo(memoID: $0.memoID) }
-        
-        // 新しいメモを保存
-        for (task, reflectionText) in taskReflections {
-            if !reflectionText.isEmpty {
-                _ = memoViewModel.saveMemo(
-                    measuresID: task.taskID,
-                    noteID: noteID,
-                    detail: reflectionText
-                )
-            }
-        }
-        
-        // メモを再読み込み
-        viewModel.loadMemos()
     }
 }
