@@ -63,6 +63,7 @@ class NoteViewModel: ObservableObject {
     ///   - temperature: 気温
     ///   - created_at: 作成日時
     /// - Returns: 保存したノート
+    @discardableResult
     func saveNote(
         noteID: String? = nil,
         noteType: NoteType,
@@ -185,6 +186,7 @@ class NoteViewModel: ObservableObject {
     }
     
     /// 練習ノートの保存処理
+    @discardableResult
     private func savePracticeNote(
         noteID: String? = nil,
         purpose: String,
@@ -272,6 +274,7 @@ class NoteViewModel: ObservableObject {
     }
     
     /// 大会ノートの保存処理
+    @discardableResult
     func saveTournamentNote(
         noteID: String? = nil,
         target: String,
@@ -300,6 +303,7 @@ class NoteViewModel: ObservableObject {
     }
     
     /// フリーノートの保存処理
+    @discardableResult
     func saveFreeNote(
         noteID: String? = nil,
         title: String,

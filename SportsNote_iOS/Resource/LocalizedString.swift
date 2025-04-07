@@ -81,6 +81,7 @@ struct LocalizedStrings {
     static let selectTask = "selectTask".localized
     static let deleteTaskFromNote = "deleteTaskFromNote".localized
     static let added = "added".localized
+    static let defaltFreeNoteDetail = "defaltFreeNoteDetail".localized
 
     // MARK: Target
     static let target = "target".localized

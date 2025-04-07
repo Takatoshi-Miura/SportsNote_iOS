@@ -13,7 +13,6 @@ struct SportsNote_iOSApp: App {
             Crashlytics.crashlytics().setUserID(userID)
         }
         
-        // Setup app for first launch if needed
         setupFirstLaunch()
     }
     
@@ -44,8 +43,11 @@ struct SportsNote_iOSApp: App {
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
             
             // フリーノート作成
-            let freeNote = Note(title: LocalizedStrings.freeNote)
-            RealmManager.shared.saveItem(freeNote)
+            let noteViewModel = NoteViewModel()
+            noteViewModel.saveFreeNote(
+                title: LocalizedStrings.freeNote,
+                detail: LocalizedStrings.defaltFreeNoteDetail
+            )
             
             // 未分類グループ作成
             let groupViewModel = GroupViewModel()
