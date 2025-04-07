@@ -55,9 +55,6 @@ struct NoteView: View {
                 viewModel.fetchNotes()
             })
         }
-        .onAppear {
-            viewModel.fetchNotes()
-        }
     }
 }
 
@@ -99,6 +96,7 @@ struct SearchBarView: View {
 /// ノート一覧
 struct NoteListView: View {
     @ObservedObject var viewModel: NoteViewModel
+    @State private var selectedNoteID: String? = nil
     
     var body: some View {
         List {
@@ -111,14 +109,28 @@ struct NoteListView: View {
             } else {
                 ForEach(viewModel.notes, id: \.noteID) { note in
                     let noteType = NoteType(rawValue: note.noteType) ?? .free
-                    NavigationLink(destination: noteType.destinationView(noteID: note.noteID)) {
+                    NavigationLink(
+                        tag: note.noteID,
+                        selection: $selectedNoteID,
+                        destination: { 
+                            noteType.destinationView(noteID: note.noteID)
+                                .onDisappear {
+                                    // 詳細画面から戻ったときに選択状態を解除
+                                    DispatchQueue.main.async {
+                                        selectedNoteID = nil
+                                    }
+                                }
+                        }
+                    ) {
                         NoteRow(note: note)
                     }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            viewModel.deleteNote(id: note.noteID)
-                        } label: {
-                            Label(LocalizedStrings.delete, systemImage: "trash")
+                    .if(noteType != .free) { view in
+                        view.swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                viewModel.deleteNote(id: note.noteID)
+                            } label: {
+                                Label(LocalizedStrings.delete, systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -178,5 +190,16 @@ struct NoteRow: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"
         return formatter.string(from: date)
+    }
+}
+
+extension View {
+    /// 条件付きでビューを修飾する
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
