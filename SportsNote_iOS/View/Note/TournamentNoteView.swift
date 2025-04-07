@@ -1,6 +1,75 @@
 import SwiftUI
 import RealmSwift
 
+// 基本情報セクション
+struct BasicInfoSection: View {
+    @Binding var date: Date
+    @Binding var selectedWeather: Weather
+    @Binding var temperature: Int
+    let onUpdate: () -> Void
+    
+    var body: some View {
+        Section(header: Text(LocalizedStrings.basicInfo)) {
+            // 日付
+            DatePicker(
+                LocalizedStrings.date,
+                selection: $date,
+                displayedComponents: [.date]
+            )
+            .onChange(of: date) { _ in
+                onUpdate()
+            }
+            
+            // 天気
+            HStack {
+                Text(LocalizedStrings.weather)
+                Spacer()
+                Picker("", selection: $selectedWeather) {
+                    ForEach(Weather.allCases, id: \.self) { weather in
+                        HStack {
+                            Image(systemName: weather.icon)
+                            Text(weather.title)
+                        }
+                        .tag(weather)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .onChange(of: selectedWeather) { _ in
+                    onUpdate()
+                }
+            }
+            
+            // 気温
+            HStack {
+                Text(LocalizedStrings.temperature)
+                Spacer()
+                Stepper("\(temperature) °C", value: $temperature, in: -30...50)
+                    .onChange(of: temperature) { _ in
+                        onUpdate()
+                    }
+            }
+        }
+    }
+}
+
+// テキストエディタセクション
+struct TextEditorSection: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    let onUpdate: () -> Void
+    
+    var body: some View {
+        Section(header: Text(title)) {
+            AutoResizingTextEditor(text: $text, placeholder: placeholder, minHeight: 50)
+                .onChange(of: text) { _ in
+                    onUpdate()
+                }
+        }
+    }
+}
+
 struct TournamentNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
@@ -17,103 +86,78 @@ struct TournamentNoteView: View {
     @State private var temperature: Int = 20
     
     var body: some View {
-        ZStack {
-            if viewModel.isLoadingNote {
-                VStack {
-                    Text("Loading note...")
-                        .foregroundColor(.gray)
-                        .italic()
-                    ProgressView()
-                }
-            } else {
-                Form {
-                    // Basic Information Section
-                    Section(header: Text(LocalizedStrings.basicInfo)) {
-                        // 日付
-                        DatePicker(
-                            LocalizedStrings.date,
-                            selection: $date,
-                            displayedComponents: [.date]
+        GeometryReader { geometry in
+            ZStack {
+                if viewModel.isLoadingNote {
+                    VStack {
+                        Text("Loading note...")
+                            .foregroundColor(.gray)
+                            .italic()
+                        ProgressView()
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                } else {
+                    Form {
+                        BasicInfoSection(
+                            date: $date,
+                            selectedWeather: $selectedWeather,
+                            temperature: $temperature,
+                            onUpdate: updateNote
                         )
-                        .onChange(of: date) { _ in
-                            updateNote()
-                        }
                         
-                        // 天気
-                        HStack {
-                            Text(LocalizedStrings.weather)
-                            Spacer()
-                            Picker("", selection: $selectedWeather) {
-                                ForEach(Weather.allCases, id: \.self) { weather in
-                                    HStack {
-                                        Image(systemName: weather.icon)
-                                        Text(weather.title)
-                                    }
-                                    .tag(weather)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .labelsHidden()
-                            .onChange(of: selectedWeather) { _ in
-                                updateNote()
-                            }
-                        }
+                        TextEditorSection(
+                            title: LocalizedStrings.condition,
+                            placeholder: LocalizedStrings.condition,
+                            text: $condition,
+                            onUpdate: updateNote
+                        )
                         
-                        // 気温
-                        HStack {
-                            Text(LocalizedStrings.temperature)
-                            Spacer()
-                            Stepper("\(temperature) °C", value: $temperature, in: -30...50)
-                                .onChange(of: temperature) { _ in
-                                    updateNote()
+                        TextEditorSection(
+                            title: LocalizedStrings.target,
+                            placeholder: LocalizedStrings.target,
+                            text: $target,
+                            onUpdate: updateNote
+                        )
+                        
+                        TextEditorSection(
+                            title: LocalizedStrings.consciousness,
+                            placeholder: LocalizedStrings.consciousness,
+                            text: $consciousness,
+                            onUpdate: updateNote
+                        )
+                        
+                        TextEditorSection(
+                            title: LocalizedStrings.result,
+                            placeholder: LocalizedStrings.result,
+                            text: $result,
+                            onUpdate: updateNote
+                        )
+                        
+                        TextEditorSection(
+                            title: LocalizedStrings.reflection,
+                            placeholder: LocalizedStrings.reflection,
+                            text: $reflection,
+                            onUpdate: updateNote
+                        )
+                    }
+                    .navigationTitle(LocalizedStrings.tournamentNote)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: {
+                                if let note = viewModel.selectedNote {
+                                    viewModel.deleteNote(id: note.noteID)
+                                    // dismiss()
                                 }
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
                         }
-                    }
-                    
-                    // 体調
-                    Section(header: Text(LocalizedStrings.condition)) {
-                        AutoResizingTextEditor(text: $condition, placeholder: LocalizedStrings.condition, minHeight: 50)
-                            .onChange(of: condition) { _ in
-                                updateNote()
-                            }
-                    }
-                    
-                    // 目標
-                    Section(header: Text(LocalizedStrings.target)) {
-                        AutoResizingTextEditor(text: $target, placeholder: LocalizedStrings.target, minHeight: 50)
-                            .onChange(of: target) { _ in
-                                updateNote()
-                            }
-                    }
-                    
-                    // 意識すること
-                    Section(header: Text(LocalizedStrings.consciousness)) {
-                        AutoResizingTextEditor(text: $consciousness, placeholder: LocalizedStrings.consciousness, minHeight: 50)
-                            .onChange(of: consciousness) { _ in
-                                updateNote()
-                            }
-                    }
-                    
-                    // 結果
-                    Section(header: Text(LocalizedStrings.result)) {
-                        AutoResizingTextEditor(text: $result, placeholder: LocalizedStrings.result, minHeight: 50)
-                            .onChange(of: result) { _ in
-                                updateNote()
-                            }
-                    }
-                    
-                    // 反省
-                    Section(header: Text(LocalizedStrings.reflection)) {
-                        AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
-                            .onChange(of: reflection) { _ in
-                                updateNote()
-                            }
                     }
                 }
             }
         }
-        .navigationTitle(LocalizedStrings.tournamentNote)
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             loadData()
         }
@@ -136,7 +180,6 @@ struct TournamentNoteView: View {
         viewModel.loadMemos()
     }
     
-    // ノート更新処理
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
         

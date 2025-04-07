@@ -28,71 +28,36 @@ struct PracticeNoteView: View {
             } else {
                 Form {
                     // 基本情報
-                    Section(header: Text(LocalizedStrings.basicInfo)) {
-                        // 日付
-                        DatePicker(
-                            LocalizedStrings.date,
-                            selection: $date,
-                            displayedComponents: [.date]
-                        )
-                        .onChange(of: date) { _ in
-                            updateNote()
-                        }
-                        
-                        // 天気
-                        HStack {
-                            Text(LocalizedStrings.weather)
-                            Spacer()
-                            Picker("", selection: $selectedWeather) {
-                                ForEach(Weather.allCases, id: \.self) { weather in
-                                    HStack {
-                                        Image(systemName: weather.icon)
-                                        Text(weather.title)
-                                    }
-                                    .tag(weather)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .labelsHidden()
-                            .onChange(of: selectedWeather) { _ in
-                                updateNote()
-                            }
-                        }
-                        
-                        // 気温
-                        HStack {
-                            Text(LocalizedStrings.temperature)
-                            Spacer()
-                            Stepper("\(temperature) °C", value: $temperature, in: -30...50)
-                                .onChange(of: temperature) { _ in
-                                    updateNote()
-                                }
-                        }
-                    }
+                    BasicInfoSection(
+                        date: $date,
+                        selectedWeather: $selectedWeather,
+                        temperature: $temperature,
+                        onUpdate: updateNote
+                    )
                     
                     // 体調
-                    Section(header: Text(LocalizedStrings.condition)) {
-                        AutoResizingTextEditor(text: $condition, placeholder: LocalizedStrings.condition, minHeight: 50)
-                            .onChange(of: condition) { _ in
-                                updateNote()
-                            }
-                    }
+                    TextEditorSection(
+                        title: LocalizedStrings.condition,
+                        placeholder: LocalizedStrings.condition,
+                        text: $condition,
+                        onUpdate: updateNote
+                    )
                     
                     // 目的
-                    Section(header: Text(LocalizedStrings.purpose)) {
-                        AutoResizingTextEditor(text: $purpose, placeholder: LocalizedStrings.purpose, minHeight: 50)
-                            .onChange(of: purpose) { _ in
-                                updateNote()
-                            }
-                    }
+                    TextEditorSection(
+                        title: LocalizedStrings.purpose,
+                        placeholder: LocalizedStrings.purpose,
+                        text: $purpose,
+                        onUpdate: updateNote
+                    )
                     
                     // 内容
-                    Section(header: Text(LocalizedStrings.practiceDetail)) {
-                        AutoResizingTextEditor(text: $detail, placeholder: LocalizedStrings.practiceDetail, minHeight: 50)
-                            .onChange(of: detail) { _ in
-                                updateNote()
-                            }
-                    }
+                    TextEditorSection(
+                        title: LocalizedStrings.practiceDetail,
+                        placeholder: LocalizedStrings.practiceDetail,
+                        text: $detail,
+                        onUpdate: updateNote
+                    )
                     
                     // 取り組んだ課題
                     Section(header: Text(LocalizedStrings.taskReflection)) {
@@ -103,12 +68,12 @@ struct PracticeNoteView: View {
                     }
                     
                     // 反省
-                    Section(header: Text(LocalizedStrings.reflection)) {
-                        AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
-                            .onChange(of: reflection) { _ in
-                                updateNote()
-                            }
-                    }
+                    TextEditorSection(
+                        title: LocalizedStrings.reflection,
+                        placeholder: LocalizedStrings.reflection,
+                        text: $reflection,
+                        onUpdate: updateNote
+                    )
                 }
             }
         }
