@@ -71,6 +71,7 @@
 "noTasksAvailable" = "No tasks available to add";
 "selectTask" = "Select tasks to add to note";
 "deleteTaskFromNote" = "Remove task from this note?";
+"added" = "Added";
 
 // MARK: Target
 "target" = "Target";

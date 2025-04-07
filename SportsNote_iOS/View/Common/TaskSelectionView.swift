@@ -7,9 +7,7 @@ struct TaskSelectionView: View {
     @StateObject private var taskViewModel = TaskViewModel()
     
     var onTaskSelected: (TaskListData) -> Void
-    var addedTaskIds: Set<String> // 追加済みの課題IDを保持
-    
-    // 未完了のタスクをフィルタリングするコンピューテッドプロパティを追加
+    var addedTaskIds: Set<String>
     private var incompleteTasks: [TaskListData] {
         return taskViewModel.taskListData.filter { !$0.isComplete }
     }
@@ -22,7 +20,6 @@ struct TaskSelectionView: View {
                         .foregroundColor(.gray)
                         .padding()
                 } else {
-                    // 複雑なフィルタリング条件をコンピューテッドプロパティに移動
                     ForEach(incompleteTasks, id: \.taskID) { task in
                         Button(action: {
                             onTaskSelected(task)
@@ -51,9 +48,21 @@ struct TaskSelectionView: View {
                                 .padding(.leading, 4)
                                 
                                 Spacer()
+                                
+                                // 追加済みの課題にはラベル表示
+                                if addedTaskIds.contains(task.taskID) {
+                                    Text(LocalizedStrings.added)
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.green.opacity(0.1))
+                                        .cornerRadius(4)
+                                }
                             }
                         }
                         .disabled(addedTaskIds.contains(task.taskID))
+                        .listRowBackground(addedTaskIds.contains(task.taskID) ? Color(.systemGray5) : Color(.systemBackground))
                     }
                 }
             }

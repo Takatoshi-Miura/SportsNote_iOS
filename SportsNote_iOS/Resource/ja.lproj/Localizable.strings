@@ -71,6 +71,7 @@
 "noTasksAvailable" = "追加可能な課題がありません";
 "selectTask" = "ノートに追加する課題を選択";
 "deleteTaskFromNote" = "ノートから課題を削除しますか？";
+"added" = "追加済み";
 
 // MARK: Target
 "target" = "目標";
