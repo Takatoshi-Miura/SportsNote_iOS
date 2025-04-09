@@ -1,75 +1,7 @@
 import SwiftUI
 import RealmSwift
 
-// 基本情報セクション
-struct BasicInfoSection: View {
-    @Binding var date: Date
-    @Binding var selectedWeather: Weather
-    @Binding var temperature: Int
-    let onUpdate: () -> Void
-    
-    var body: some View {
-        Section(header: Text(LocalizedStrings.basicInfo)) {
-            // 日付
-            DatePicker(
-                LocalizedStrings.date,
-                selection: $date,
-                displayedComponents: [.date]
-            )
-            .onChange(of: date) { _ in
-                onUpdate()
-            }
-            
-            // 天気
-            HStack {
-                Text(LocalizedStrings.weather)
-                Spacer()
-                Picker("", selection: $selectedWeather) {
-                    ForEach(Weather.allCases, id: \.self) { weather in
-                        HStack {
-                            Image(systemName: weather.icon)
-                            Text(weather.title)
-                        }
-                        .tag(weather)
-                    }
-                }
-                .pickerStyle(.menu)
-                .labelsHidden()
-                .onChange(of: selectedWeather) { _ in
-                    onUpdate()
-                }
-            }
-            
-            // 気温
-            HStack {
-                Text(LocalizedStrings.temperature)
-                Spacer()
-                Stepper("\(temperature) °C", value: $temperature, in: -30...50)
-                    .onChange(of: temperature) { _ in
-                        onUpdate()
-                    }
-            }
-        }
-    }
-}
-
-// テキストエディタセクション
-struct TextEditorSection: View {
-    let title: String
-    let placeholder: String
-    @Binding var text: String
-    let onUpdate: () -> Void
-    
-    var body: some View {
-        Section(header: Text(title)) {
-            AutoResizingTextEditor(text: $text, placeholder: placeholder, minHeight: 50)
-                .onChange(of: text) { _ in
-                    onUpdate()
-                }
-        }
-    }
-}
-
+/// 大会ノート詳細画面
 struct TournamentNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
@@ -98,6 +30,7 @@ struct TournamentNoteView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 } else {
                     Form {
+                        // 基本情報
                         BasicInfoSection(
                             date: $date,
                             selectedWeather: $selectedWeather,
@@ -105,6 +38,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                         
+                        // 体調
                         TextEditorSection(
                             title: LocalizedStrings.condition,
                             placeholder: LocalizedStrings.condition,
@@ -112,6 +46,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                         
+                        // 目標
                         TextEditorSection(
                             title: LocalizedStrings.target,
                             placeholder: LocalizedStrings.target,
@@ -119,6 +54,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                         
+                        // 意識すること
                         TextEditorSection(
                             title: LocalizedStrings.consciousness,
                             placeholder: LocalizedStrings.consciousness,
@@ -126,6 +62,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                         
+                        // 結果
                         TextEditorSection(
                             title: LocalizedStrings.result,
                             placeholder: LocalizedStrings.result,
@@ -133,6 +70,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                         
+                        // 反省
                         TextEditorSection(
                             title: LocalizedStrings.reflection,
                             placeholder: LocalizedStrings.reflection,

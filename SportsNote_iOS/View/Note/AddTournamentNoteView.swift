@@ -19,56 +19,53 @@ struct AddTournamentNoteView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text(LocalizedStrings.basicInfo)) {
-                    // 日付
-                    DatePicker(
-                        LocalizedStrings.date,
-                        selection: $date,
-                        displayedComponents: [.date]
-                    )
-                    // 天気
-                    HStack {
-                        Text(LocalizedStrings.weather)
-                        Spacer()
-                        Picker("", selection: $selectedWeather) {
-                            ForEach(Weather.allCases, id: \.self) { weather in
-                                HStack {
-                                    Image(systemName: weather.icon)
-                                    Text(weather.title)
-                                }
-                                .tag(weather)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .labelsHidden()
-                    }
-                    // 気温
-                    HStack {
-                        Text(LocalizedStrings.temperature)
-                        Spacer()
-                        Stepper("\(temperature) °C", value: $temperature, in: -30...50)
-                    }
-                }
+                // 基本情報
+                BasicInfoSection(
+                    date: $date,
+                    selectedWeather: $selectedWeather,
+                    temperature: $temperature,
+                    onUpdate: {}
+                )
+                
                 // 体調
-                Section(header: Text(LocalizedStrings.condition)) {
-                    AutoResizingTextEditor(text: $condition, placeholder: LocalizedStrings.condition, minHeight: 50)
-                }
+                TextEditorSection(
+                    title: LocalizedStrings.condition,
+                    placeholder: LocalizedStrings.condition,
+                    text: $condition,
+                    onUpdate: {}
+                )
+                
                 // 目標
-                Section(header: Text(LocalizedStrings.target)) {
-                    AutoResizingTextEditor(text: $target, placeholder: LocalizedStrings.target, minHeight: 50)
-                }
+                TextEditorSection(
+                    title: LocalizedStrings.target,
+                    placeholder: LocalizedStrings.target,
+                    text: $target,
+                    onUpdate: {}
+                )
+                
                 // 意識すること
-                Section(header: Text(LocalizedStrings.consciousness)) {
-                    AutoResizingTextEditor(text: $consciousness, placeholder: LocalizedStrings.consciousness, minHeight: 50)
-                }
+                TextEditorSection(
+                    title: LocalizedStrings.consciousness,
+                    placeholder: LocalizedStrings.consciousness,
+                    text: $consciousness,
+                    onUpdate: {}
+                )
+                
                 // 結果
-                Section(header: Text(LocalizedStrings.result)) {
-                    AutoResizingTextEditor(text: $result, placeholder: LocalizedStrings.result, minHeight: 50)
-                }
+                TextEditorSection(
+                    title: LocalizedStrings.result,
+                    placeholder: LocalizedStrings.result,
+                    text: $result,
+                    onUpdate: {}
+                )
+                
                 // 反省
-                Section(header: Text(LocalizedStrings.reflection)) {
-                    AutoResizingTextEditor(text: $reflection, placeholder: LocalizedStrings.reflection, minHeight: 50)
-                }
+                TextEditorSection(
+                    title: LocalizedStrings.reflection,
+                    placeholder: LocalizedStrings.reflection,
+                    text: $reflection,
+                    onUpdate: {}
+                )
             }
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.tournamentNote))
             .navigationBarTitleDisplayMode(.inline)
