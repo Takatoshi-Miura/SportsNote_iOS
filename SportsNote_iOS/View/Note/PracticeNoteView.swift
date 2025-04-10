@@ -5,6 +5,8 @@ struct PracticeNoteView: View {
     let noteID: String
     @StateObject private var viewModel = NoteViewModel()
     @StateObject private var taskViewModel = TaskViewModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingDeleteConfirmation = false
     
     // 編集用の状態変数
     @State private var date: Date = Date()
@@ -79,6 +81,29 @@ struct PracticeNoteView: View {
         }
         .navigationTitle(LocalizedStrings.practiceNote)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        .alert(isPresented: $showingDeleteConfirmation) {
+            Alert(
+                title: Text("ノートの削除"),
+                message: Text("このノートを削除してもよろしいですか？"),
+                primaryButton: .destructive(Text("削除")) {
+                    if let note = viewModel.selectedNote {
+                        viewModel.deleteNote(id: note.noteID)
+                        dismiss()
+                    }
+                },
+                secondaryButton: .cancel(Text("キャンセル"))
+            )
+        }
         .onAppear {
             loadData()
         }
