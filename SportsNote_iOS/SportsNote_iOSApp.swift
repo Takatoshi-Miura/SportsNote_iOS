@@ -3,6 +3,8 @@ import Firebase
 
 @main
 struct SportsNote_iOSApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+    
     init() {
         // 初期化
 //        FirebaseApp.configure()
@@ -21,15 +23,23 @@ struct SportsNote_iOSApp: App {
             MainTabView()
                 .onAppear {
                     setupNavigationBarAppearance()
-                    
-                    // 利用規約ダイアログを表示
-                    if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
-                        TermsManager.showDialog()
-                    }
+                    checkAndShowTermsDialog()
                     
                     // For debugging
                     RealmManager.shared.printRealmFilePath()
                 }
+                .onChange(of: scenePhase) { phase in
+                    if phase == .active {
+                        checkAndShowTermsDialog()
+                    }
+                }
+        }
+    }
+    
+    /// 利用規約の同意状態をチェックし、未同意の場合はダイアログを表示
+    private func checkAndShowTermsDialog() {
+        if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
+            TermsManager.showDialog()
         }
     }
     
