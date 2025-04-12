@@ -33,6 +33,7 @@
 // MARK: Group
 "group" = "Group";
 "uncategorized" = "Uncategorized";
+"deleteGroup" = "Are you sure you want to delete this group?\nDeleting the group will also delete all tasks within it. Once deleted, the group and tasks cannot be restored.";
 
 // MARK: Task
 "task" = "Task";

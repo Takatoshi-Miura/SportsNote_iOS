@@ -9,6 +9,7 @@ struct GroupView: View {
     @ObservedObject var viewModel: GroupViewModel
     @State private var title: String
     @State private var selectedColor: GroupColor
+    @State private var showingDeleteConfirmation = false
     private let group: Group
 
     init(group: Group, viewModel: GroupViewModel) {
@@ -32,5 +33,24 @@ struct GroupView: View {
         .background(Color(UIColor.systemBackground))
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.group))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        .alert(LocalizedStrings.delete, isPresented: $showingDeleteConfirmation) {
+            Button(LocalizedStrings.cancel, role: .cancel) {}
+            Button(LocalizedStrings.delete, role: .destructive) {
+                viewModel.deleteGroup(id: group.groupID)
+                dismiss()
+            }
+        } message: {
+            Text(LocalizedStrings.deleteGroup)
+        }
     }
 }

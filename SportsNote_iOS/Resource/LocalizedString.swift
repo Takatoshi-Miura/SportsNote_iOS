@@ -44,6 +44,7 @@ struct LocalizedStrings {
     // MARK: Group
     static let group = "group".localized
     static let uncategorized = "uncategorized".localized
+    static let deleteGroup = "deleteGroup".localized
     
     // MARK: Task
     static let task = "task".localized
