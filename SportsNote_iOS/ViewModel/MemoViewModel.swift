@@ -49,6 +49,7 @@ class MemoViewModel: ObservableObject {
     ///   - detail: メモ内容
     ///   - created_at: 作成日時
     /// - Returns: 保存したメモ
+    @discardableResult
     func saveMemo(
         memoID: String? = nil,
         measuresID: String,

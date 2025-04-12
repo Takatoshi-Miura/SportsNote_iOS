@@ -169,7 +169,7 @@ struct MeasuresListView: View {
     var body: some View {
         if let detail = viewModel.taskDetail {
             if detail.measuresList.isEmpty {
-                Text("No measures yet")
+                Text("対策がありません")
                     .foregroundColor(.gray)
                     .italic()
             } else {
@@ -181,13 +181,6 @@ struct MeasuresListView: View {
                                 .lineLimit(2)
                                 .padding(.vertical, 4)
                             Spacer()
-                        }
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            viewModel.deleteMeasure(measuresID: detail.measuresList[index].measuresID)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }

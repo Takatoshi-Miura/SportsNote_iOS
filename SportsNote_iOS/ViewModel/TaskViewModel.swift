@@ -97,6 +97,7 @@ class TaskViewModel: ObservableObject {
     ///   - isComplete: 完了状態
     ///   - order: 表示順序（指定がない場合は自動計算）
     ///   - created_at: 作成日時（指定がない場合は現在時刻）
+    @discardableResult
     func saveTask(
         taskID: String? = nil,
         title: String,
