@@ -59,7 +59,7 @@ class TaskViewModel: ObservableObject {
                 groupColor: groupColor,
                 title: task.title,
                 measuresID: measures?.measuresID ?? "",
-                measures: measures?.title ?? "未設定",
+                measures: measures?.title ?? "",
                 memoID: nil,
                 order: task.order,
                 isComplete: task.isComplete
