@@ -1,5 +1,6 @@
 import SwiftUI
 import RealmSwift
+import Combine
 
 @MainActor
 class TargetViewModel: ObservableObject {
@@ -8,7 +9,21 @@ class TargetViewModel: ObservableObject {
     @Published var yearlyTargets: [Target] = []
     @Published var monthlyTargets: [Target] = []
     
+    // 現在の年月を追跡するプロパティ
+    @Published var currentYear: Int = Calendar.current.component(.year, from: Date())
+    @Published var currentMonth: Int = Calendar.current.component(.month, from: Date())
+    
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
+        // 年月が変わったときに自動的にデータを更新する
+        $currentYear
+            .combineLatest($currentMonth)
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] year, month in
+                self?.fetchTargets(year: year, month: month)
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Fetch Methods
@@ -59,6 +74,11 @@ class TargetViewModel: ObservableObject {
             isYearlyTarget: isYearlyTarget
         )
         RealmManager.shared.saveItem(target)
+        
+        // 保存後に同じ年月のデータを再取得して状態を更新
+        if year == currentYear && month == currentMonth {
+            fetchTargets(year: year, month: month)
+        }
 
         // TODO: Firebaseにも保存する
     }
@@ -69,5 +89,14 @@ class TargetViewModel: ObservableObject {
         RealmManager.shared.logicalDelete(id: id, type: Target.self)
         targets.removeAll(where: { $0.targetID == id })
         updateFilteredTargets()
+    }
+    
+    /// 現在の年月を更新
+    /// - Parameters:
+    ///   - year: 年
+    ///   - month: 月
+    func updateCurrentPeriod(year: Int, month: Int) {
+        currentYear = year
+        currentMonth = month
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct TargetView: View {
     @Binding var isMenuOpen: Bool
@@ -8,8 +9,8 @@ struct TargetView: View {
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
     @State private var selectedMonth = Calendar.current.component(.month, from: Date())
     @State private var selectedDate: Date?
-    @ObservedObject var viewModel = TargetViewModel()
-
+    @StateObject var viewModel = TargetViewModel()
+    
     var body: some View {
         TabTopView(
             title: LocalizedStrings.target,
@@ -20,7 +21,8 @@ struct TargetView: View {
                     selectedYear: $selectedYear,
                     selectedMonth: $selectedMonth,
                     selectedDate: $selectedDate,
-                    noteViewModel: noteViewModel
+                    noteViewModel: noteViewModel,
+                    targetViewModel: viewModel
                 )
             },
             content: {
@@ -31,15 +33,14 @@ struct TargetView: View {
                             selectedYear: selectedYear,
                             selectedMonth: selectedMonth,
                             selectedDate: $selectedDate,
-                            yearlyTargets: viewModel.yearlyTargets,
-                            monthlyTargets: viewModel.monthlyTargets,
                             onDateSelected: { date in
                                 selectedDate = date
                                 // 選択した日付に対応するノートを取得
                                 Task { @MainActor in
                                     noteViewModel.notes = noteViewModel.filterNotesByDate(date)
                                 }
-                            }
+                            },
+                            targetViewModel: viewModel
                         )
                         .padding(.top, 16)
                         
@@ -65,9 +66,7 @@ struct TargetView: View {
                 isYearly: true,
                 year: selectedYear,
                 month: selectedMonth,
-                onSave: {
-                    viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
-                },
+                onSave: {},
                 viewModel: viewModel
             )
         }
@@ -77,14 +76,13 @@ struct TargetView: View {
                 isYearly: false,
                 year: selectedYear,
                 month: selectedMonth,
-                onSave: {
-                    viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
-                },
+                onSave: {},
                 viewModel: viewModel
             )
         }
         .onAppear {
-            viewModel.fetchTargets(year: selectedYear, month: selectedMonth)
+            // 初期時の年月をViewModelにセット
+            viewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
             
             // 初回だけ全ノートを読み込み
             if noteViewModel.notes.isEmpty {
@@ -92,29 +90,12 @@ struct TargetView: View {
             } else if let date = selectedDate {
                 noteViewModel.notes = noteViewModel.filterNotesByDate(date)
             }
-            
-            // 通知の登録
-            NotificationCenter.default.addObserver(
-                forName: NSNotification.Name("RefreshSelectedDateNotes"),
-                object: nil,
-                queue: .main
-            ) { notification in
-                // 通知から日付を取得
-                if let date = notification.userInfo?["date"] as? Date {
-                    // 受け取った日付に対応するノートで再フィルタリング
-                    Task { @MainActor in
-                        self.noteViewModel.notes = self.noteViewModel.filterNotesByDate(date)
-                    }
-                }
-            }
         }
-        .onDisappear {
-            // 通知の解除
-            NotificationCenter.default.removeObserver(
-                self,
-                name: NSNotification.Name("RefreshSelectedDateNotes"),
-                object: nil
-            )
+        .onChange(of: selectedYear) { newYear in
+            viewModel.updateCurrentPeriod(year: newYear, month: selectedMonth)
+        }
+        .onChange(of: selectedMonth) { newMonth in
+            viewModel.updateCurrentPeriod(year: selectedYear, month: newMonth)
         }
     }
 }
@@ -125,13 +106,18 @@ struct TodayButton: View {
     @Binding var selectedMonth: Int
     @Binding var selectedDate: Date?
     @ObservedObject var noteViewModel: NoteViewModel
+    @ObservedObject var targetViewModel: TargetViewModel
 
     var body: some View {
         Button {
             let today = Date()
-            selectedYear = Calendar.current.component(.year, from: today)
-            selectedMonth = Calendar.current.component(.month, from: today)
+            let calendar = Calendar.current
+            selectedYear = calendar.component(.year, from: today)
+            selectedMonth = calendar.component(.month, from: today)
             selectedDate = today
+            
+            // ViewModelの年月も更新
+            targetViewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
 
             NotificationCenter.default.post(
                 name: NSNotification.Name("MoveToToday"),
@@ -154,19 +140,27 @@ struct CalendarSection: View {
     let selectedYear: Int
     let selectedMonth: Int
     @Binding var selectedDate: Date?
-    let yearlyTargets: [Target]
-    let monthlyTargets: [Target]
     let onDateSelected: (Date) -> Void
-    @State private var currentMonth: Date = Date()
-    @State private var currentDisplayedYearMonth: (year: Int, month: Int) = (
-        Calendar.current.component(.year, from: Date()),
-        Calendar.current.component(.month, from: Date())
-    )
-    @StateObject private var targetViewModel = TargetViewModel()
+    @State private var currentMonth: Date
+    @State private var currentDisplayedYearMonth: (year: Int, month: Int)
+    @ObservedObject var targetViewModel: TargetViewModel
+    
+    init(selectedYear: Int, selectedMonth: Int, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void, targetViewModel: TargetViewModel) {
+        self.selectedYear = selectedYear
+        self.selectedMonth = selectedMonth
+        self._selectedDate = selectedDate
+        self.onDateSelected = onDateSelected
+        self._currentMonth = State(initialValue: {
+            let calendar = Calendar.current
+            return calendar.date(from: DateComponents(year: selectedYear, month: selectedMonth, day: 1)) ?? Date()
+        }())
+        self._currentDisplayedYearMonth = State(initialValue: (selectedYear, selectedMonth))
+        self.targetViewModel = targetViewModel
+    }
     
     var body: some View {
         VStack {
-            // 目標表示
+            // 目標表示 - 表示中の年月の目標を使用
             TargetSummaryView(
                 yearlyTargets: targetViewModel.yearlyTargets,
                 monthlyTargets: targetViewModel.monthlyTargets
@@ -174,15 +168,20 @@ struct CalendarSection: View {
             // カレンダー表示
             CalendarView(
                 selectedDate: $selectedDate,
+                initialDate: currentMonth,
                 onDateSelected: onDateSelected,
                 onMonthChanged: { newDate in
-                    let year = Calendar.current.component(.year, from: newDate)
-                    let month = Calendar.current.component(.month, from: newDate)
+                    let calendar = Calendar.current
+                    let year = calendar.component(.year, from: newDate)
+                    let month = calendar.component(.month, from: newDate)
                     
-                    // 年月が変わったら目標を更新
+                    // 年月が変わったら表示される月と目標を更新
                     if year != currentDisplayedYearMonth.year || month != currentDisplayedYearMonth.month {
                         currentDisplayedYearMonth = (year, month)
-                        targetViewModel.fetchTargets(year: year, month: month)
+                        currentMonth = newDate
+                        
+                        // 目標データを更新
+                        targetViewModel.updateCurrentPeriod(year: year, month: month)
                     }
                 }
             )
@@ -193,7 +192,7 @@ struct CalendarSection: View {
         .padding(.horizontal)
         .onAppear {
             // 初期表示時にも目標を取得
-            targetViewModel.fetchTargets(
+            targetViewModel.updateCurrentPeriod(
                 year: currentDisplayedYearMonth.year, 
                 month: currentDisplayedYearMonth.month
             )
@@ -267,7 +266,7 @@ struct CalendarView: View {
     let onDateSelected: (Date) -> Void
     let onMonthChanged: (Date) -> Void
     
-    @State private var currentMonth = Date()
+    @State private var currentMonth: Date
     @GestureState private var dragOffset: CGFloat = 0
     @State private var slideDirection: CGFloat = 0 // スライド方向（-1: 左, 1: 右）
     @State private var isAnimating: Bool = false   // アニメーション中かどうか
@@ -276,6 +275,13 @@ struct CalendarView: View {
     
     // 曜日の配列（日曜始まり）
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    
+    init(selectedDate: Binding<Date?>, initialDate: Date = Date(), onDateSelected: @escaping (Date) -> Void, onMonthChanged: @escaping (Date) -> Void) {
+        self._selectedDate = selectedDate
+        self.onDateSelected = onDateSelected
+        self.onMonthChanged = onMonthChanged
+        self._currentMonth = State(initialValue: initialDate)
+    }
     
     var body: some View {
         VStack {
@@ -318,7 +324,7 @@ struct CalendarView: View {
                         .offset(x: slideDirection * UIScreen.main.bounds.width - (slideDirection * dragOffset))
                 }
             }
-            .clipped() // はみ出た部分を非表示にする
+            .clipped()
             .gesture(
                 DragGesture()
                     .updating($dragOffset) { value, state, _ in

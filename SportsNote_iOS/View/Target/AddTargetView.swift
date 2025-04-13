@@ -63,10 +63,11 @@ struct AddTargetView: View {
                     Button(LocalizedStrings.save) {
                         viewModel.saveTarget(
                             title: title,
-                            year: year,
-                            month: month,
+                            year: selectedYear,
+                            month: selectedMonth,
                             isYearlyTarget: isYearly
                         )
+                        onSave()
                         dismiss()
                     }
                     .disabled(title.isEmpty)
