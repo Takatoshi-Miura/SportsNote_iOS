@@ -16,6 +16,8 @@
 "edit" = "編集";
 "notice" = "お知らせ";
 "ok" = "OK";
+"previous" = "前へ";
+"next" = "次へ";
 
 // MARK: - Color
 "color" = "カラー";

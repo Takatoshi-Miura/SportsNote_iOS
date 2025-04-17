@@ -185,11 +185,9 @@ struct TutorialScreen: View {
     var onDismiss: () -> Void
     
     var body: some View {
-        VStack {
-            Text("Tutorial Screen")
-            Button("Close") {
+        TutorialView()
+            .onDisappear {
                 onDismiss()
             }
-        }
     }
 }

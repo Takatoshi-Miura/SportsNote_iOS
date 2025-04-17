@@ -23,6 +23,8 @@ struct LocalizedStrings {
     static let edit = "edit".localized
     static let notice = "notice".localized
     static let ok = "ok".localized
+    static let previous = "previous".localized
+    static let next = "next".localized
     
     // MARK: Task View
     static let showCompletedTasks = "showCompletedTasks".localized

@@ -16,6 +16,8 @@
 "edit" = "Edit";
 "notice" = "Notice";
 "ok" = "OK";
+"previous" = "Previous";
+"next" = "Next";
 
 // MARK: Color
 "color" = "Color";
