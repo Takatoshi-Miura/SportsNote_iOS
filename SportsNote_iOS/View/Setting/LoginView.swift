@@ -116,6 +116,10 @@ struct LoginView: View {
                     }
                 }
                 .padding()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hideKeyboard()
+                }
             }
             .navigationBarHidden(true)
             .alert(isPresented: $viewModel.showingAlert) {
@@ -127,5 +131,10 @@ struct LoginView: View {
             }
         }
         .interactiveDismissDisabled() // スワイプで閉じる動作を無効化
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

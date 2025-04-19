@@ -16,6 +16,10 @@ struct NoteView: View {
                 ZStack {
                     Color(.secondarySystemBackground)
                         .edgesIgnoringSafeArea(.all)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            hideKeyboard()
+                        }
                     
                     VStack(spacing: 0) {
                         SearchBarView(searchText: $searchQuery) {
@@ -56,6 +60,11 @@ struct NoteView: View {
             })
         }
     }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 }
 
 /// 検索バー
@@ -90,6 +99,11 @@ struct SearchBarView: View {
                 .stroke(Color(.systemGray4), lineWidth: 1)
         )
         .padding()
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

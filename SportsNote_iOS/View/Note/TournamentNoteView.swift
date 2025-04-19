@@ -80,6 +80,10 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        hideKeyboard()
+                    }
                     .navigationTitle(LocalizedStrings.tournamentNote)
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
@@ -145,5 +149,10 @@ struct TournamentNoteView: View {
             temperature: temperature,
             created_at: note.created_at
         )
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

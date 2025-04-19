@@ -43,12 +43,21 @@ struct MeasureDetailView: View {
                     }
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)
         }
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

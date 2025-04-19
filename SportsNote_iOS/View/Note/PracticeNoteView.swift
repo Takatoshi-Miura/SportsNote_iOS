@@ -77,6 +77,10 @@ struct PracticeNoteView: View {
                         onUpdate: updateNote
                     )
                 }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hideKeyboard()
+                }
             }
         }
         .navigationTitle(LocalizedStrings.practiceNote)
@@ -185,5 +189,10 @@ struct PracticeNoteView: View {
             temperature: temperature,
             taskReflections: taskReflections
         )
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

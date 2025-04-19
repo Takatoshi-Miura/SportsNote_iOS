@@ -38,6 +38,10 @@ struct AddTaskView: View {
                     TextField(LocalizedStrings.measures, text: $measuresTitle)
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                hideKeyboard()
+            }
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.task))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -79,5 +83,10 @@ struct AddTaskView: View {
         }
         
         dismiss()
+    }
+    
+    /// キーボードを閉じる
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
