@@ -25,6 +25,9 @@ struct LocalizedStrings {
     static let ok = "ok".localized
     static let previous = "previous".localized
     static let next = "next".localized
+    static let loading = "loading".localized
+    static let deleteNote = "deleteNote".localized
+    static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     
     // MARK: Task View
     static let showCompletedTasks = "showCompletedTasks".localized
@@ -53,11 +56,15 @@ struct LocalizedStrings {
     static let cause = "cause".localized
     static let completeMessage = "completeMessage".localized
     static let inCompleteMessage = "inCompleteMessage".localized
+    static let noTasksWorkedOn = "noTasksWorkedOn".localized
+    static let addTask = "addTask".localized
     
     // MARK: Measures
     static let measures = "measures".localized
     static let measuresPriority = "measuresPriority".localized
     static let measuresDetail = "measuresDetail".localized
+    static let noNotesYet = "noNotesYet".localized
+    static let noMeasures = "noMeasures".localized
         
     // MARK: Note
     static let note = "note".localized

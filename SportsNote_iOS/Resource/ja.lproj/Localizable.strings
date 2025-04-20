@@ -18,6 +18,9 @@
 "ok" = "OK";
 "previous" = "前へ";
 "next" = "次へ";
+"loading" = "読み込み中...";
+"deleteNote" = "ノートの削除";
+"deleteNoteConfirmation" = "このノートを削除してもよろしいですか？";
 
 // MARK: - Color
 "color" = "カラー";
@@ -44,11 +47,15 @@
 "inCompleteMessage" = "課題を未完了に戻しますか？";
 "showCompletedTasks" = "完了した課題を表示";
 "hideCompletedTasks" = "完了した課題を非表示";
+"noTasksWorkedOn" = "取り組んだ課題はありません。";
+"addTask" = "課題を追加";
 
 // MARK: Measures
 "measures" = "対策";
 "measuresPriority" = "対策(優先度が高い順)";
 "measuresDetail" = "対策の詳細";
+"noNotesYet" = "ノートがありません";
+"noMeasures" = "対策がありません";
 
 // MARK: Note
 "note" = "ノート";

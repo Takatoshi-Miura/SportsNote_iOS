@@ -33,7 +33,7 @@ struct MeasureDetailView: View {
                 
                 Section(header: Text(LocalizedStrings.note)) {
                     if viewModel.memos.isEmpty {
-                        Text("No notes yet")
+                        Text(LocalizedStrings.noNotesYet)
                             .foregroundColor(.gray)
                             .italic()
                     } else {

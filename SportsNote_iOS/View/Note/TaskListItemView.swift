@@ -60,7 +60,7 @@ struct TaskListSection: View {
 
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Text("取り組んだ課題はありません。")
+            Text(LocalizedStrings.noTasksWorkedOn)
                 .foregroundColor(.gray)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
@@ -73,7 +73,7 @@ struct TaskListSection: View {
         }) {
             HStack {
                 Image(systemName: "plus.circle.fill")
-                Text("課題を追加")
+                Text(LocalizedStrings.addTask)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)

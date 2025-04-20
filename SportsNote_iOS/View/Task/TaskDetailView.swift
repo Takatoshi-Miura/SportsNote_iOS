@@ -169,7 +169,7 @@ struct MeasuresListView: View {
     var body: some View {
         if let detail = viewModel.taskDetail {
             if detail.measuresList.isEmpty {
-                Text("対策がありません")
+                Text(LocalizedStrings.noMeasures)
                     .foregroundColor(.gray)
                     .italic()
             } else {

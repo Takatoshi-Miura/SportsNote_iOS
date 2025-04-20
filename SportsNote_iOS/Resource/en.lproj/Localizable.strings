@@ -18,6 +18,9 @@
 "ok" = "OK";
 "previous" = "Previous";
 "next" = "Next";
+"loading" = "Loading...";
+"deleteNote" = "Delete Note";
+"deleteNoteConfirmation" = "Are you sure you want to delete this note?";
 
 // MARK: Color
 "color" = "Color";
@@ -44,11 +47,15 @@
 "inCompleteMessage" = "Mark this task as incomplete?";
 "showCompletedTasks" = "Show Completed Tasks";
 "hideCompletedTasks" = "Hide Completed Tasks";
+"noTasksWorkedOn" = "No tasks worked on.";
+"addTask" = "Add Task";
 
 // MARK: Measures
 "measures" = "Measures";
 "measuresPriority" = "Measures (High Priority First)";
 "measuresDetail" = "Measure Details";
+"noNotesYet" = "No notes yet";
+"noMeasures" = "No measures available";
 
 // MARK: Note
 "note" = "Note";
