@@ -22,7 +22,7 @@ struct PracticeNoteView: View {
         ZStack {
             if viewModel.isLoadingNote {
                 VStack {
-                    Text("Loading note...")
+                    Text(LocalizedStrings.loading)
                         .foregroundColor(.gray)
                         .italic()
                     ProgressView()
@@ -97,15 +97,15 @@ struct PracticeNoteView: View {
         }
         .alert(isPresented: $showingDeleteConfirmation) {
             Alert(
-                title: Text("ノートの削除"),
-                message: Text("このノートを削除してもよろしいですか？"),
-                primaryButton: .destructive(Text("削除")) {
+                title: Text(LocalizedStrings.deleteNote),
+                message: Text(LocalizedStrings.deleteNoteConfirmation),
+                primaryButton: .destructive(Text(LocalizedStrings.delete)) {
                     if let note = viewModel.selectedNote {
                         viewModel.deleteNote(id: note.noteID)
                         dismiss()
                     }
                 },
-                secondaryButton: .cancel(Text("キャンセル"))
+                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
             )
         }
         .onAppear {

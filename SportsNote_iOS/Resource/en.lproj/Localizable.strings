@@ -21,6 +21,7 @@
 "loading" = "Loading...";
 "deleteNote" = "Delete Note";
 "deleteNoteConfirmation" = "Are you sure you want to delete this note?";
+"error" = "Error";
 
 // MARK: Color
 "color" = "Color";
@@ -38,7 +39,7 @@
 // MARK: Group
 "group" = "Group";
 "uncategorized" = "Uncategorized";
-"deleteGroup" = "Are you sure you want to delete this group?\nDeleting the group will also delete all tasks within it. Once deleted, the group and tasks cannot be restored.";
+"deleteGroup" = "Delete this group? All tasks in this group will also be deleted. Once deleted, groups and tasks cannot be restored.";
 
 // MARK: Task
 "task" = "Task";
@@ -53,9 +54,9 @@
 // MARK: Measures
 "measures" = "Measures";
 "measuresPriority" = "Measures (High Priority First)";
-"measuresDetail" = "Measure Details";
+"measuresDetail" = "Measures Details";
 "noNotesYet" = "No notes yet";
-"noMeasures" = "No measures available";
+"noMeasures" = "No measures";
 
 // MARK: Note
 "note" = "Note";
@@ -68,11 +69,11 @@
 "sunny" = "Sunny";
 "cloudy" = "Cloudy";
 "rainy" = "Rainy";
-"condition" = "Physical Condition";
-"consciousness" = "Points to Focus";
+"condition" = "Condition";
+"consciousness" = "Consciousness";
 "result" = "Result";
 "reflection" = "Reflection";
-"purpose" = "Practice Purpose";
+"purpose" = "Purpose";
 "practiceDetail" = "Practice Details";
 "searchNotes" = "Search notes...";
 "noNotesFound" = "No notes found";
@@ -80,7 +81,7 @@
 "taskReflection" = "Tasks Worked On";
 "noTasksAvailable" = "No tasks available to add";
 "selectTask" = "Select tasks to add to note";
-"deleteTaskFromNote" = "Remove task from this note?";
+"deleteTaskFromNote" = "Delete this task from note?";
 "added" = "Added";
 "defaltFreeNoteDetail" = "This note is always displayed at the top.";
 
@@ -94,6 +95,14 @@
 "notSet" = "Not Set";
 "today" = "Today";
 
+// MARK: Mail
+"pleaseEnterInquiry" = "Please enter your inquiry below.";
+"doNotDeleteBelow" = "Please do not delete the information below.";
+"deviceInfo" = "Device";
+"osVersion" = "OS Version";
+"mailError" = "An error occurred while sending email";
+"mailAppNotFound" = "No mail app found";
+
 // MARK: Setting
 "data" = "Data";
 "dataTransfer" = "Data Transfer";
@@ -106,7 +115,7 @@
 "appVersion" = "App Version";
 "TermsOfServiceTitle" = "Do you agree to the Terms of Service?";
 "TermsOfServiceMessage" = "You must agree to the Terms of Service to use this app.";
-"checkTermsOfService" = "View Terms of Service";
+"checkTermsOfService" = "Check Terms of Service";
 "agree" = "Agree";
 
 // MARK: Login/Auth
@@ -119,10 +128,10 @@
 "deleteAccount" = "Delete Account";
 "loggedIn" = "Logged In";
 "notLoggedIn" = "Not Logged In";
-"loginSuccessful" = "Login successful";
-"logoutSuccessful" = "Logged out successfully";
-"pleaseEnterEmailAndPassword" = "Please enter email and password";
+"loginSuccessful" = "Login Successful";
+"logoutSuccessful" = "Logout Successful";
+"pleaseEnterEmailAndPassword" = "Please enter your email and password";
 "pleaseEnterEmail" = "Please enter your email";
 "passwordResetEmailSent" = "Password reset email sent";
-"accountCreated" = "Account created successfully";
-"accountDeleted" = "Account deleted successfully";
+"accountCreated" = "Account created";
+"accountDeleted" = "Account deleted";

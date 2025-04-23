@@ -21,6 +21,7 @@
 "loading" = "読み込み中...";
 "deleteNote" = "ノートの削除";
 "deleteNoteConfirmation" = "このノートを削除してもよろしいですか？";
+"error" = "エラー";
 
 // MARK: - Color
 "color" = "カラー";
@@ -93,6 +94,14 @@
 "month" = "月";
 "notSet" = "未設定";
 "today" = "今日";
+
+// MARK: Mail
+"pleaseEnterInquiry" = "お問い合わせ内容をご記入ください。";
+"doNotDeleteBelow" = "以下は削除しないでください。";
+"deviceInfo" = "ご利用端末";
+"osVersion" = "OSバージョン";
+"mailError" = "メール送信中にエラーが発生しました";
+"mailAppNotFound" = "メールアプリが見つかりません";
 
 // MARK: Setting
 "data" = "データ";

@@ -28,6 +28,7 @@ struct LocalizedStrings {
     static let loading = "loading".localized
     static let deleteNote = "deleteNote".localized
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
+    static let error = "error".localized
     
     // MARK: Task View
     static let showCompletedTasks = "showCompletedTasks".localized
@@ -117,6 +118,14 @@ struct LocalizedStrings {
     static let termsOfServiceMessage = "TermsOfServiceMessage".localized
     static let checkTermsOfService = "checkTermsOfService".localized
     static let agree = "agree".localized
+    
+    // MARK: Mail
+    static let pleaseEnterInquiry = "pleaseEnterInquiry".localized
+    static let doNotDeleteBelow = "doNotDeleteBelow".localized
+    static let deviceInfo = "deviceInfo".localized
+    static let osVersion = "osVersion".localized
+    static let mailError = "mailError".localized
+    static let mailAppNotFound = "mailAppNotFound".localized
     
     // MARK: Login/Auth
     static let login = "login".localized

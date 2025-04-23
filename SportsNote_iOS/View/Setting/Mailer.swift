@@ -28,7 +28,7 @@ class Mailer: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let email = "SportsNote開発者<it6210ge@gmail.com>"
         
         // 件名
-        let subject = NSLocalizedString("お問い合わせ", comment: "Inquiry subject")
+        let subject = LocalizedStrings.inquiry
         
         // デバイス情報
         let deviceName = UIDevice.current.name
@@ -36,18 +36,18 @@ class Mailer: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let osVersion = "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
         
         // アプリバージョン
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "不明"
-        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "不明"
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? LocalizedStrings.notSet
+        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? LocalizedStrings.notSet
         
         // メール本文
         let body = """
-        お問い合わせ内容をご記入下さい。
+        \(LocalizedStrings.pleaseEnterInquiry)
         
         
-        以下は削除しないでください。
-        ■ご利用端末：\(deviceName) (\(deviceModel))
-        ■OSバージョン：\(osVersion)
-        ■アプリバージョン：\(appVersion) (\(buildNumber))
+        \(LocalizedStrings.doNotDeleteBelow)
+        ■\(LocalizedStrings.deviceInfo)：\(deviceName) (\(deviceModel))
+        ■\(LocalizedStrings.osVersion)：\(osVersion)
+        ■\(LocalizedStrings.appVersion)：\(appVersion) (\(buildNumber))
         """
         
         shared.launchMailer(from: viewController, email: email, subject: subject, body: body, onSuccess: onSuccess)
@@ -105,7 +105,7 @@ class Mailer: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         if let error = error {
             print("Mail error: \(error.localizedDescription)")
             if let viewController = self.presentingViewController {
-                showErrorAlert(from: viewController, message: "メール送信中にエラーが発生しました: \(error.localizedDescription)")
+                showErrorAlert(from: viewController, message: "\(LocalizedStrings.mailError): \(error.localizedDescription)")
             }
         } else if result == .sent {
             // メール送信成功時のコールバックを実行
@@ -128,22 +128,22 @@ class Mailer: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
     /// メーラーが見つからない場合のアラートを表示
     private func showMailerNotFoundAlert(from viewController: UIViewController) {
         let alert = UIAlertController(
-            title: NSLocalizedString("エラー", comment: "Error"),
-            message: NSLocalizedString("メールアプリが見つかりません", comment: "Mail app not found"),
+            title: LocalizedStrings.error,
+            message: LocalizedStrings.mailAppNotFound,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK"), style: .default))
+        alert.addAction(UIAlertAction(title: LocalizedStrings.ok, style: .default))
         viewController.present(alert, animated: true)
     }
     
     /// エラーアラートを表示
     private func showErrorAlert(from viewController: UIViewController, message: String) {
         let alert = UIAlertController(
-            title: NSLocalizedString("エラー", comment: "Error"),
+            title: LocalizedStrings.error,
             message: message,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK"), style: .default))
+        alert.addAction(UIAlertAction(title: LocalizedStrings.ok, style: .default))
         viewController.present(alert, animated: true)
     }
 }
