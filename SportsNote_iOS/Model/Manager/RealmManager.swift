@@ -223,19 +223,22 @@ class RealmManager: Sendable {
             let freeNotes = Array(realm.objects(Note.self)
                 .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
             
-            // 検索条件に一致するノートを取得
+            // 検索条件に一致するノートを取得（フリーノート以外）
             let queryNotes = Array(realm.objects(Note.self)
-                .filter("isDeleted == false")
+                .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
                 .filter("condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@", query, query, query, query, query, query, query))
             
-            // 結果を結合して重複を除去しつつ、無効なIDのノートを除外
-            let combinedNotes = Array(Set(freeNotes + queryNotes))
-            return combinedNotes.filter { note in
-                // IDが空でないことを確認
-                !note.noteID.isEmpty &&
-                // 取得したノートが実際にRealmに存在することを確認（無効参照を防止）
-                realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
+            // IDが空でないことを確認し、無効なIDのノートを除外
+            let validFreeNotes = freeNotes.filter { note in
+                !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
             }
+            
+            let validQueryNotes = queryNotes.filter { note in
+                !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
+            }
+            
+            // フリーノートを先頭にして、検索結果を日付の降順でソート
+            return validFreeNotes + validQueryNotes.sorted(by: { $0.date > $1.date })
         } catch {
             print("Error searching notes by query: \(error)")
             return []
