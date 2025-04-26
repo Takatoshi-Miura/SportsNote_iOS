@@ -4,8 +4,6 @@ import Combine
 
 @MainActor
 class TargetViewModel: ObservableObject {
-    @Published var targets: [Target] = []
-    @Published var selectedTarget: Target?
     @Published var yearlyTargets: [Target] = []
     @Published var monthlyTargets: [Target] = []
     
@@ -28,14 +26,13 @@ class TargetViewModel: ObservableObject {
     
     // MARK: - Fetch Methods
     
+    /// カレンダーに表示する年間目標、月間目標を取得
+    /// - Parameters:
+    ///   - year: 年
+    ///   - month: 月
     func fetchTargets(year: Int, month: Int) {
-        targets = RealmManager.shared.getDataList(clazz: Target.self).filter { $0.year == year && $0.month == month }
-        updateFilteredTargets()
-    }
-    
-    private func updateFilteredTargets() {
-        yearlyTargets = targets.filter { $0.isYearlyTarget }
-        monthlyTargets = targets.filter { !$0.isYearlyTarget }
+        yearlyTargets = RealmManager.shared.getDataList(clazz: Target.self).filter { $0.year == year && $0.isYearlyTarget }
+        monthlyTargets = RealmManager.shared.getDataList(clazz: Target.self).filter { $0.year == year && $0.month == month && !$0.isYearlyTarget }
     }
     
     // MARK: - CRUD Operations
@@ -53,14 +50,13 @@ class TargetViewModel: ObservableObject {
         isYearlyTarget: Bool = false
     ) {
         // 重複する目標を削除
-        let fetchedTargets = RealmManager.shared.fetchTargetsByYearMonth(year: year, month: month)
         if isYearlyTarget {
-            let yearlyTargets = fetchedTargets.filter { $0.isYearlyTarget == true }
+            let yearlyTargets = RealmManager.shared.fetchYearlyTargets(year: year)
             yearlyTargets.forEach {
                 deleteTarget(id: $0.targetID)
             }
         } else {
-            let monthlyTargets = fetchedTargets.filter { $0.isYearlyTarget == false }
+            let monthlyTargets = RealmManager.shared.fetchTargetsByYearMonth(year: year, month: month)
             monthlyTargets.forEach {
                 deleteTarget(id: $0.targetID)
             }
@@ -87,8 +83,8 @@ class TargetViewModel: ObservableObject {
     /// - Parameter id: targetID
     private func deleteTarget(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Target.self)
-        targets.removeAll(where: { $0.targetID == id })
-        updateFilteredTargets()
+        yearlyTargets.removeAll(where: { $0.targetID == id })
+        monthlyTargets.removeAll(where: { $0.targetID == id })
     }
     
     /// 現在の年月を更新

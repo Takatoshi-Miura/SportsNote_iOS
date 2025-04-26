@@ -335,16 +335,32 @@ class RealmManager: Sendable {
         }
     }
     
-    /// 指定した年と月に合致し、削除されていない目標を取得
+    /// 指定した年の削除されていない年間目標を取得
+    /// - Parameters:
+    ///   - year: 取得したい目標の年
+    /// - Returns: 条件に一致する目標のリスト
+    func fetchYearlyTargets(year: Int) -> [Target] {
+         do {
+             let realm = try Realm()
+             let targets = realm.objects(Target.self)
+                 .filter("((isYearlyTarget == true AND year == %@)) AND isDeleted == false", year)
+             return Array(targets)
+         } catch {
+             print("Error fetching targets by year and month: \(error)")
+             return []
+         }
+     }
+    
+    /// 指定した年と月の削除されていない目標を取得
     /// - Parameters:
     ///   - year: 取得したい目標の年
     ///   - month: 取得したい目標の月
     /// - Returns: 条件に一致する目標のリスト
-    func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
+   func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
         do {
             let realm = try Realm()
             let targets = realm.objects(Target.self)
-                .filter("((isYearlyTarget == false AND year == %@ AND month == %@) OR (isYearlyTarget == true AND year == %@)) AND isDeleted == false", year, month, year)
+                .filter("((isYearlyTarget == false AND year == %@ AND month == %@)) AND isDeleted == false", year, month)
             return Array(targets)
         } catch {
             print("Error fetching targets by year and month: \(error)")
