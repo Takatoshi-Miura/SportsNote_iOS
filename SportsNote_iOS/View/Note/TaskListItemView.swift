@@ -97,32 +97,10 @@ struct TaskListItemView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                // グループカラー
-                Rectangle()
-                    .fill(Color(task.groupColor.color))
-                    .frame(width: 10)
-                    .frame(height: 50)
+                TaskRow(taskList: task, isComplete: false)
+                    .padding(.leading, 4)
+                    .padding(.top, 2)
                     .disabled(true)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    // 課題タイトル
-                    Text(task.title)
-                        .font(.body)
-                        .lineLimit(1)
-                        .disabled(true)
-                    
-                    // 最優先の対策
-                    if !task.measures.isEmpty {
-                        Text(LocalizedStrings.measures + ":" + task.measures)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                            .disabled(true)
-                    }
-                }
-                .padding(.leading, 4)
-                .padding(.top, 2)
-                .disabled(true)
                 
                 Spacer()
                 

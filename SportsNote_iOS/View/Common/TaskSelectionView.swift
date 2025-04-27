@@ -26,26 +26,7 @@ struct TaskSelectionView: View {
                             dismiss()
                         }) {
                             HStack {
-                                // グループカラー
-                                Rectangle()
-                                    .fill(Color(task.groupColor.color))
-                                    .frame(width: 10)
-                                    .padding(.vertical, 4)
-                                
-                                VStack(alignment: .leading) {
-                                    // タイトル
-                                    Text(task.title)
-                                        .font(.body)
-                                        .foregroundColor(addedTaskIds.contains(task.taskID) ? .gray : .primary)
-                                    
-                                    // 対策
-                                    if !task.measures.isEmpty {
-                                        Text(LocalizedStrings.measures + ":" + task.measures)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                    }
-                                }
-                                .padding(.leading, 4)
+                                TaskRow(taskList: task, isComplete: false)
                                 
                                 Spacer()
                                 

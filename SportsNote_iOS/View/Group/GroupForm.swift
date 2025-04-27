@@ -19,18 +19,18 @@ struct GroupForm: View {
             Section(header: Text(LocalizedStrings.color)) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 10) {
                     ForEach(GroupColor.allCases, id: \.self) { color in
-                        Circle()
-                            .fill(Color(color.color))
-                            .frame(width: 30, height: 30)
-                            .overlay(
+                        ZStack {
+                            GroupColorCircle(color: Color(color.color), size: 30)
+                            if selectedColor == color {
                                 Circle()
-                                    .stroke(Color.primary, lineWidth: selectedColor == color ? 3 : 0)
-                                    .padding(1)
-                            )
-                            .onTapGesture {
-                                selectedColor = color
-                                onChange?()
+                                    .stroke(Color.primary, lineWidth: 3)
+                                    .frame(width: 32, height: 32)
                             }
+                        }
+                        .onTapGesture {
+                            selectedColor = color
+                            onChange?()
+                        }
                     }
                 }
             }

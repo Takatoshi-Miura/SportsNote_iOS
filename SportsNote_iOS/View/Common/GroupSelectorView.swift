@@ -13,9 +13,7 @@ struct GroupSelectorView: View {
     
     var body: some View {
         HStack {
-            Circle()
-                .fill(getGroupColor(for: selectedGroupIndex))
-                .frame(width: 16, height: 16)
+            GroupColorCircle(color: getGroupColor(for: selectedGroupIndex))
             Text(groups.indices.contains(selectedGroupIndex) ? groups[selectedGroupIndex].title : "")
             Spacer()
             Menu {
@@ -27,9 +25,7 @@ struct GroupSelectorView: View {
                         }
                     }) {
                         HStack {
-                            Circle()
-                                .fill(getGroupColor(for: index))
-                                .frame(width: 16, height: 16)
+                            GroupColorCircle(color: getGroupColor(for: index))
                             Text(groups[index].title)
                             if selectedGroupIndex == index {
                                 Spacer()

@@ -184,9 +184,7 @@ private struct GroupChip: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 6) {
-                Circle()
-                    .fill(Color(GroupColor.allCases[Int(group.color)].color))
-                    .frame(width: 16, height: 16)
+                GroupColorCircle(color: Color(GroupColor.allCases[Int(group.color)].color))
 
                 Text(group.title)
                     .font(.subheadline)
@@ -224,6 +222,23 @@ private struct GroupChip: View {
         } else {
             return Color(.systemGray4)
         }
+    }
+}
+
+/// グループカラーサークルコンポーネント
+struct GroupColorCircle: View {
+    let color: Color
+    let size: CGFloat
+    
+    init(color: Color, size: CGFloat = 16) {
+        self.color = color
+        self.size = size
+    }
+    
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: size, height: size)
     }
 }
 
@@ -294,9 +309,7 @@ struct TaskRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Circle()
-                .fill(Color(taskList.groupColor.color))
-                .frame(width: 16, height: 16)
+            GroupColorCircle(color: Color(taskList.groupColor.color))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(taskList.title)
