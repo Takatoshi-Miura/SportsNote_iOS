@@ -30,6 +30,7 @@ struct TaskListSection: View {
                             showingDeleteConfirmation = true
                         }
                     )
+                    .contentShape(Rectangle())
 
                     if task.taskID != Array(taskReflections.keys).last?.taskID {
                         Divider()
@@ -86,6 +87,8 @@ struct TaskListSection: View {
         .disabled(unaddedTasks.isEmpty)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .allowsHitTesting(true)
     }
 }
 
@@ -112,6 +115,11 @@ struct TaskListItemView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+                .allowsHitTesting(true)
+                .onTapGesture {
+                    onOptionClick()
+                }
             }
             
             // メモ入力欄
@@ -128,6 +136,6 @@ struct TaskListItemView: View {
             .padding(.horizontal, 4)
         }
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.001))
+        .contentShape(Rectangle())
     }
 }
