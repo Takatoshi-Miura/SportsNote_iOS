@@ -186,7 +186,7 @@ private struct GroupChip: View {
             HStack(spacing: 6) {
                 Circle()
                     .fill(Color(GroupColor.allCases[Int(group.color)].color))
-                    .frame(width: 12, height: 12)
+                    .frame(width: 16, height: 16)
 
                 Text(group.title)
                     .font(.subheadline)
@@ -287,6 +287,7 @@ private struct TaskListView: View {
     }
 }
 
+/// 課題セル
 struct TaskRow: View {
     let taskList: TaskListData
     let isComplete: Bool
@@ -295,10 +296,9 @@ struct TaskRow: View {
         HStack(alignment: .top, spacing: 12) {
             Circle()
                 .fill(Color(taskList.groupColor.color))
-                .frame(width: 10, height: 10)
-                .padding(.top, 6)
+                .frame(width: 16, height: 16)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(taskList.title)
                     .font(.headline)
                     .strikethrough(isComplete)
@@ -310,6 +310,5 @@ struct TaskRow: View {
                     .lineLimit(1)
             }
         }
-        .padding(.vertical, 0)
     }
 }
