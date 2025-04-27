@@ -97,6 +97,7 @@ struct AddPracticeNoteView: View {
             .onTapGesture {
                 hideKeyboard()
             }
+            .allowsHitTesting(true)
         }
     }
     
