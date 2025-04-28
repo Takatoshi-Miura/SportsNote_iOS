@@ -53,6 +53,10 @@ struct TaskListSection: View {
             Button(LocalizedStrings.cancel, role: .cancel) {}
             Button(LocalizedStrings.delete, role: .destructive) {
                 if let task = selectedTaskForDeletion {
+                    if let deleteMemoID = task.memoID {
+                        let memoViewModel = MemoViewModel()
+                        memoViewModel.deleteMemo(memoID: deleteMemoID)
+                    }
                     taskReflections.removeValue(forKey: task)
                 }
             }
