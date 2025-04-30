@@ -8,6 +8,7 @@ struct MeasureDetailView: View {
     @State private var title: String
     @State private var memo: String = ""
     @StateObject private var viewModel: MeasuresViewModel
+    @StateObject private var memoViewModel = MemoViewModel()
     
     init(measure: Measures) {
         self.measure = measure
@@ -32,13 +33,14 @@ struct MeasureDetailView: View {
                 }
                 
                 Section(header: Text(LocalizedStrings.note)) {
-                    if viewModel.memos.isEmpty {
+                    let measuresMemos = memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID)
+                    if measuresMemos.isEmpty {
                         Text(LocalizedStrings.noNotesYet)
                             .foregroundColor(.gray)
                             .italic()
                     } else {
-                        ForEach(viewModel.memos, id: \.memoID) { memo in
-                            MemoRow(memo: memo)
+                        ForEach(measuresMemos, id: \.memoID) { measuresMemo in
+                            MeasuresMemoRow(measuresMemo: measuresMemo)
                         }
                     }
                 }
@@ -50,9 +52,6 @@ struct MeasureDetailView: View {
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            viewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)
-        }
     }
     
     /// キーボードを閉じる
@@ -61,16 +60,16 @@ struct MeasureDetailView: View {
     }
 }
 
-struct MemoRow: View {
-    let memo: Memo
+struct MeasuresMemoRow: View {
+    let measuresMemo: MeasuresMemo
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(memo.detail)
+            Text(measuresMemo.detail)
                 .font(.body)
                 .lineLimit(nil)
             
-            Text(formatDate(memo.created_at))
+            Text(formatDate(measuresMemo.date))
                 .font(.caption)
                 .foregroundColor(.gray)
         }
