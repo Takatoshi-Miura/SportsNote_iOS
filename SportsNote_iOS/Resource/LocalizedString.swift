@@ -86,6 +86,7 @@ struct LocalizedStrings {
     static let practiceDetail = "practiceDetail".localized
     static let searchNotes = "searchNotes".localized
     static let noNotesFound = "noNotesFound".localized
+    static let noteNotFound = "noteNotFound".localized
     static let detail = "detail".localized
     static let taskReflection = "taskReflection".localized
     static let noTasksAvailable = "noTasksAvailable".localized

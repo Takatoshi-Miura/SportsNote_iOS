@@ -77,6 +77,7 @@
 "practiceDetail" = "練習内容";
 "searchNotes" = "ノートを検索...";
 "noNotesFound" = "ノートが見つかりません";
+"noteNotFound" = "ノートが見つかりません";
 "detail" = "詳細";
 "taskReflection" = "取り組んだ課題";
 "noTasksAvailable" = "追加可能な課題がありません";

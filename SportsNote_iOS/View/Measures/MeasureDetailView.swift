@@ -31,6 +31,10 @@ struct MeasureDetailView: View {
                             )
                         }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hideKeyboard()
+                }
                 
                 Section(header: Text(LocalizedStrings.note)) {
                     let measuresMemos = memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID)
@@ -40,18 +44,27 @@ struct MeasureDetailView: View {
                             .italic()
                     } else {
                         ForEach(measuresMemos, id: \.memoID) { measuresMemo in
-                            MeasuresMemoRow(measuresMemo: measuresMemo)
+                            NavigationLink(destination: destinationView(for: measuresMemo.noteID)) {
+                                MeasuresMemoRow(measuresMemo: measuresMemo)
+                            }
                         }
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                hideKeyboard()
-            }
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    /// ノートIDに基づいて適切な遷移先を返す
+    @ViewBuilder
+    private func destinationView(for noteID: String) -> some View {
+        if let note = RealmManager.shared.getObjectById(id: noteID, type: Note.self),
+           let noteType = NoteType(rawValue: note.noteType) {
+            noteType.destinationView(noteID: noteID)
+        } else {
+            Text(LocalizedStrings.noteNotFound)
+        }
     }
     
     /// キーボードを閉じる
