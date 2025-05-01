@@ -50,6 +50,7 @@
 "hideCompletedTasks" = "完了した課題を非表示";
 "noTasksWorkedOn" = "取り組んだ課題はありません。";
 "addTask" = "課題を追加";
+"deleteTask" = "課題を削除しますか？\n課題を削除すると復元できません。";
 
 // MARK: Measures
 "measures" = "対策";
@@ -57,6 +58,7 @@
 "measuresDetail" = "対策の詳細";
 "noNotesYet" = "ノートがありません";
 "noMeasures" = "対策がありません";
+"deleteMeasures" = "対策を削除しますか？\n対策を削除するとノートに記入した本課題に関する記載も全て削除されます。一度削除した対策は復元できません。";
 
 // MARK: Note
 "note" = "ノート";

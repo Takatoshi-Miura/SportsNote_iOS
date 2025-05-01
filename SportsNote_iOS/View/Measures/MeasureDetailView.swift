@@ -9,6 +9,8 @@ struct MeasureDetailView: View {
     @State private var memo: String = ""
     @StateObject private var viewModel: MeasuresViewModel
     @StateObject private var memoViewModel = MemoViewModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var showDeleteConfirmation = false
     
     init(measure: Measures) {
         self.measure = measure
@@ -54,6 +56,27 @@ struct MeasureDetailView: View {
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        .alert(isPresented: $showDeleteConfirmation) {
+            Alert(
+                title: Text(LocalizedStrings.delete),
+                message: Text(String(format: LocalizedStrings.deleteMeasures)),
+                primaryButton: .destructive(Text(LocalizedStrings.delete)) {
+                    viewModel.deleteMeasures(id: measure.measuresID)
+                    dismiss()
+                },
+                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
+            )
+        }
     }
     
     /// ノートIDに基づいて適切な遷移先を返す

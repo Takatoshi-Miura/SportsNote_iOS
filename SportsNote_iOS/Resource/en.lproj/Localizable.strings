@@ -50,6 +50,7 @@
 "hideCompletedTasks" = "Hide Completed Tasks";
 "noTasksWorkedOn" = "No tasks worked on.";
 "addTask" = "Add Task";
+"deleteTask" = "Do you want to delete the task? \nOnce you delete an task, it cannot be restored.";
 
 // MARK: Measures
 "measures" = "Measures";
@@ -57,6 +58,7 @@
 "measuresDetail" = "Measures Details";
 "noNotesYet" = "No notes yet";
 "noMeasures" = "No measures";
+"deleteMeasures" = "Do you want to delete the measure? \nIf you delete a measure, all notes about this assignment that you have written in your notebook will also be deleted. Once deleted, the measure cannot be restored.";
 
 // MARK: Note
 "note" = "Note";

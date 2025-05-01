@@ -11,6 +11,7 @@ struct TaskDetailView: View {
     @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
     @State private var showCompletionToggleAlert = false
+    @State private var showDeleteConfirmation = false
 
     let taskData: TaskData
 
@@ -57,27 +58,49 @@ struct TaskDetailView: View {
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.task))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // 完了状態切り替えアラート
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showCompletionToggleAlert = true
-                }) {
-                    Image(systemName: "checkmark.circle")
+                HStack {
+                    Button(action: {
+                        showCompletionToggleAlert = true
+                    }) {
+                        Image(systemName: "checkmark.circle")
+                    }
+                    
+                    Button(action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
                 }
-                .alert(isPresented: $showCompletionToggleAlert) {
-                    let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete) ?
-                    LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
-                    return Alert(
-                        title: Text(title),
-                        primaryButton: .default(Text("OK")) {
-                            viewModel.toggleTaskCompletion(taskID: taskData.taskID)
+            }
+        }
+        .alert(isPresented: $showCompletionToggleAlert) {
+            let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete) ?
+            LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
+            return Alert(
+                title: Text(title),
+                primaryButton: .default(Text(LocalizedStrings.ok)) {
+                    viewModel.toggleTaskCompletion(taskID: taskData.taskID)
+                    dismiss()
+                },
+                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
+            )
+        }
+        .background(
+            EmptyView()
+                .alert(isPresented: $showDeleteConfirmation) {
+                    Alert(
+                        title: Text(LocalizedStrings.delete),
+                        message: Text(String(format: LocalizedStrings.deleteTask)),
+                        primaryButton: .destructive(Text(LocalizedStrings.delete)) {
+                            viewModel.deleteTask(id: taskData.taskID)
                             dismiss()
                         },
                         secondaryButton: .cancel(Text(LocalizedStrings.cancel))
                     )
                 }
-            }
-        }
+        )
         .onAppear {
             loadData()
         }
