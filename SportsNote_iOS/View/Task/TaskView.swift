@@ -11,9 +11,7 @@ struct TaskView: View {
     @State private var showCompletedTasks = false
     @ObservedObject var viewModel = GroupViewModel()
     @ObservedObject var taskViewModel = TaskViewModel()
-    // ViewModelの変更を強制的に反映させるためのトリガー
     @State private var refreshTrigger: Bool = false
-    // Combine購読のキャンセル保持用
     @State private var cancellables = Set<AnyCancellable>()
     
     var body: some View {
@@ -251,6 +249,8 @@ private struct TaskListView: View {
     let refreshAction: () async -> Void
     // TaskViewModelを受け取るように追加
     let taskViewModel: TaskViewModel
+    @State private var showDeleteConfirmation = false
+    @State private var taskToDelete: String? = nil
 
     var body: some View {
         List {
@@ -263,9 +263,10 @@ private struct TaskListView: View {
                 }
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
-                        onDelete(taskList.taskID)
+                        taskToDelete = taskList.taskID
+                        showDeleteConfirmation = true
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label(LocalizedStrings.delete, systemImage: "trash")
                     }
                 }
                 .swipeActions(edge: .leading) {
@@ -286,6 +287,21 @@ private struct TaskListView: View {
         .refreshable {
             await refreshAction()
         }
+        .alert(
+            LocalizedStrings.delete,
+            isPresented: $showDeleteConfirmation,
+            actions: {
+                Button(LocalizedStrings.cancel, role: .cancel) {}
+                Button(LocalizedStrings.delete, role: .destructive) {
+                    if let taskID = taskToDelete {
+                        onDelete(taskID)
+                    }
+                }
+            },
+            message: {
+                Text(LocalizedStrings.deleteTask)
+            }
+        )
     }
 
     private func isTaskComplete(taskID: String) -> Bool {
