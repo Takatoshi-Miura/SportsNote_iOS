@@ -168,11 +168,6 @@ class TaskViewModel: ObservableObject {
         taskUpdatedPublisher.send()
     }
     
-    /// タスク一覧を更新する（外部からの呼び出し用）
-    func refreshTasks() {
-        fetchAllTasks()
-    }
-    
     // MARK: - Task Detail
     
     /// 課題の詳細情報を取得

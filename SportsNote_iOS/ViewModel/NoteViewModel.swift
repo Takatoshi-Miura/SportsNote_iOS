@@ -321,10 +321,6 @@ class NoteViewModel: ObservableObject {
     
     // MARK: - Filter Methods
     
-    func filterNotesByGroup(_ groupId: String) -> [Note] {
-        return notes.filter { $0.noteID == groupId }
-    }
-    
     func filterNotesByDate(_ date: Date) -> [Note] {
         // RealmManagerに処理を委譲し、日付でのフィルタリングを確実に行う
         return realmManager.getNotesByDate(selectedDate: date)
