@@ -147,5 +147,17 @@ struct LocalizedStrings {
     static let passwordResetEmailSent = "passwordResetEmailSent".localized
     static let accountCreated = "accountCreated".localized
     static let accountDeleted = "accountDeleted".localized
+    static let loginFailed = "loginFailed".localized
+    static let logoutFailed = "logoutFailed".localized
+    static let createAccountFailed = "createAccountFailed".localized
+    static let deleteAccountFailed = "deleteAccountFailed".localized
+    static let pleaseLogin = "pleaseLogin".localized
+    static let internetError = "internetError".localized
+    static let invalidCredentialsError = "invalidCredentialsError".localized
+    static let invalidUserError = "invalidUserError".localized
+    static let networkError = "networkError".localized
+    static let userCollisionError = "userCollisionError".localized
+    static let weakPasswordError = "weakPasswordError".localized
+    static let recentLoginRequiredError = "recentLoginRequiredError".localized
 }
 

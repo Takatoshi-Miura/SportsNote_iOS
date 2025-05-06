@@ -54,10 +54,12 @@ struct LoginView: View {
                         Button(action: {
                             if viewModel.isLoggedIn {
                                 // ログアウト処理
-                                viewModel.logout()
+                                // TODO: 成功、失敗時の処理を実装
+                                viewModel.logout(onSuccess: {}, onFailure: {})
                             } else {
                                 // ログイン処理
-                                viewModel.login()
+                                // TODO: 成功、失敗時の処理を実装
+                                viewModel.login(onSuccess: {}, onFailure: {})
                             }
                         }) {
                             Text(viewModel.isLoggedIn ? LocalizedStrings.logout : LocalizedStrings.login)
@@ -72,7 +74,8 @@ struct LoginView: View {
                         
                         // パスワードリセットボタン
                         Button(action: {
-                            viewModel.resetPassword()
+                            // TODO: 成功、失敗時の処理を実装
+                            viewModel.resetPassword(onSuccess: {}, onFailure: {})
                         }) {
                             Text(LocalizedStrings.resetPassword)
                                 .foregroundColor(.blue)
@@ -81,7 +84,8 @@ struct LoginView: View {
                         
                         // アカウント作成ボタン
                         Button(action: {
-                            viewModel.createAccount()
+                            // TODO: 成功、失敗時の処理を実装
+                            viewModel.createAccount(onSuccess: {}, onFailure: {})
                         }) {
                             Text(LocalizedStrings.createAccount)
                                 .foregroundColor(.blue)
@@ -91,7 +95,8 @@ struct LoginView: View {
                         // アカウント削除ボタン（ログイン中のみ表示）
                         if viewModel.isLoggedIn {
                             Button(action: {
-                                viewModel.deleteAccount()
+                                // TODO: 成功、失敗時の処理を実装
+                                viewModel.deleteAccount(onSuccess: {}, onFailure: {})
                             }) {
                                 Text(LocalizedStrings.deleteAccount)
                                     .foregroundColor(.red)

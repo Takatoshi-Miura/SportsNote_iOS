@@ -138,3 +138,15 @@
 "passwordResetEmailSent" = "パスワードリセットのメールを送信しました";
 "accountCreated" = "アカウントを作成しました";
 "accountDeleted" = "アカウントを削除しました";
+"loginFailed" = "ログインに失敗しました";
+"logoutFailed" = "ログアウトに失敗しました";
+"createAccountFailed" = "アカウント作成に失敗しました";
+"deleteAccountFailed" = "アカウント削除に失敗しました";
+"pleaseLogin" = "ログインしてください";
+"internetError" = "インターネット接続を確認してください";
+"invalidCredentialsError" = "メールアドレスまたはパスワードが間違っています";
+"invalidUserError" = "ユーザーが見つかりませんでした";
+"networkError" = "ネットワークエラーが発生しました";
+"userCollisionError" = "このメールアドレスは既に使用されています";
+"weakPasswordError" = "より強力なパスワードを設定してください";
+"recentLoginRequiredError" = "再度ログインしてから操作を行ってください";

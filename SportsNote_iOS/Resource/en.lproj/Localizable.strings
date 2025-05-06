@@ -138,3 +138,15 @@
 "passwordResetEmailSent" = "Password reset email sent";
 "accountCreated" = "Account created";
 "accountDeleted" = "Account deleted";
+"loginFailed" = "Login failed";
+"logoutFailed" = "Logout failed";
+"createAccountFailed" = "Failed to create account";
+"deleteAccountFailed" = "Failed to delete account";
+"pleaseLogin" = "Please login";
+"internetError" = "Please check your internet connection";
+"invalidCredentialsError" = "Invalid email or password";
+"invalidUserError" = "User not found";
+"networkError" = "Network error occurred";
+"userCollisionError" = "This email is already in use";
+"weakPasswordError" = "Please use a stronger password";
+"recentLoginRequiredError" = "Please login again before this operation";

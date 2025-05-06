@@ -1,6 +1,5 @@
 import Foundation
 
-@MainActor
 class UserDefaultsManager {
     /// キー一覧
     struct Keys {
@@ -12,8 +11,8 @@ class UserDefaultsManager {
         static let agree = "agree" // 利用規約への同意状況
     }
     
-    private static let userDefaults = UserDefaults.standard
-    private static var cachedUserID: String?
+    nonisolated(unsafe) private static let userDefaults = UserDefaults.standard
+    nonisolated(unsafe) private static var cachedUserID: String?
     
     private static func getEditor() -> UserDefaults {
         return userDefaults
