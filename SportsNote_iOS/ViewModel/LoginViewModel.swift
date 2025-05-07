@@ -4,7 +4,7 @@ import FirebaseAuth
 import FirebaseCore
 
 class LoginViewModel: ObservableObject {
-    // 状態用のパブリッシャー
+    
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -12,19 +12,19 @@ class LoginViewModel: ObservableObject {
     @Published var alertMessage: String = ""
     @Published var isLoading: Bool = false
     
-    // Combineのサブスクリプション管理用
     private var cancellables = Set<AnyCancellable>()
-    
-    // FirebaseAuthのインスタンス
     private let auth = Auth.auth()
     
     init() {
-        // 初期化時にログイン状態をチェック
         checkLoginStatus()
     }
     
-    // ログイン処理
+    /// ログイン処理
+    /// - Parameters:
+    ///   - onSuccess: 成功時の処理
+    ///   - onFailure: 失敗時の処理
     func login(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
+        // 未入力エラー
         if email.isEmpty || password.isEmpty {
             alertMessage = LocalizedStrings.pleaseEnterEmailAndPassword
             showingAlert = true
@@ -32,6 +32,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
+        // オフラインエラー
         if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
@@ -41,6 +42,7 @@ class LoginViewModel: ObservableObject {
         
         isLoading = true
         
+        // ログイン処理
         auth.signIn(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
             
@@ -53,6 +55,7 @@ class LoginViewModel: ObservableObject {
             }
             
             if authResult?.user != nil {
+                // TODO: 処理を確認
                 // ユーザー情報の保存
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: authResult?.user.uid ?? "")
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.address, value: self.email)
@@ -67,7 +70,6 @@ class LoginViewModel: ObservableObject {
                 self.alertMessage = LocalizedStrings.loginSuccessful
                 self.showingAlert = true
                 
-                // 成功ハンドラーを呼び出す
                 onSuccess()
             } else {
                 self.alertMessage = LocalizedStrings.loginFailed
@@ -77,8 +79,12 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // ログアウト処理
+    /// ログアウト処理
+    /// - Parameters:
+    ///   - onSuccess: 成功時の処理
+    ///   - onFailure: 失敗時の処理
     func logout(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
+        // オフラインエラー
         if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
@@ -100,7 +106,6 @@ class LoginViewModel: ObservableObject {
             alertMessage = LocalizedStrings.logoutSuccessful
             showingAlert = true
             
-            // 成功ハンドラーを呼び出す
             onSuccess()
         } catch {
             alertMessage = LocalizedStrings.logoutFailed
@@ -109,8 +114,12 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // パスワードリセット
+    /// パスワードリセット処理
+    /// - Parameters:
+    ///   - onSuccess: 成功時の処理
+    ///   - onFailure: 失敗時の処理
     func resetPassword(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
+        // 未入力エラー
         if email.isEmpty {
             alertMessage = LocalizedStrings.pleaseEnterEmail
             showingAlert = true
@@ -118,6 +127,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
+        // オフラインエラー
         if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
@@ -127,6 +137,7 @@ class LoginViewModel: ObservableObject {
         
         isLoading = true
         
+        // パスワードリセット処理
         auth.sendPasswordReset(withEmail: email) { [weak self] error in
             guard let self = self else { return }
             
@@ -144,8 +155,12 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // アカウント作成
+    /// アカウント作成処理
+    /// - Parameters:
+    ///   - onSuccess: 成功時の処理
+    ///   - onFailure: 失敗時の処理
     func createAccount(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
+        // 未入力エラー
         if email.isEmpty || password.isEmpty {
             alertMessage = LocalizedStrings.pleaseEnterEmailAndPassword
             showingAlert = true
@@ -153,6 +168,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
+        // オフラインエラー
         if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
@@ -162,6 +178,7 @@ class LoginViewModel: ObservableObject {
         
         isLoading = true
         
+        // アカウント作成処理
         auth.createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
             
@@ -180,6 +197,7 @@ class LoginViewModel: ObservableObject {
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
                 
+                // TODO: 処理を確認
                 // RealmデータのuserIDを更新する処理（実際の実装はここに追加）
                 self.updateAllUserIds(userId: user.uid)
                 
@@ -190,7 +208,6 @@ class LoginViewModel: ObservableObject {
                 self.alertMessage = LocalizedStrings.accountCreated
                 self.showingAlert = true
                 
-                // 成功ハンドラーを呼び出す
                 onSuccess()
             } else {
                 self.alertMessage = LocalizedStrings.createAccountFailed
@@ -200,8 +217,12 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // アカウント削除
+    /// アカウント削除処理
+    /// - Parameters:
+    ///   - onSuccess: 成功時の処理
+    ///   - onFailure: 失敗時の処理
     func deleteAccount(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
+        // オフラインエラー
         if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
@@ -209,14 +230,8 @@ class LoginViewModel: ObservableObject {
             return
         }
         
-        if !isLoggedIn {
-            alertMessage = LocalizedStrings.pleaseLogin
-            showingAlert = true
-            onFailure()
-            return
-        }
-        
-        guard let user = auth.currentUser else {
+        // 未ログインエラー
+        guard let user = auth.currentUser, isLoggedIn else {
             alertMessage = LocalizedStrings.pleaseLogin
             showingAlert = true
             onFailure()
@@ -225,6 +240,7 @@ class LoginViewModel: ObservableObject {
         
         isLoading = true
         
+        // アカウント削除処理
         user.delete { [weak self] error in
             guard let self = self else { return }
             
@@ -250,7 +266,7 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // ログイン状態の確認
+    /// ログイン状態の確認
     private func checkLoginStatus() {
         isLoggedIn = auth.currentUser != nil
         
@@ -260,7 +276,7 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // Firebaseの認証エラーハンドリング
+    /// Firebaseの認証エラーハンドリング
     private func handleAuthError(_ error: Error) {
         let authError = error as NSError
         
