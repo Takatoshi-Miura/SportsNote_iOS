@@ -32,7 +32,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
-        if !isNetworkOnline() {
+        if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
             onFailure()
@@ -79,7 +79,7 @@ class LoginViewModel: ObservableObject {
     
     // ログアウト処理
     func logout(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
-        if !isNetworkOnline() {
+        if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
             onFailure()
@@ -118,7 +118,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
-        if !isNetworkOnline() {
+        if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
             onFailure()
@@ -153,7 +153,7 @@ class LoginViewModel: ObservableObject {
             return
         }
         
-        if !isNetworkOnline() {
+        if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
             onFailure()
@@ -202,7 +202,7 @@ class LoginViewModel: ObservableObject {
     
     // アカウント削除
     func deleteAccount(onSuccess: @escaping () -> Void, onFailure: @escaping () -> Void) {
-        if !isNetworkOnline() {
+        if !Network.isOnline() {
             alertMessage = LocalizedStrings.internetError
             showingAlert = true
             onFailure()
@@ -284,13 +284,6 @@ class LoginViewModel: ObservableObject {
         }
         
         showingAlert = true
-    }
-    
-    // TODO: 以下の処理を実装すること
-    // ネットワーク接続確認（実際の実装はNetworkクラスなどで行う）
-    private func isNetworkOnline() -> Bool {
-        // ここに実際のネットワーク接続確認のコードを実装
-        return true // とりあえずデフォルトでtrueを返す
     }
     
     // データの削除（実際の実装はInitializationManagerなどで行う）
