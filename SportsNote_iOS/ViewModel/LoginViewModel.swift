@@ -312,9 +312,15 @@ class LoginViewModel: ObservableObject {
         // ここにアプリ初期化のコードを実装
     }
     
-    // 全データの同期（実際の実装はSyncManagerなどで行う）
+    /// 全データの同期
     private func syncAllData() {
-        // ここにデータ同期のコードを実装
+        Task<Void, Never>.detached { @Sendable in
+            do {
+                try await SyncManager.shared.syncAllData()
+            } catch {
+                print("データ同期に失敗しました: \(error.localizedDescription)")
+            }
+        }
     }
     
     // ユーザーIDの更新（実際の実装はRealmManagerなどで行う）
@@ -322,3 +328,4 @@ class LoginViewModel: ObservableObject {
         // ここにユーザーID更新のコードを実装
     }
 }
+
