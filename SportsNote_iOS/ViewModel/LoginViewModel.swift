@@ -62,9 +62,11 @@ class LoginViewModel: ObservableObject {
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
                 
-                // データ初期化と同期処理（実際の実装はここに追加）
-                self.initializeAppData(isLogin: true)
-                self.syncAllData()
+                // データ初期化と同期処理
+                Task.detached {
+                    await InitializationManager.shared.initializeApp(isLogin: true)
+                    await InitializationManager.shared.syncAllData()
+                }
                 
                 self.isLoggedIn = true
                 self.alertMessage = LocalizedStrings.loginSuccessful
@@ -96,8 +98,10 @@ class LoginViewModel: ObservableObject {
             try auth.signOut()
             
             // データの削除と初期化
-            deleteAllData()
-            initializeAppData(isLogin: false)
+            Task.detached {
+                await InitializationManager.shared.deleteAllData()
+                await InitializationManager.shared.initializeApp(isLogin: false)
+            }
             
             isLoggedIn = false
             email = ""
@@ -197,12 +201,12 @@ class LoginViewModel: ObservableObject {
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
                 
-                // TODO: 処理を確認
-                // RealmデータのuserIDを更新する処理（実際の実装はここに追加）
-                self.updateAllUserIds(userId: user.uid)
-                
                 // データ同期
-                self.syncAllData()
+                let userId = user.uid
+                Task.detached {
+                    await InitializationManager.shared.updateAllUserIds(userId: userId)
+                    await InitializationManager.shared.syncAllData()
+                }
                 
                 self.isLoggedIn = true
                 self.alertMessage = LocalizedStrings.accountCreated
@@ -253,8 +257,10 @@ class LoginViewModel: ObservableObject {
             }
             
             // データの削除と初期化
-            self.deleteAllData()
-            self.initializeAppData(isLogin: false)
+            Task.detached {
+                await InitializationManager.shared.deleteAllData()
+                await InitializationManager.shared.initializeApp(isLogin: false)
+            }
             
             self.isLoggedIn = false
             self.email = ""
@@ -300,32 +306,6 @@ class LoginViewModel: ObservableObject {
         }
         
         showingAlert = true
-    }
-    
-    // データの削除（実際の実装はInitializationManagerなどで行う）
-    private func deleteAllData() {
-        // ここにデータ削除のコードを実装
-    }
-    
-    // アプリの初期化（実際の実装はInitializationManagerなどで行う）
-    private func initializeAppData(isLogin: Bool) {
-        // ここにアプリ初期化のコードを実装
-    }
-    
-    /// 全データの同期
-    private func syncAllData() {
-        Task<Void, Never>.detached { @Sendable in
-            do {
-                try await SyncManager.shared.syncAllData()
-            } catch {
-                print("データ同期に失敗しました: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    // ユーザーIDの更新（実際の実装はRealmManagerなどで行う）
-    private func updateAllUserIds(userId: String) {
-        // ここにユーザーID更新のコードを実装
     }
 }
 
