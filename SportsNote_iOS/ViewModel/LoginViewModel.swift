@@ -55,8 +55,13 @@ class LoginViewModel: ObservableObject {
             }
             
             if authResult?.user != nil {
-                // TODO: 処理を確認
+                // データ全削除
+                Task.detached {
+                    await InitializationManager.shared.deleteAllData()
+                }
+                
                 // ユーザー情報の保存
+                UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: authResult?.user.uid ?? "")
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.address, value: self.email)
                 UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
@@ -71,7 +76,6 @@ class LoginViewModel: ObservableObject {
                 self.isLoggedIn = true
                 self.alertMessage = LocalizedStrings.loginSuccessful
                 self.showingAlert = true
-                
                 onSuccess()
             } else {
                 self.alertMessage = LocalizedStrings.loginFailed
@@ -106,10 +110,8 @@ class LoginViewModel: ObservableObject {
             isLoggedIn = false
             email = ""
             password = ""
-            
             alertMessage = LocalizedStrings.logoutSuccessful
             showingAlert = true
-            
             onSuccess()
         } catch {
             alertMessage = LocalizedStrings.logoutFailed
@@ -211,7 +213,6 @@ class LoginViewModel: ObservableObject {
                 self.isLoggedIn = true
                 self.alertMessage = LocalizedStrings.accountCreated
                 self.showingAlert = true
-                
                 onSuccess()
             } else {
                 self.alertMessage = LocalizedStrings.createAccountFailed
@@ -265,7 +266,6 @@ class LoginViewModel: ObservableObject {
             self.isLoggedIn = false
             self.email = ""
             self.password = ""
-            
             self.alertMessage = LocalizedStrings.accountDeleted
             self.showingAlert = true
             onSuccess()
