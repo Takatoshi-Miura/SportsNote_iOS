@@ -11,8 +11,7 @@ class InitializationManager {
     /// アプリの初期化
     /// - Parameter isLogin: ログイン済みかどうか
     func initializeApp(isLogin: Bool = false) async {
-        initializePreferences()
-        initializeRealm()
+        RealmManager.shared.initRealm()
         
         let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
         if isFirstLaunch {
@@ -28,41 +27,23 @@ class InitializationManager {
         }
     }
     
-    // TODO: 以降の処理を要確認
-    
-    /**
-     * UserDefaults を初期化
-     */
-    private func initializePreferences() {
-        // UserDefaultsManagerはすでに初期化されているため、追加の処理は不要
-    }
-    
-    /**
-     * Realm を初期化
-     */
-    private func initializeRealm() {
-        RealmManager.shared.initRealm()
-    }
-    
-    /**
-     * フリーノートを作成
-     */
+    /// フリーノートを作成
+    /// ※既に存在する場合は作成しない
     private func createFreeNote() async {
-        // フリーノートがすでに存在するか確認
-        if RealmManager.shared.getFreeNote() == nil {
-            let noteViewModel = NoteViewModel()
-            noteViewModel.saveFreeNote(
-                title: LocalizedStrings.freeNote,
-                detail: LocalizedStrings.defaltFreeNoteDetail
-            )
+        if RealmManager.shared.getFreeNote() != nil {
+            return
         }
+        
+        let noteViewModel = NoteViewModel()
+        noteViewModel.saveFreeNote(
+            title: LocalizedStrings.freeNote,
+            detail: LocalizedStrings.defaltFreeNoteDetail
+        )
     }
     
-    /**
-     * 未分類グループを作成
-     */
+    /// 未分類グループを作成
+    /// ※グループが既に存在する場合は作成しない
     private func createUncategorizedGroup() async {
-        // すでにグループが存在するか確認
         let groups = RealmManager.shared.getDataList(clazz: Group.self)
         if groups.isEmpty {
             let groupViewModel = GroupViewModel()
@@ -73,17 +54,13 @@ class InitializationManager {
         }
     }
     
-    /**
-     * データを全削除
-     */
+    /// データを全削除
     func deleteAllData() async {
         RealmManager.shared.clearAll()
         UserDefaultsManager.clearAll()
     }
     
-    /**
-     * 全データの同期処理
-     */
+    /// 全データの同期処理
     func syncAllData() async {
         do {
             try await SyncManager.shared.syncAllData()
@@ -92,11 +69,9 @@ class InitializationManager {
         }
     }
     
-    /**
-     * ユーザーIDの更新処理
-     */
+    /// ユーザIDの更新処理
+    /// - Parameter userId: userId
     func updateAllUserIds(userId: String) async {
-        // RealmManagerの機能を使用してユーザーIDを更新
         RealmManager.shared.updateAllUserIds(userId: userId)
     }
 } 
