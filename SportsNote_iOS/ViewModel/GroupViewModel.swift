@@ -9,8 +9,7 @@ class GroupViewModel: ObservableObject {
         fetchGroups()
     }
     
-    // MARK: - Data Operations
-    
+    /// グループ取得
     func fetchGroups() {
         groups = RealmManager.shared.getDataList(clazz: Group.self)
     }
@@ -42,16 +41,35 @@ class GroupViewModel: ObservableObject {
         )
         
         RealmManager.shared.saveItem(group)
-
-        // TODO: Firebaseへの同期
+        
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                let isUpdate = groupID != nil
+                if isUpdate {
+                    try await FirebaseManager.shared.updateGroup(group: group)
+                } else {
+                    try await FirebaseManager.shared.saveGroup(group: group)
+                }
+            }
+        }
 
         fetchGroups()
     }
     
+    /// グループ削除処理
+    /// - Parameter id: グループID
     func deleteGroup(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Group.self)
         
-        // TODO: Firebaseへの同期
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedGroup = RealmManager.shared.getObjectById(id: id, type: Group.self) {
+                    try await FirebaseManager.shared.updateGroup(group: deletedGroup)
+                }
+            }
+        }
         
         fetchGroups()
     }
