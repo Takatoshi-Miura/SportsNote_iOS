@@ -70,7 +70,17 @@ class MemoViewModel: ObservableObject {
         )
         RealmManager.shared.saveItem(memo)
         
-        // TODO: Firebaseの処理を追加
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                let isUpdate = memoID != nil
+                if isUpdate {
+                    try await FirebaseManager.shared.updateMemo(memo: memo)
+                } else {
+                    try await FirebaseManager.shared.saveMemo(memo: memo)
+                }
+            }
+        }
         
         // リストを更新
         fetchAllMemos()
@@ -86,7 +96,14 @@ class MemoViewModel: ObservableObject {
     func deleteMemo(memoID: String) {
         RealmManager.shared.logicalDelete(id: memoID, type: Memo.self)
         
-        // TODO: Firebaseの処理を追加
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedMemo = RealmManager.shared.getObjectById(id: memoID, type: Memo.self) {
+                    try await FirebaseManager.shared.updateMemo(memo: deletedMemo)
+                }
+            }
+        }
         
         // リストから削除したメモを除外
         memoList.removeAll(where: { $0.memoID == memoID })

@@ -64,7 +64,17 @@ class MeasuresViewModel: ObservableObject {
         )
         RealmManager.shared.saveItem(measures)
         
-        // TODO: Firebaseに保存
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                let isUpdate = measuresID != nil
+                if isUpdate {
+                    try await FirebaseManager.shared.updateMeasures(measures: measures)
+                } else {
+                    try await FirebaseManager.shared.saveMeasures(measures: measures)
+                }
+            }
+        }
         
         // リストを更新
         fetchAllMeasures()
@@ -75,7 +85,14 @@ class MeasuresViewModel: ObservableObject {
     func deleteMeasures(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Measures.self)
         
-        // TODO: Firebaseに保存
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedMeasures = RealmManager.shared.getObjectById(id: id, type: Measures.self) {
+                    try await FirebaseManager.shared.updateMeasures(measures: deletedMeasures)
+                }
+            }
+        }
         
         // リストから削除した対策を除外
         measuresList.removeAll(where: { $0.measuresID == id })
