@@ -71,18 +71,33 @@ class TargetViewModel: ObservableObject {
         )
         RealmManager.shared.saveItem(target)
         
+        // Firebaseに反映
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                try await FirebaseManager.shared.saveTarget(target: target)
+            }
+        }
+        
         // 保存後に同じ年月のデータを再取得して状態を更新
         if year == currentYear && month == currentMonth {
             fetchTargets(year: year, month: month)
         }
-
-        // TODO: Firebaseにも保存する
     }
     
     /// 目標を削除
     /// - Parameter id: targetID
     private func deleteTarget(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: Target.self)
+        
+        // Firebaseに反映
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedTarget = RealmManager.shared.getObjectById(id: id, type: Target.self) {
+                    try await FirebaseManager.shared.updateTarget(target: deletedTarget)
+                }
+            }
+        }
+        
         yearlyTargets.removeAll(where: { $0.targetID == id })
         monthlyTargets.removeAll(where: { $0.targetID == id })
     }
