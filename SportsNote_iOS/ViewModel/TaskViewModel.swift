@@ -77,7 +77,7 @@ class TaskViewModel: ObservableObject {
         if let group = RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
             return GroupColor.allCases[Int(group.color)]
         }
-        return GroupColor.gray // デフォルトはグレー
+        return GroupColor.gray
     }
     
     /// 最も優先度の高い（orderが低い）対策を取得
@@ -122,7 +122,17 @@ class TaskViewModel: ObservableObject {
         )
         RealmManager.shared.saveItem(task)
         
-        // TODO: Firebaseへの同期
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                let isUpdate = taskID != nil
+                if isUpdate {
+                    try await FirebaseManager.shared.updateTask(task: task)
+                } else {
+                    try await FirebaseManager.shared.saveTask(task: task)
+                }
+            }
+        }
         
         // Refresh task list
         fetchAllTasks()
@@ -159,7 +169,15 @@ class TaskViewModel: ObservableObject {
     func deleteTask(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
         
-        // Update task list by removing the deleted task
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedTask = RealmManager.shared.getObjectById(id: id, type: TaskData.self) {
+                    try await FirebaseManager.shared.updateTask(task: deletedTask)
+                }
+            }
+        }
+        
         tasks.removeAll(where: { $0.taskID == id })
         taskListData.removeAll(where: { $0.taskID == id })
         self.objectWillChange.send()
