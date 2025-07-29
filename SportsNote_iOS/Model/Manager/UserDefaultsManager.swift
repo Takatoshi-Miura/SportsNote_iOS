@@ -3,21 +3,21 @@ import Foundation
 class UserDefaultsManager {
     /// キー一覧
     struct Keys {
-        static let firstLaunch = "firstLaunch" // 初回起動判定
-        static let userID = "userID" // アカウント持ちならFirebaseID、なければ端末のUID
-        static let address = "address" // アカウントのメールアドレス
-        static let password = "password" // アカウントのパスワード
-        static let isLogin = "isLogin" // ログイン状態
-        static let agree = "agree" // 利用規約への同意状況
+        static let firstLaunch = "firstLaunch"  // 初回起動判定
+        static let userID = "userID"  // アカウント持ちならFirebaseID、なければ端末のUID
+        static let address = "address"  // アカウントのメールアドレス
+        static let password = "password"  // アカウントのパスワード
+        static let isLogin = "isLogin"  // ログイン状態
+        static let agree = "agree"  // 利用規約への同意状況
     }
-    
+
     nonisolated(unsafe) private static let userDefaults = UserDefaults.standard
     nonisolated(unsafe) private static var cachedUserID: String?
-    
+
     private static func getEditor() -> UserDefaults {
         return userDefaults
     }
-    
+
     /// 保存処理
     /// - Parameters:
     ///   - key: キー
@@ -26,7 +26,7 @@ class UserDefaultsManager {
         if key == Keys.userID {
             cachedUserID = value as? String
         }
-        
+
         switch value {
         case let value as Int:
             userDefaults.set(value, forKey: key)
@@ -42,7 +42,7 @@ class UserDefaultsManager {
             fatalError("Unsupported type")
         }
     }
-    
+
     /// 取得処理
     /// - Parameters:
     ///   - key: キー
@@ -62,7 +62,7 @@ class UserDefaultsManager {
             set(key: key, value: newID)
             return newID as! T
         }
-        
+
         // 通常の処理
         if let value = userDefaults.value(forKey: key) as? T {
             return value
@@ -70,7 +70,7 @@ class UserDefaultsManager {
             return defaultValue
         }
     }
-    
+
     /// 削除処理
     /// - Parameter key: キー
     static func remove(key: String) {
@@ -79,7 +79,7 @@ class UserDefaultsManager {
         }
         userDefaults.removeObject(forKey: key)
     }
-    
+
     /// UserDefaultsの全データを削除
     static func clearAll() {
         cachedUserID = nil
@@ -87,7 +87,7 @@ class UserDefaultsManager {
             userDefaults.removeObject(forKey: key)
         }
     }
-    
+
     /// ユーザIDを再生成
     static func resetUserInfo(userID: String = UUID().uuidString) {
         set(key: Keys.userID, value: userID)

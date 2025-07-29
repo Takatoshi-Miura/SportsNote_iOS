@@ -1,13 +1,13 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 struct AddPracticeNoteView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var taskViewModel = TaskViewModel()
     @StateObject private var noteViewModel = NoteViewModel()
-    
+
     var onSave: () -> Void
-    
+
     @State private var purpose: String = ""
     @State private var detail: String = ""
     @State private var reflection: String = ""
@@ -16,7 +16,7 @@ struct AddPracticeNoteView: View {
     @State private var selectedWeather: Weather = .sunny
     @State private var temperature: Int = 20
     @State private var taskReflections: [TaskListData: String] = [:]
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -27,7 +27,7 @@ struct AddPracticeNoteView: View {
                     temperature: $temperature,
                     onUpdate: {}
                 )
-                
+
                 // 体調
                 TextEditorSection(
                     title: LocalizedStrings.condition,
@@ -35,7 +35,7 @@ struct AddPracticeNoteView: View {
                     text: $condition,
                     onUpdate: {}
                 )
-                
+
                 // 目的
                 TextEditorSection(
                     title: LocalizedStrings.purpose,
@@ -43,7 +43,7 @@ struct AddPracticeNoteView: View {
                     text: $purpose,
                     onUpdate: {}
                 )
-                
+
                 // 内容
                 TextEditorSection(
                     title: LocalizedStrings.practiceDetail,
@@ -51,7 +51,7 @@ struct AddPracticeNoteView: View {
                     text: $detail,
                     onUpdate: {}
                 )
-                
+
                 // 取り組んだ課題
                 Section(header: Text(LocalizedStrings.taskReflection)) {
                     TaskListSection(
@@ -59,7 +59,7 @@ struct AddPracticeNoteView: View {
                         unaddedTasks: getUnaddedTasks()
                     )
                 }
-                
+
                 // 反省
                 TextEditorSection(
                     title: LocalizedStrings.reflection,
@@ -100,17 +100,15 @@ struct AddPracticeNoteView: View {
             .allowsHitTesting(true)
         }
     }
-    
+
     /// 未追加のタスクを取得
     private func getUnaddedTasks() -> [TaskListData] {
         let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
-        return taskViewModel.taskListData.filter { 
-            !$0.isComplete && 
-            !addedTaskIds.contains($0.taskID) &&
-            $0.measuresID != ""
+        return taskViewModel.taskListData.filter {
+            !$0.isComplete && !addedTaskIds.contains($0.taskID) && $0.measuresID != ""
         }
     }
-    
+
     /// 保存処理
     private func saveNote() {
         noteViewModel.savePracticeNoteWithReflections(
@@ -123,11 +121,11 @@ struct AddPracticeNoteView: View {
             temperature: temperature,
             taskReflections: taskReflections
         )
-        
+
         onSave()
         dismiss()
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

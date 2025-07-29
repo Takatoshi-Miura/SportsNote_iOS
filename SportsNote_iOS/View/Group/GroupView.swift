@@ -1,6 +1,6 @@
-import UIKit
-import SwiftUI
 import RealmSwift
+import SwiftUI
+import UIKit
 
 /// グループ詳細画面
 struct GroupView: View {

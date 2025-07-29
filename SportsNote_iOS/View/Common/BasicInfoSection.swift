@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 // 基本情報セクション
 struct BasicInfoSection: View {
@@ -7,7 +7,7 @@ struct BasicInfoSection: View {
     @Binding var selectedWeather: Weather
     @Binding var temperature: Int
     let onUpdate: () -> Void
-    
+
     var body: some View {
         Section(header: Text(LocalizedStrings.basicInfo)) {
             // 日付
@@ -19,7 +19,7 @@ struct BasicInfoSection: View {
             .onChange(of: date) { _ in
                 onUpdate()
             }
-            
+
             // 天気
             HStack {
                 Text(LocalizedStrings.weather)
@@ -39,7 +39,7 @@ struct BasicInfoSection: View {
                     onUpdate()
                 }
             }
-            
+
             // 気温
             HStack {
                 Text(LocalizedStrings.temperature)

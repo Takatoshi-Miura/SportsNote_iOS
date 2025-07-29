@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct TargetView: View {
     @Binding var isMenuOpen: Bool
@@ -10,7 +10,7 @@ struct TargetView: View {
     @State private var selectedMonth = Calendar.current.component(.month, from: Date())
     @State private var selectedDate: Date?
     @StateObject var viewModel = TargetViewModel()
-    
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.target,
@@ -43,7 +43,7 @@ struct TargetView: View {
                             targetViewModel: viewModel
                         )
                         .padding(.top, 16)
-                        
+
                         // ノートリストセクション
                         if let date = selectedDate {
                             NoteListSection(
@@ -57,7 +57,7 @@ struct TargetView: View {
             },
             actionItems: [
                 (LocalizedStrings.yearlyTarget, { isAddYearlyTargetPresented = true }),
-                (LocalizedStrings.monthlyTarget, { isAddMonthlyTargetPresented = true })
+                (LocalizedStrings.monthlyTarget, { isAddMonthlyTargetPresented = true }),
             ]
         )
         .sheet(isPresented: $isAddYearlyTargetPresented) {
@@ -83,7 +83,7 @@ struct TargetView: View {
         .onAppear {
             // 初期時の年月をViewModelにセット
             viewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
-            
+
             // 初回だけ全ノートを読み込み
             if noteViewModel.notes.isEmpty {
                 noteViewModel.fetchNotes()
@@ -115,7 +115,7 @@ struct TodayButton: View {
             selectedYear = calendar.component(.year, from: today)
             selectedMonth = calendar.component(.month, from: today)
             selectedDate = today
-            
+
             // ViewModelの年月も更新
             targetViewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
 
@@ -144,20 +144,24 @@ struct CalendarSection: View {
     @State private var currentMonth: Date
     @State private var currentDisplayedYearMonth: (year: Int, month: Int)
     @ObservedObject var targetViewModel: TargetViewModel
-    
-    init(selectedYear: Int, selectedMonth: Int, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void, targetViewModel: TargetViewModel) {
+
+    init(
+        selectedYear: Int, selectedMonth: Int, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void,
+        targetViewModel: TargetViewModel
+    ) {
         self.selectedYear = selectedYear
         self.selectedMonth = selectedMonth
         self._selectedDate = selectedDate
         self.onDateSelected = onDateSelected
-        self._currentMonth = State(initialValue: {
-            let calendar = Calendar.current
-            return calendar.date(from: DateComponents(year: selectedYear, month: selectedMonth, day: 1)) ?? Date()
-        }())
+        self._currentMonth = State(
+            initialValue: {
+                let calendar = Calendar.current
+                return calendar.date(from: DateComponents(year: selectedYear, month: selectedMonth, day: 1)) ?? Date()
+            }())
         self._currentDisplayedYearMonth = State(initialValue: (selectedYear, selectedMonth))
         self.targetViewModel = targetViewModel
     }
-    
+
     var body: some View {
         VStack {
             // 目標表示 - 表示中の年月の目標を使用
@@ -174,12 +178,12 @@ struct CalendarSection: View {
                     let calendar = Calendar.current
                     let year = calendar.component(.year, from: newDate)
                     let month = calendar.component(.month, from: newDate)
-                    
+
                     // 年月が変わったら表示される月と目標を更新
                     if year != currentDisplayedYearMonth.year || month != currentDisplayedYearMonth.month {
                         currentDisplayedYearMonth = (year, month)
                         currentMonth = newDate
-                        
+
                         // 目標データを更新
                         targetViewModel.updateCurrentPeriod(year: year, month: month)
                     }
@@ -193,7 +197,7 @@ struct CalendarSection: View {
         .onAppear {
             // 初期表示時にも目標を取得
             targetViewModel.updateCurrentPeriod(
-                year: currentDisplayedYearMonth.year, 
+                year: currentDisplayedYearMonth.year,
                 month: currentDisplayedYearMonth.month
             )
         }
@@ -265,24 +269,27 @@ struct CalendarView: View {
     @Binding var selectedDate: Date?
     let onDateSelected: (Date) -> Void
     let onMonthChanged: (Date) -> Void
-    
+
     @State private var currentMonth: Date
     @GestureState private var dragOffset: CGFloat = 0
-    @State private var slideDirection: CGFloat = 0 // スライド方向（-1: 左, 1: 右）
-    @State private var isAnimating: Bool = false   // アニメーション中かどうか
-    @StateObject private var noteViewModel = NoteViewModel() // 日付にノートがあるかの判定用
-    @State private var datesWithNotes: Set<Date> = [] // ノートがある日付のセット
-    
+    @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
+    @State private var isAnimating: Bool = false  // アニメーション中かどうか
+    @StateObject private var noteViewModel = NoteViewModel()  // 日付にノートがあるかの判定用
+    @State private var datesWithNotes: Set<Date> = []  // ノートがある日付のセット
+
     // 曜日の配列（日曜始まり）
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    
-    init(selectedDate: Binding<Date?>, initialDate: Date = Date(), onDateSelected: @escaping (Date) -> Void, onMonthChanged: @escaping (Date) -> Void) {
+
+    init(
+        selectedDate: Binding<Date?>, initialDate: Date = Date(), onDateSelected: @escaping (Date) -> Void,
+        onMonthChanged: @escaping (Date) -> Void
+    ) {
         self._selectedDate = selectedDate
         self.onDateSelected = onDateSelected
         self.onMonthChanged = onMonthChanged
         self._currentMonth = State(initialValue: initialDate)
     }
-    
+
     var body: some View {
         VStack {
             // カレンダーヘッダー
@@ -292,16 +299,16 @@ struct CalendarView: View {
                 }) {
                     Image(systemName: "chevron.left")
                 }
-                
+
                 Spacer()
-                
+
                 let monthYear = currentMonth.formatted(.dateTime.month().year())
                 Text(monthYear)
                     .font(.title3)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     changeMonth(isPrevious: false)
                 }) {
@@ -310,14 +317,14 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 5)
-            
+
             // カレンダーコンテンツ（スワイプ可能）
             ZStack {
                 calendarContent
                     .offset(x: isAnimating ? -slideDirection * UIScreen.main.bounds.width : 0)
                     .offset(x: dragOffset)
                     .animation(isAnimating ? .easeInOut(duration: 0.3) : nil, value: isAnimating)
-                
+
                 if isAnimating {
                     // 新しい月のカレンダーを表示（スライド方向に基づいて配置）
                     calendarContent
@@ -328,13 +335,13 @@ struct CalendarView: View {
             .gesture(
                 DragGesture()
                     .updating($dragOffset) { value, state, _ in
-                        if !isAnimating { // アニメーション中はドラッグを無視
+                        if !isAnimating {  // アニメーション中はドラッグを無視
                             state = value.translation.width
                         }
                     }
                     .onEnded { value in
-                        guard !isAnimating else { return } // アニメーション中はジェスチャーを処理しない
-                        
+                        guard !isAnimating else { return }  // アニメーション中はジェスチャーを処理しない
+
                         let threshold: CGFloat = 50
                         if value.translation.width > threshold {
                             // 右スワイプ - 前月
@@ -350,10 +357,10 @@ struct CalendarView: View {
         .onAppear {
             // 初期表示時にもコールバックを呼び出し
             onMonthChanged(currentMonth)
-            
+
             // 当月のノートがある日付を取得
             updateDatesWithNotes()
-            
+
             // 「今日」ボタンの通知を受け取る
             NotificationCenter.default.addObserver(
                 forName: NSNotification.Name("MoveToToday"),
@@ -368,12 +375,14 @@ struct CalendarView: View {
                     let currentYearValue = calendar.component(.year, from: self.currentMonth)
                     let todayMonthValue = calendar.component(.month, from: today)
                     let todayYearValue = calendar.component(.year, from: today)
-                    
+
                     if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
                         // アニメーションなしで今日の月に直接移動
-                        self.currentMonth = calendar.date(from: DateComponents(year: todayYearValue, month: todayMonthValue, day: 1)) ?? today
+                        self.currentMonth =
+                            calendar.date(from: DateComponents(year: todayYearValue, month: todayMonthValue, day: 1))
+                            ?? today
                         self.onMonthChanged(self.currentMonth)
-                        
+
                         // ノートの更新
                         self.updateDatesWithNotes()
                     }
@@ -389,49 +398,51 @@ struct CalendarView: View {
             )
         }
     }
-    
+
     // 月の切り替えを行う関数
     private func changeMonth(isPrevious: Bool) {
-        guard !isAnimating else { return } // 既にアニメーション中なら何もしない
-        
+        guard !isAnimating else { return }  // 既にアニメーション中なら何もしない
+
         isAnimating = true
-        slideDirection = isPrevious ? -1 : 1 // 前月なら左から右へ、次月なら右から左へ
-        
+        slideDirection = isPrevious ? -1 : 1  // 前月なら左から右へ、次月なら右から左へ
+
         // アニメーション完了後の処理
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             // 月を実際に変更
             withAnimation(nil) {
-                let newMonth = Calendar.current.date(
-                    byAdding: .month,
-                    value: isPrevious ? -1 : 1,
-                    to: currentMonth
-                ) ?? currentMonth
-                
+                let newMonth =
+                    Calendar.current.date(
+                        byAdding: .month,
+                        value: isPrevious ? -1 : 1,
+                        to: currentMonth
+                    ) ?? currentMonth
+
                 currentMonth = newMonth
                 onMonthChanged(currentMonth)
-                
+
                 // アニメーションをリセット
                 isAnimating = false
                 slideDirection = 0
-                
+
                 // 新しい月のノートがある日付を取得
                 updateDatesWithNotes()
             }
         }
     }
-    
+
     // 表示中の月のノートがある日付を更新
     private func updateDatesWithNotes() {
         datesWithNotes.removeAll()
-        
+
         // 表示している月の初日と末日を取得
         let calendar = Calendar.current
         let year = calendar.component(.year, from: currentMonth)
         let month = calendar.component(.month, from: currentMonth)
-        
+
         if let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
-           let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate) {
-            
+            let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate)
+        {
+
             // 月の初日から末日までの間の全ての日のノートを確認
             var date = startDate
             while date <= endDate {
@@ -444,7 +455,7 @@ struct CalendarView: View {
             }
         }
     }
-    
+
     // カレンダーコンテンツ部分を分離
     private var calendarContent: some View {
         VStack {
@@ -458,7 +469,7 @@ struct CalendarView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            
+
             // 日付グリッド
             let days = extractDates()
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
@@ -487,25 +498,25 @@ struct CalendarView: View {
             }
         }
     }
-    
+
     // 曜日ヘッダーの色を返す関数（0=Sunday, 6=Saturday）
     private func colorForWeekdayHeader(_ weekday: Int) -> Color {
         switch weekday {
-        case 0: // Sunday
+        case 0:  // Sunday
             return .red
-        case 6: // Saturday
+        case 6:  // Saturday
             return .blue
         default:
             return .primary
         }
     }
-    
+
     // 曜日に応じた色を返す関数（日付セルの色）
     private func colorForWeekday(_ weekday: Int) -> Color {
         switch weekday {
-        case 0: // Sunday
+        case 0:  // Sunday
             return .red
-        case 6: // Saturday
+        case 6:  // Saturday
             return .blue
         default:
             return .primary
@@ -515,32 +526,32 @@ struct CalendarView: View {
     private func isToday(_ date: Date) -> Bool {
         return Calendar.current.isDate(date, inSameDayAs: Date())
     }
-    
+
     private func isSelectedDate(_ date: Date) -> Bool {
         guard let selectedDate = selectedDate else { return false }
         return Calendar.current.isDate(date, inSameDayAs: selectedDate)
     }
-    
+
     private func hasNoteForDate(_ date: Date) -> Bool {
         let startOfDay = Calendar.current.startOfDay(for: date)
         return datesWithNotes.contains(startOfDay)
     }
-    
+
     private func foregroundColorFor(_ date: Date) -> Color {
         if isSelectedDate(date) {
             return .white
         } else if JapaneseHolidayChecker.isJapaneseHoliday(date) {
             // 日本の祝日の場合は赤色で表示
             return .red
-        } else if date.get(.weekday) == 1 { // 日曜日は1
+        } else if date.get(.weekday) == 1 {  // 日曜日は1
             return .red
-        } else if date.get(.weekday) == 7 { // 土曜日は7
+        } else if date.get(.weekday) == 7 {  // 土曜日は7
             return .blue
         } else {
             return .primary
         }
     }
-    
+
     @ViewBuilder
     private func backgroundFor(_ date: Date) -> some View {
         // 選択中の日付 > 今日 > ノートがある日付 の優先順位で背景を決定
@@ -555,15 +566,15 @@ struct CalendarView: View {
             EmptyView()
         }
     }
-    
+
     private func extractDates() -> [Date] {
         let calendar = Calendar.current
         let startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
         let firstWeekday = calendar.component(.weekday, from: startDate)
         let daysInMonth = calendar.range(of: .day, in: .month, for: currentMonth)!.count
-        
+
         var days: [Date] = []
-        
+
         // Add days from previous month
         let daysFromPreviousMonth = firstWeekday - 1
         if daysFromPreviousMonth > 0 {
@@ -573,14 +584,14 @@ struct CalendarView: View {
                 }
             }
         }
-        
+
         // Add days from current month
         for day in 0..<daysInMonth {
             if let date = calendar.date(byAdding: .day, value: day, to: startDate) {
                 days.append(date)
             }
         }
-        
+
         // Add days from next month to complete the grid
         let remainingDays = 7 - (days.count % 7)
         if remainingDays < 7 {
@@ -590,7 +601,7 @@ struct CalendarView: View {
                 }
             }
         }
-        
+
         return days
     }
 }
@@ -599,7 +610,7 @@ struct CalendarView: View {
 struct NoteListSection: View {
     let notes: [Note]
     let date: Date
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             // ノート数を表示
@@ -608,7 +619,7 @@ struct NoteListSection: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             if notes.isEmpty {
                 Text("ノートがありません")
                     .foregroundColor(.gray)
@@ -632,7 +643,7 @@ struct NoteListSection: View {
         .cornerRadius(10)
         .padding(.horizontal)
     }
-    
+
     @ViewBuilder
     private func noteDestination(for note: Note) -> some View {
         switch NoteType(rawValue: note.noteType) {

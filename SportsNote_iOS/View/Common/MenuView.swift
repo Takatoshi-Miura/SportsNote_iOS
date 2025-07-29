@@ -3,7 +3,7 @@ import UIKit
 
 struct MenuButton: View {
     @Binding var isMenuOpen: Bool
-    
+
     var body: some View {
         Button(action: {
             withAnimation {
@@ -40,27 +40,28 @@ struct MenuView: View {
     @State private var isTutorialDialogVisible: Bool = false
     private let appVersion: String
     private let appName: String
-    
+
     // セクションデータ
     @State private var sections: [SectionData] = []
-    
+
     var onDismiss: () -> Void
-    
+
     init(isMenuOpen: Binding<Bool>, onDismiss: @escaping () -> Void) {
         self._isMenuOpen = isMenuOpen
         self.onDismiss = onDismiss
         self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "不明"
         self.appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? "不明"
     }
-    
+
     /// メーラーを表示する処理
     private func openMailer() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootViewController = windowScene.windows.first?.rootViewController {
+            let rootViewController = windowScene.windows.first?.rootViewController
+        {
             Mailer.openInquiry(from: rootViewController)
         }
     }
-    
+
     /// セクションデータを作成
     private func createSections() -> [SectionData] {
         return [
@@ -91,7 +92,7 @@ struct MenuView: View {
                         subTitle: "",
                         iconRes: "envelope",
                         onClick: { openMailer() }
-                    )
+                    ),
                 ]
             ),
             // その他
@@ -115,12 +116,12 @@ struct MenuView: View {
                         subTitle: appVersion,
                         iconRes: "info.circle",
                         onClick: {}
-                    )
+                    ),
                 ]
-            )
+            ),
         ]
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             List {
@@ -157,7 +158,7 @@ struct MenuView: View {
 /// メニュー項目のビュー
 struct MenuItemView: View {
     let item: ItemData
-    
+
     var body: some View {
         HStack {
             Image(systemName: item.iconRes)
@@ -183,7 +184,7 @@ struct MenuItemView: View {
 
 struct TutorialScreen: View {
     var onDismiss: () -> Void
-    
+
     var body: some View {
         TutorialView()
             .onDisappear {

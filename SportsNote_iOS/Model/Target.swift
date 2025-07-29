@@ -12,7 +12,7 @@ open class Target: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    
+
     override init() {
         super.init()
         targetID = UUID().uuidString
@@ -23,7 +23,7 @@ open class Target: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
-        
+
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID
@@ -31,7 +31,7 @@ open class Target: Object {
             self.userID = ""
         }
     }
-    
+
     convenience init(
         title: String,
         year: Int,
@@ -44,7 +44,7 @@ open class Target: Object {
         self.month = month
         self.isYearlyTarget = isYearlyTarget
     }
-    
+
     public override static func primaryKey() -> String? {
         return "targetID"
     }

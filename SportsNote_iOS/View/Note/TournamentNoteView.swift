@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 /// 大会ノート詳細画面
 struct TournamentNoteView: View {
@@ -8,7 +8,7 @@ struct TournamentNoteView: View {
     @State private var memo = ""
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteConfirmation = false
-    
+
     // 編集用の状態変数
     @State private var target: String = ""
     @State private var consciousness: String = ""
@@ -18,7 +18,7 @@ struct TournamentNoteView: View {
     @State private var date: Date = Date()
     @State private var selectedWeather: Weather = .sunny
     @State private var temperature: Int = 20
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -39,7 +39,7 @@ struct TournamentNoteView: View {
                             temperature: $temperature,
                             onUpdate: updateNote
                         )
-                        
+
                         // 体調
                         TextEditorSection(
                             title: LocalizedStrings.condition,
@@ -47,7 +47,7 @@ struct TournamentNoteView: View {
                             text: $condition,
                             onUpdate: updateNote
                         )
-                        
+
                         // 目標
                         TextEditorSection(
                             title: LocalizedStrings.target,
@@ -55,7 +55,7 @@ struct TournamentNoteView: View {
                             text: $target,
                             onUpdate: updateNote
                         )
-                        
+
                         // 意識すること
                         TextEditorSection(
                             title: LocalizedStrings.consciousness,
@@ -63,7 +63,7 @@ struct TournamentNoteView: View {
                             text: $consciousness,
                             onUpdate: updateNote
                         )
-                        
+
                         // 結果
                         TextEditorSection(
                             title: LocalizedStrings.result,
@@ -71,7 +71,7 @@ struct TournamentNoteView: View {
                             text: $result,
                             onUpdate: updateNote
                         )
-                        
+
                         // 反省
                         TextEditorSection(
                             title: LocalizedStrings.reflection,
@@ -128,15 +128,15 @@ struct TournamentNoteView: View {
             }
         }
     }
-    
+
     private func loadData() {
         viewModel.loadNote(id: noteID)
         viewModel.loadMemos()
     }
-    
+
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
-        
+
         viewModel.saveTournamentNote(
             noteID: note.noteID,
             target: target,
@@ -150,7 +150,7 @@ struct TournamentNoteView: View {
             created_at: note.created_at
         )
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

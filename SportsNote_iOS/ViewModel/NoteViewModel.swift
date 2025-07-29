@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 @MainActor
 class NoteViewModel: ObservableObject {
@@ -10,15 +10,15 @@ class NoteViewModel: ObservableObject {
     @Published var freeNotes: [Note] = []
     @Published var memos: [Memo] = []
     @Published var isLoadingNote: Bool = false
-    
+
     private let realmManager = RealmManager.shared
-    
+
     init() {
         fetchNotes()
     }
-    
+
     // MARK: - Fetch Methods
-    
+
     func fetchNotes() {
         let allNotes = realmManager.getNotes()
         if let freeNote = realmManager.getFreeNote() {
@@ -30,22 +30,22 @@ class NoteViewModel: ObservableObject {
         notes = allNotes
         updateFilteredNotes()
     }
-    
+
     private func updateFilteredNotes() {
         practiceNotes = notes.filter { $0.noteType == NoteType.practice.rawValue }
         tournamentNotes = notes.filter { $0.noteType == NoteType.tournament.rawValue }
         freeNotes = notes.filter { $0.noteType == NoteType.free.rawValue }
     }
-    
+
     // MARK: - Search Methods
-    
+
     func searchNotes(query: String) {
         let searchResults = realmManager.searchNotesByQuery(query: query)
         notes = searchResults
     }
-    
+
     // MARK: - CRUD Operations
-    
+
     /// ノート保存処理(新規作成と更新を兼ねる)
     /// - Parameters:
     ///   - noteID: ノートID（更新時に指定、新規作成時はnil）
@@ -82,15 +82,15 @@ class NoteViewModel: ObservableObject {
     ) -> Note {
         // 新しいNoteオブジェクトを作成または既存のIDを再利用
         let note = Note()
-        
+
         if let id = noteID {
             // 既存ノートの更新の場合、IDを設定
             note.noteID = id
         }
-        
+
         // ノートタイプの設定
         note.noteType = noteType.rawValue
-        
+
         // 既存のノートからデータを取得
         if let id = noteID, let existingNote = realmManager.getObjectById(id: id, type: Note.self) {
             // 既存の値で初期化（明示的に上書きされない限り保持される）
@@ -111,80 +111,81 @@ class NoteViewModel: ObservableObject {
             // 新規ノートの場合
             note.created_at = created_at ?? Date()
         }
-        
+
         // 各ノートタイプに応じたフィールド設定（パラメータで明示的に指定されたもののみ上書き）
         if let title = title {
             note.title = title
         }
-        
+
         if let purpose = purpose {
             note.purpose = purpose
         }
-        
+
         if let detail = detail {
             note.detail = detail
         }
-        
+
         if let target = target {
             note.target = target
         }
-        
+
         if let consciousness = consciousness {
             note.consciousness = consciousness
         }
-        
+
         if let result = result {
             note.result = result
         }
-        
+
         if let reflection = reflection {
             note.reflection = reflection
         }
-        
+
         if let condition = condition {
             note.condition = condition
         }
-        
+
         if let date = date {
             note.date = date
         }
-        
+
         if let weather = weather {
             note.weather = weather.rawValue
         }
-        
+
         if let temperature = temperature {
             note.temperature = temperature
         }
-        
+
         // 更新日時は必ず現在の時刻
         note.updated_at = Date()
-        
+
         // Realmに保存
         realmManager.saveItem(note)
-        
+
         // データの再取得
         if noteID == nil {
             fetchNotes()
         } else {
             loadNote(id: note.noteID)
         }
-        
+
         return note
     }
-    
+
     func deleteNote(id: String) {
         // Don't allow deleting free note
         if let note = notes.first(where: { $0.noteID == id }),
-           note.noteType == NoteType.free.rawValue {
+            note.noteType == NoteType.free.rawValue
+        {
             return
         }
-        
+
         realmManager.logicalDelete(id: id, type: Note.self)
         notes.removeAll(where: { $0.noteID == id })
         updateFilteredNotes()
     }
-    
+
     /// 練習ノートの保存処理
     @discardableResult
     private func savePracticeNote(
@@ -211,7 +212,7 @@ class NoteViewModel: ObservableObject {
             created_at: created_at
         )
     }
-    
+
     /// 練習ノートの保存処理とタスクリフレクションの更新
     /// - Parameters:
     ///   - noteID: ノートID（更新時に指定、新規作成時はnil）
@@ -248,11 +249,11 @@ class NoteViewModel: ObservableObject {
             temperature: temperature,
             created_at: created_at
         )
-        
+
         // タスクリフレクションを更新
         updateTaskReflections(noteID: note.noteID, taskReflections: taskReflections)
     }
-    
+
     /// 課題の振り返りメモを保存・更新
     /// - Parameters:
     ///   - noteID: ノートID
@@ -260,7 +261,7 @@ class NoteViewModel: ObservableObject {
     private func updateTaskReflections(noteID: String, taskReflections: [TaskListData: String]) {
         for (task, reflectionText) in taskReflections {
             if reflectionText.isEmpty { continue }
-            
+
             let memo = Memo()
             memo.memoID = task.memoID ?? UUID().uuidString
             memo.measuresID = task.measuresID
@@ -268,11 +269,11 @@ class NoteViewModel: ObservableObject {
             memo.detail = reflectionText
             realmManager.saveItem(memo)
         }
-        
+
         // メモを再読み込み
         loadMemos()
     }
-    
+
     /// 大会ノートの保存処理
     @discardableResult
     func saveTournamentNote(
@@ -301,7 +302,7 @@ class NoteViewModel: ObservableObject {
             created_at: created_at
         )
     }
-    
+
     /// フリーノートの保存処理
     @discardableResult
     func saveFreeNote(
@@ -318,23 +319,23 @@ class NoteViewModel: ObservableObject {
             created_at: created_at
         )
     }
-    
+
     // MARK: - Filter Methods
-    
+
     func filterNotesByDate(_ date: Date) -> [Note] {
         // RealmManagerに処理を委譲し、日付でのフィルタリングを確実に行う
         return realmManager.getNotesByDate(selectedDate: date)
     }
-    
+
     // MARK: - Note Detail Methods
-    
+
     func loadNote(id: String) {
         isLoadingNote = true
         selectedNote = realmManager.getObjectById(id: id, type: Note.self)
         loadMemos()
         isLoadingNote = false
     }
-    
+
     func loadNote() {
         isLoadingNote = true
         if let id = selectedNote?.noteID {
@@ -343,11 +344,11 @@ class NoteViewModel: ObservableObject {
         }
         isLoadingNote = false
     }
-    
+
     func loadMemos() {
         if let noteID = selectedNote?.noteID {
             memos = realmManager.getMemosByNoteID(noteID: noteID)
         }
     }
-    
+
 }

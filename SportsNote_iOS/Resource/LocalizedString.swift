@@ -29,11 +29,11 @@ struct LocalizedStrings {
     static let deleteNote = "deleteNote".localized
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     static let error = "error".localized
-    
+
     // MARK: Task View
     static let showCompletedTasks = "showCompletedTasks".localized
     static let hideCompletedTasks = "hideCompletedTasks".localized
-    
+
     // MARK: Color
     static let color = "color".localized
     static let red = "red".localized
@@ -46,12 +46,12 @@ struct LocalizedStrings {
     static let gray = "gray".localized
     static let white = "white".localized
     static let black = "black".localized
-    
+
     // MARK: Group
     static let group = "group".localized
     static let uncategorized = "uncategorized".localized
     static let deleteGroup = "deleteGroup".localized
-    
+
     // MARK: Task
     static let task = "task".localized
     static let cause = "cause".localized
@@ -60,7 +60,7 @@ struct LocalizedStrings {
     static let noTasksWorkedOn = "noTasksWorkedOn".localized
     static let addTask = "addTask".localized
     static let deleteTask = "deleteTask".localized
-    
+
     // MARK: Measures
     static let measures = "measures".localized
     static let measuresPriority = "measuresPriority".localized
@@ -68,7 +68,7 @@ struct LocalizedStrings {
     static let noNotesYet = "noNotesYet".localized
     static let noMeasures = "noMeasures".localized
     static let deleteMeasures = "deleteMeasures".localized
-        
+
     // MARK: Note
     static let note = "note".localized
     static let practiceNote = "practiceNote".localized
@@ -121,7 +121,7 @@ struct LocalizedStrings {
     static let termsOfServiceMessage = "TermsOfServiceMessage".localized
     static let checkTermsOfService = "checkTermsOfService".localized
     static let agree = "agree".localized
-    
+
     // MARK: Mail
     static let pleaseEnterInquiry = "pleaseEnterInquiry".localized
     static let doNotDeleteBelow = "doNotDeleteBelow".localized
@@ -129,7 +129,7 @@ struct LocalizedStrings {
     static let osVersion = "osVersion".localized
     static let mailError = "mailError".localized
     static let mailAppNotFound = "mailAppNotFound".localized
-    
+
     // MARK: Login/Auth
     static let login = "login".localized
     static let logout = "logout".localized
@@ -160,4 +160,3 @@ struct LocalizedStrings {
     static let weakPasswordError = "weakPasswordError".localized
     static let recentLoginRequiredError = "recentLoginRequiredError".localized
 }
-

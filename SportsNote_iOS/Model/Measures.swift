@@ -1,5 +1,5 @@
-import UIKit
 import RealmSwift
+import UIKit
 
 /// 対策
 class Measures: Object {
@@ -11,7 +11,7 @@ class Measures: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    
+
     override init() {
         super.init()
         measuresID = UUID().uuidString
@@ -21,7 +21,7 @@ class Measures: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
-        
+
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID
@@ -29,7 +29,7 @@ class Measures: Object {
             self.userID = ""
         }
     }
-    
+
     convenience init(
         measuresID: String,
         taskID: String,
@@ -44,7 +44,7 @@ class Measures: Object {
         self.order = order
         self.created_at = created_at
     }
-    
+
     override static func primaryKey() -> String? {
         return "measuresID"
     }

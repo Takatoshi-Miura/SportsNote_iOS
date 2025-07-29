@@ -4,7 +4,7 @@ struct TutorialView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = TutorialViewModel()
     @State private var currentPage = 0
-    
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -17,7 +17,7 @@ struct TutorialView: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
-                
+
                 // ナビゲーションボタン
                 HStack {
                     // 戻るボタン（最初のページでは非表示）
@@ -39,9 +39,9 @@ struct TutorialView: View {
                     } else {
                         Spacer()
                     }
-                    
+
                     Spacer()
-                    
+
                     // 次へボタンまたは完了ボタン
                     Button(action: {
                         if currentPage < viewModel.pages.count - 1 {
@@ -53,7 +53,9 @@ struct TutorialView: View {
                         }
                     }) {
                         HStack {
-                            Text(currentPage < viewModel.pages.count - 1 ? LocalizedStrings.next : LocalizedStrings.complete)
+                            Text(
+                                currentPage < viewModel.pages.count - 1
+                                    ? LocalizedStrings.next : LocalizedStrings.complete)
                             if currentPage < viewModel.pages.count - 1 {
                                 Image(systemName: "chevron.right")
                             }
@@ -83,14 +85,14 @@ struct TutorialView: View {
 /// チュートリアルの各ページを表示するビュー
 struct TutorialPageView: View {
     let page: TutorialPage
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Text(page.title)
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.top)
-            
+
             // スクリーンショットイメージ
             Image(page.imageName)
                 .resizable()
@@ -98,12 +100,12 @@ struct TutorialPageView: View {
                 .cornerRadius(12)
                 .shadow(radius: 5)
                 .padding(.horizontal)
-            
+
             Text(page.description)
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-            
+
             Spacer()
         }
         .padding()
@@ -114,4 +116,4 @@ struct TutorialView_Previews: PreviewProvider {
     static var previews: some View {
         TutorialView()
     }
-} 
+}

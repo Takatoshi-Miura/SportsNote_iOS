@@ -3,12 +3,12 @@ import SwiftUI
 struct TabTopView<Trailing: View, Content: View>: View {
     @Binding var isMenuOpen: Bool
     @State private var showActionSheet = false
-    
+
     let title: String
     let trailingItem: Trailing
     let content: () -> Content
     let actionItems: [(title: String, action: () -> Void)]
-    
+
     init(
         title: String,
         isMenuOpen: Binding<Bool>,
@@ -22,7 +22,7 @@ struct TabTopView<Trailing: View, Content: View>: View {
         self.content = content
         self.actionItems = actionItems
     }
-    
+
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 0) {
@@ -43,7 +43,7 @@ struct TabTopView<Trailing: View, Content: View>: View {
                 // 設定メニューをオーバーレイ
                 EmptyView()
             )
-            
+
             // ＋ボタン
             VStack {
                 Spacer()

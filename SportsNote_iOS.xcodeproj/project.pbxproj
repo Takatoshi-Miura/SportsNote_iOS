@@ -14,8 +14,6 @@
 		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
 		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
 		8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */; };
-		8DF30B972E3904B20044FB42 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F52D85171600AC19C1 /* Realm */; };
-		8DF53A4E2DA28DD8004ED22E /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 8D4EF5F72D85171600AC19C1 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,7 +40,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				8DF53A4E2DA28DD8004ED22E /* RealmSwift in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -78,7 +75,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8DF30B972E3904B20044FB42 /* Realm in Frameworks */,
 				8D8F87352D8CECDA00899E68 /* FirebaseAnalytics in Frameworks */,
 				8D8F87372D8CECDA00899E68 /* FirebaseAuth in Frameworks */,
 				8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */,
@@ -137,7 +133,6 @@
 				8D79F2D52D80660200D5D685 /* Frameworks */,
 				8D79F2D62D80660200D5D685 /* Resources */,
 				8DF53A4F2DA28DD8004ED22E /* Embed Frameworks */,
-				8DF30C1A2E3905670044FB42 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -279,26 +274,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		8DF30C1A2E3905670044FB42 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# フォーマットしたいフォルダを指定\nTARGET_DIR=\"$SRCROOT/SportsNote_iOS\"\n\n# Xcode内蔵のswift-formatを使用してフォーマットを実行\nif xcrun --find swift-format >/dev/null; then\n  xcrun swift-format format --in-place --recursive \"$TARGET_DIR\"\nelse\n  echo \"warning: Xcodeにswift-formatが見つかりません。Xcode 16以降を使用してください。\"\nfi\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8D79F2D42D80660200D5D685 /* Sources */ = {

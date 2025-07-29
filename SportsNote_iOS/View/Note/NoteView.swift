@@ -6,7 +6,7 @@ struct NoteView: View {
     @State private var isPracticeNotePresented = false
     @State private var isTournamentNotePresented = false
     @State private var searchQuery = ""
-    
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.note,
@@ -20,7 +20,7 @@ struct NoteView: View {
                         .onTapGesture {
                             hideKeyboard()
                         }
-                    
+
                     VStack(spacing: 0) {
                         SearchBarView(searchText: $searchQuery) {
                             viewModel.fetchNotes()
@@ -36,7 +36,7 @@ struct NoteView: View {
                             }
                     }
                     .onChange(of: searchQuery) { newValue in
-                        if (!newValue.isEmpty) {
+                        if !newValue.isEmpty {
                             viewModel.searchNotes(query: newValue)
                         } else {
                             viewModel.fetchNotes()
@@ -46,7 +46,7 @@ struct NoteView: View {
             },
             actionItems: [
                 (LocalizedStrings.practiceNote, { isPracticeNotePresented = true }),
-                (LocalizedStrings.tournamentNote, { isTournamentNotePresented = true })
+                (LocalizedStrings.tournamentNote, { isTournamentNotePresented = true }),
             ]
         )
         .sheet(isPresented: $isPracticeNotePresented) {
@@ -60,7 +60,7 @@ struct NoteView: View {
             })
         }
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -71,17 +71,17 @@ struct NoteView: View {
 struct SearchBarView: View {
     @Binding var searchText: String
     var onClear: () -> Void
-    
+
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
                 .padding(.leading)
-            
+
             TextField(LocalizedStrings.searchNotes, text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.vertical, 8)
-            
+
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
@@ -100,7 +100,7 @@ struct SearchBarView: View {
         )
         .padding()
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -111,7 +111,7 @@ struct SearchBarView: View {
 struct NoteListView: View {
     @ObservedObject var viewModel: NoteViewModel
     @State private var selectedNoteID: String? = nil
-    
+
     var body: some View {
         List {
             if viewModel.notes.isEmpty {
@@ -126,7 +126,7 @@ struct NoteListView: View {
                     NavigationLink(
                         tag: note.noteID,
                         selection: $selectedNoteID,
-                        destination: { 
+                        destination: {
                             noteType.destinationView(noteID: note.noteID)
                                 .onDisappear {
                                     // 詳細画面から戻ったときに選択状態を解除
@@ -157,19 +157,19 @@ struct NoteListView: View {
 /// ノートセル
 struct NoteRow: View {
     let note: Note
-    
+
     var body: some View {
         HStack(spacing: 12) {
             noteTypeIndicator
                 .padding(.vertical, 2)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     let noteType = NoteType(rawValue: note.noteType) ?? .free
                     Text(noteType.displayTitle(from: note))
                         .font(.headline)
                         .lineLimit(1)
-                    
+
                     Spacer()
 
                     Text(formatDate(note.date))
@@ -186,7 +186,7 @@ struct NoteRow: View {
         }
         .padding(.vertical, 4)
     }
-    
+
     // Note type indicator with color
     private var noteTypeIndicator: some View {
         let noteType = NoteType(rawValue: note.noteType) ?? .free
@@ -199,7 +199,7 @@ struct NoteRow: View {
                 .cornerRadius(8)
         }
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"

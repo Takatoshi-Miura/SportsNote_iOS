@@ -12,11 +12,11 @@ struct TutorialPage {
 class TutorialViewModel: ObservableObject {
     /// 使い方ページデータ
     @Published var pages: [TutorialPage] = []
-    
+
     init() {
         setupTutorialPages()
     }
-    
+
     /// チュートリアルページをセットアップ
     private func setupTutorialPages() {
         pages = [
@@ -73,7 +73,7 @@ class TutorialViewModel: ObservableObject {
                     完了した課題からいつでも振り返ることができます。
                     """,
                 imageName: "screenshot_6"
-            )
+            ),
         ]
     }
 }

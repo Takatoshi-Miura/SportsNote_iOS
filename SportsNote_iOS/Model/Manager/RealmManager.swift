@@ -1,5 +1,5 @@
-import UIKit
 import RealmSwift
+import UIKit
 
 struct RealmConstants {
     static let databaseName = "sportsnote.realm"
@@ -9,46 +9,47 @@ struct RealmConstants {
 /// Realmデータベースを管理するクラス
 @MainActor
 class RealmManager: Sendable {
-    
+
     // シングルトンインスタンス
     static let shared = RealmManager()
-    
+
     private init() {}
-    
+
     /// Realmを初期化(起動準備)
     func initRealm() {
         let config = Realm.Configuration(
-            fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent().appendingPathComponent(RealmConstants.databaseName),
+            fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent()
+                .appendingPathComponent(RealmConstants.databaseName),
             schemaVersion: RealmConstants.schemaVersion,
-            deleteRealmIfMigrationNeeded: true // マイグレーションが必要な場合、データ削除
+            deleteRealmIfMigrationNeeded: true  // マイグレーションが必要な場合、データ削除
         )
         Realm.Configuration.defaultConfiguration = config
     }
-    
+
     /// Realmファイルのパスを出力
     func printRealmFilePath() {
         if let realmFile = Realm.Configuration.defaultConfiguration.fileURL {
             print("Realm file path: \(realmFile)")
         }
     }
-    
+
     // MARK: - Insert
-    
+
     /// 汎用的なデータ保存メソッド
     /// - Parameter item: 保存するデータ
     func saveItem<T: Object>(_ item: T) {
         do {
             let realm = try Realm()
             try realm.write {
-                realm.add(item, update: .modified) // `insertOrUpdate`相当
+                realm.add(item, update: .modified)  // `insertOrUpdate`相当
             }
         } catch let error {
             print("Failed to save item: \(error)")
         }
     }
-    
+
     // MARK: - Update
-    
+
     /// すべてのデータの userID を指定した値に更新する
     /// - Parameter userId: 更新後の userID
     func updateAllUserIds(userId: String) {
@@ -67,9 +68,9 @@ class RealmManager: Sendable {
             print("Error updating all userIDs: \(error)")
         }
     }
-    
+
     // MARK: - Select
-    
+
     /// 指定したクラスに対応するプライマリキーのプロパティ名を取得
     /// - Returns: Tに対応するプライマリキーのプロパティ名
     /// - Throws: 対応していないクラスの場合にスローされる
@@ -91,7 +92,7 @@ class RealmManager: Sendable {
             fatalError("Unsupported class")
         }
     }
-    
+
     /// 汎用的なデータ取得メソッド（ID指定）
     /// - Parameter id: 検索するID（文字列）
     /// - Returns: 取得データ（存在しない場合やエラーが発生した場合は`nil`）
@@ -100,12 +101,12 @@ class RealmManager: Sendable {
             print("Error: Empty ID provided")
             return nil
         }
-        
+
         do {
             let realm = try Realm()
             // PrimaryKeyで安全に検索
             let primaryKeyName = getPrimaryKeyName(type)
-            
+
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {
                 // オブジェクトがisDeletedプロパティを持っているか確認
@@ -130,7 +131,7 @@ class RealmManager: Sendable {
             return nil
         }
     }
-    
+
     /// 汎用的なデータ一覧取得メソッド
     /// - Parameter clazz: 取得するデータ型のクラス
     /// - Returns: 条件に一致するデータのリスト
@@ -141,7 +142,8 @@ class RealmManager: Sendable {
                 .filter("isDeleted == false")
             // "order" プロパティが存在する場合のみソート
             if let schema = clazz.sharedSchema(),
-               schema.properties.contains(where: { $0.name == "order" }) {
+                schema.properties.contains(where: { $0.name == "order" })
+            {
                 results = results.sorted(byKeyPath: "order", ascending: true)
             }
             return Array(results)
@@ -150,7 +152,7 @@ class RealmManager: Sendable {
             return []
         }
     }
-    
+
     /// 汎用的なデータカウント取得メソッド
     /// - Parameter clazz: RealmObjectのクラス型
     /// - Returns: isDeletedがfalseのデータ数
@@ -165,7 +167,7 @@ class RealmManager: Sendable {
             return 0
         }
     }
-    
+
     /// groupIDに合致する完了した課題を取得
     /// - Parameter groupID: groupID
     /// - Returns: 完了した課題のリスト
@@ -181,7 +183,7 @@ class RealmManager: Sendable {
             return []
         }
     }
-    
+
     /// taskIDに合致する対策を取得
     /// - Parameter taskID: taskID
     /// - Returns: 対策のリスト
@@ -197,7 +199,7 @@ class RealmManager: Sendable {
             return []
         }
     }
-    
+
     /// フリーノートを取得
     /// - Returns: フリーノート（存在しない場合は`nil`）
     func getFreeNote() -> Note? {
@@ -211,32 +213,36 @@ class RealmManager: Sendable {
             return nil
         }
     }
-    
+
     /// 指定された文字列を含むノートを検索
     /// - Parameter query: 検索する文字列
     /// - Returns: 検索結果のノートリスト
     func searchNotesByQuery(query: String) -> [Note] {
         do {
             let realm = try Realm()
-            
+
             // フリーノートを取得
-            let freeNotes = Array(realm.objects(Note.self)
-                .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
-            
+            let freeNotes = Array(
+                realm.objects(Note.self)
+                    .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
+
             // 検索条件に一致するノートを取得（フリーノート以外）
-            let queryNotes = Array(realm.objects(Note.self)
-                .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
-                .filter("condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@", query, query, query, query, query, query, query))
-            
+            let queryNotes = Array(
+                realm.objects(Note.self)
+                    .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
+                    .filter(
+                        "condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@",
+                        query, query, query, query, query, query, query))
+
             // IDが空でないことを確認し、無効なIDのノートを除外
             let validFreeNotes = freeNotes.filter { note in
                 !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
             }
-            
+
             let validQueryNotes = queryNotes.filter { note in
                 !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
             }
-            
+
             // フリーノートを先頭にして、検索結果を日付の降順でソート
             return validFreeNotes + validQueryNotes.sorted(by: { $0.date > $1.date })
         } catch {
@@ -244,7 +250,7 @@ class RealmManager: Sendable {
             return []
         }
     }
-    
+
     /// 指定した日付に合致するノートを取得
     /// - Parameter selectedDate: 日付
     /// - Returns: 指定した日付に合致するノートのリスト
@@ -253,22 +259,26 @@ class RealmManager: Sendable {
             let realm = try Realm()
             let startOfDay = Calendar.current.startOfDay(for: selectedDate)
             let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-            return Array(realm.objects(Note.self)
-                .filter("isDeleted == false AND noteType != %@ AND date >= %@ AND date < %@", NoteType.free.rawValue, startOfDay, endOfDay))
+            return Array(
+                realm.objects(Note.self)
+                    .filter(
+                        "isDeleted == false AND noteType != %@ AND date >= %@ AND date < %@", NoteType.free.rawValue,
+                        startOfDay, endOfDay))
         } catch {
             print("Error fetching notes by date: \(error)")
             return []
         }
     }
-    
+
     /// すべてのノートを取得（フリーノートは除く）
     /// - Returns: ノートのリスト
     func getNotes() -> [Note] {
         do {
             let realm = try Realm()
-            return Array(realm.objects(Note.self)
-                .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
-                .sorted(byKeyPath: "date", ascending: false))
+            return Array(
+                realm.objects(Note.self)
+                    .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
+                    .sorted(byKeyPath: "date", ascending: false))
         } catch {
             print("Error fetching notes: \(error)")
             return []
@@ -281,30 +291,32 @@ class RealmManager: Sendable {
     func getMemosByMeasuresID(measuresID: String) -> [Memo] {
         do {
             let realm = try Realm()
-            return Array(realm.objects(Memo.self)
-                .filter("measuresID == %@ AND isDeleted == false", measuresID)
-                .sorted(byKeyPath: "created_at", ascending: true))
+            return Array(
+                realm.objects(Memo.self)
+                    .filter("measuresID == %@ AND isDeleted == false", measuresID)
+                    .sorted(byKeyPath: "created_at", ascending: true))
         } catch {
             print("Error fetching memos by measuresID: \(error)")
             return []
         }
     }
-    
+
     /// noteIDに合致するメモを取得
     /// - Parameter noteID: ノートID
     /// - Returns: ノートIDに関連するメモのリスト
     func getMemosByNoteID(noteID: String) -> [Memo] {
         do {
             let realm = try Realm()
-            return Array(realm.objects(Memo.self)
-                .filter("noteID == %@ AND isDeleted == false", noteID)
-                .sorted(byKeyPath: "created_at", ascending: true))
+            return Array(
+                realm.objects(Memo.self)
+                    .filter("noteID == %@ AND isDeleted == false", noteID)
+                    .sorted(byKeyPath: "created_at", ascending: true))
         } catch {
             print("Error fetching memos by noteID: \(error)")
             return []
         }
     }
-    
+
     /// ノートの背景色を取得
     /// - Parameter noteID: ノートID
     /// - Returns: ノートの背景色
@@ -313,16 +325,20 @@ class RealmManager: Sendable {
             let realm = try Realm()
             if let memo = realm.objects(Memo.self)
                 .filter("noteID == %@ AND isDeleted == false", noteID)
-                .first {
+                .first
+            {
                 if let measures = realm.objects(Measures.self)
                     .filter("measuresID == %@", memo.measuresID)
-                    .first {
+                    .first
+                {
                     if let taskData = realm.objects(TaskData.self)
                         .filter("taskID == %@", measures.taskID)
-                        .first {
+                        .first
+                    {
                         if let group = realm.objects(Group.self)
                             .filter("groupID == %@", taskData.groupID)
-                            .first {
+                            .first
+                        {
                             return GroupColor.allCases[Int(group.color)].color
                         }
                     }
@@ -334,42 +350,43 @@ class RealmManager: Sendable {
             return .white
         }
     }
-    
+
     /// 指定した年の削除されていない年間目標を取得
     /// - Parameters:
     ///   - year: 取得したい目標の年
     /// - Returns: 条件に一致する目標のリスト
     func fetchYearlyTargets(year: Int) -> [Target] {
-         do {
-             let realm = try Realm()
-             let targets = realm.objects(Target.self)
-                 .filter("((isYearlyTarget == true AND year == %@)) AND isDeleted == false", year)
-             return Array(targets)
-         } catch {
-             print("Error fetching targets by year and month: \(error)")
-             return []
-         }
-     }
-    
-    /// 指定した年と月の削除されていない目標を取得
-    /// - Parameters:
-    ///   - year: 取得したい目標の年
-    ///   - month: 取得したい目標の月
-    /// - Returns: 条件に一致する目標のリスト
-   func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
         do {
             let realm = try Realm()
             let targets = realm.objects(Target.self)
-                .filter("((isYearlyTarget == false AND year == %@ AND month == %@)) AND isDeleted == false", year, month)
+                .filter("((isYearlyTarget == true AND year == %@)) AND isDeleted == false", year)
             return Array(targets)
         } catch {
             print("Error fetching targets by year and month: \(error)")
             return []
         }
     }
-    
+
+    /// 指定した年と月の削除されていない目標を取得
+    /// - Parameters:
+    ///   - year: 取得したい目標の年
+    ///   - month: 取得したい目標の月
+    /// - Returns: 条件に一致する目標のリスト
+    func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
+        do {
+            let realm = try Realm()
+            let targets = realm.objects(Target.self)
+                .filter(
+                    "((isYearlyTarget == false AND year == %@ AND month == %@)) AND isDeleted == false", year, month)
+            return Array(targets)
+        } catch {
+            print("Error fetching targets by year and month: \(error)")
+            return []
+        }
+    }
+
     // MARK: - Delete
-    
+
     /// 汎用的な論理削除処理
     /// - Parameters:
     ///   - T: RealmObject を継承したデータ型
@@ -377,13 +394,13 @@ class RealmManager: Sendable {
     internal func logicalDelete<T: Object>(id: String, type: T.Type) {
         do {
             let realm = try Realm()
-            
+
             try realm.write {
                 // T 型のオブジェクトを指定された ID に一致するものを取得
                 if let item = realm.object(ofType: type, forPrimaryKey: id) {
                     // 削除マークを付ける
                     markAsDeleted(item, realm: realm)
-                    
+
                     // T 型に基づく関連エンティティの削除処理
                     if let note = item as? Note {
                         deleteRelatedNoteMemos(noteID: note.noteID, realm: realm)
@@ -427,7 +444,7 @@ class RealmManager: Sendable {
             realm.add(itemWithDeleteFlag, update: .modified)
         }
     }
-    
+
     /// Note に関連する Memo を削除
     /// - Parameters:
     ///   - noteID: ノートID
@@ -473,7 +490,7 @@ class RealmManager: Sendable {
             markAsDeleted(memo, realm: realm)
         }
     }
-    
+
     /// Realmの全データを削除
     func clearAll() {
         do {

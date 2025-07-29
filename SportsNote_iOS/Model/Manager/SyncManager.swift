@@ -47,9 +47,9 @@ extension Note: Syncable, @unchecked Sendable {
 @MainActor
 final class SyncManager {
     static let shared = SyncManager()
-    
+
     private init() {}
-    
+
     /// Firebase と Realm の全データを同期
     /// 各同期処理は並列に行われ、全ての同期が完了するまで待機する
     func syncAllData() async throws {
@@ -60,12 +60,12 @@ final class SyncManager {
             group.addTask { try await self.syncMemo() }
             group.addTask { try await self.syncTarget() }
             group.addTask { try await self.syncNote() }
-            
+
             // すべてのタスクが完了するまで待機
-            for try await _ in group { }
+            for try await _ in group {}
         }
     }
-    
+
     /// Firebase と Realm のデータを同期する汎用メソッド
     ///
     /// @param T Syncable を実装したデータ型
@@ -82,15 +82,15 @@ final class SyncManager {
         // Firebase と Realm のデータを取得
         let firebaseArray = try await getFirebaseData()
         let realmArray = getRealmData()
-        
+
         // ID をキーとしたマップを作成
         let firebaseMap = Dictionary(uniqueKeysWithValues: firebaseArray.map { ($0.getId(), $0) })
         let realmMap = Dictionary(uniqueKeysWithValues: realmArray.map { ($0.getId(), $0) })
-        
+
         // Firebase もしくは Realm にしか存在しないデータを取得
         let onlyFirebaseID = Set(firebaseMap.keys).subtracting(realmMap.keys)
         let onlyRealmID = Set(realmMap.keys).subtracting(firebaseMap.keys)
-        
+
         // データの同期処理
         // Realm にしかないデータを Firebase に保存
         for id in onlyRealmID {
@@ -98,20 +98,20 @@ final class SyncManager {
                 try await saveToFirebase(item)
             }
         }
-        
+
         // Firebase にしかないデータを Realm に保存
         for id in onlyFirebaseID {
             if let item = firebaseMap[id] {
                 RealmManager.shared.saveItem(item)
             }
         }
-        
+
         // 両方に存在するデータの更新日時を比較し、新しい方に更新
         for id in Set(firebaseMap.keys).intersection(realmMap.keys) {
             guard let realmItem = realmMap[id], let firebaseItem = firebaseMap[id] else {
                 continue
             }
-            
+
             if realmItem.updated_at > firebaseItem.updated_at {
                 try await updateFirebase(realmItem)
             } else if firebaseItem.updated_at > realmItem.updated_at {
@@ -119,7 +119,7 @@ final class SyncManager {
             }
         }
     }
-    
+
     /// Group を同期
     private func syncGroup() async throws {
         try await syncData(
@@ -129,7 +129,7 @@ final class SyncManager {
             updateFirebase: { try await FirebaseManager.shared.updateGroup(group: $0) }
         )
     }
-    
+
     /// Task を同期
     private func syncTask() async throws {
         try await syncData(
@@ -139,7 +139,7 @@ final class SyncManager {
             updateFirebase: { try await FirebaseManager.shared.updateTask(task: $0) }
         )
     }
-    
+
     /// Measures を同期
     private func syncMeasures() async throws {
         try await syncData(
@@ -149,7 +149,7 @@ final class SyncManager {
             updateFirebase: { try await FirebaseManager.shared.updateMeasures(measures: $0) }
         )
     }
-    
+
     /// Memo を同期
     private func syncMemo() async throws {
         try await syncData(
@@ -159,7 +159,7 @@ final class SyncManager {
             updateFirebase: { try await FirebaseManager.shared.updateMemo(memo: $0) }
         )
     }
-    
+
     /// Target を同期
     private func syncTarget() async throws {
         try await syncData(
@@ -169,7 +169,7 @@ final class SyncManager {
             updateFirebase: { try await FirebaseManager.shared.updateTarget(target: $0) }
         )
     }
-    
+
     /// Note を同期
     private func syncNote() async throws {
         try await syncData(

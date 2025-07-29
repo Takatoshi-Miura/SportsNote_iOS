@@ -1,30 +1,30 @@
-import SwiftUI
 import Firebase
+import SwiftUI
 
 @main
 struct SportsNote_iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    
+
     init() {
         // 初期化
         FirebaseApp.configure()
         RealmManager.shared.initRealm()
-        
+
         // CrashlyticsにuserID情報を付加
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             Crashlytics.crashlytics().setUserID(userID)
         }
-        
+
         setupFirstLaunch()
     }
-    
+
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .onAppear {
                     setupNavigationBarAppearance()
                     checkAndShowTermsDialog()
-                    
+
                     // For debugging
                     RealmManager.shared.printRealmFilePath()
                 }
@@ -35,14 +35,14 @@ struct SportsNote_iOSApp: App {
                 }
         }
     }
-    
+
     /// 利用規約の同意状態をチェックし、未同意の場合はダイアログを表示
     private func checkAndShowTermsDialog() {
         if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
             TermsManager.showDialog()
         }
     }
-    
+
     /// 起動時の初期化処理
     private func setupFirstLaunch() {
         let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
@@ -51,14 +51,14 @@ struct SportsNote_iOSApp: App {
             let userID = UUID().uuidString
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: userID)
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
-            
+
             // フリーノート作成
             let noteViewModel = NoteViewModel()
             noteViewModel.saveFreeNote(
                 title: LocalizedStrings.freeNote,
                 detail: LocalizedStrings.defaltFreeNoteDetail
             )
-            
+
             // 未分類グループ作成
             let groupViewModel = GroupViewModel()
             groupViewModel.saveGroup(
@@ -67,13 +67,13 @@ struct SportsNote_iOSApp: App {
             )
         }
     }
-    
+
     func setupNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()
         appearance.titleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
-            .foregroundColor: UIColor.label
+            .foregroundColor: UIColor.label,
         ]
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
@@ -119,7 +119,7 @@ struct MainTabView: View {
             }
             .toolbarBackground(.visible, for: .tabBar)
             .toolbarBackground(Color(.systemBackground), for: .tabBar)
-            
+
             // 設定メニュー
             if isMenuOpen {
                 Color.gray.opacity(0.3)
@@ -129,10 +129,13 @@ struct MainTabView: View {
                             isMenuOpen = false
                         }
                     }
-                
-                MenuView(isMenuOpen: $isMenuOpen, onDismiss: {
-                    isMenuOpen = false
-                })
+
+                MenuView(
+                    isMenuOpen: $isMenuOpen,
+                    onDismiss: {
+                        isMenuOpen = false
+                    }
+                )
                 .transition(.move(edge: .leading))
                 .zIndex(1)
             }

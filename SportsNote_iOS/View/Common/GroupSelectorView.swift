@@ -4,13 +4,13 @@ struct GroupSelectorView: View {
     @Binding var selectedGroupIndex: Int
     let groups: [Group]
     let onSelectionChanged: (() -> Void)?
-    
+
     init(selectedGroupIndex: Binding<Int>, groups: [Group], onSelectionChanged: (() -> Void)? = nil) {
         self._selectedGroupIndex = selectedGroupIndex
         self.groups = groups
         self.onSelectionChanged = onSelectionChanged
     }
-    
+
     var body: some View {
         HStack {
             GroupColorCircle(color: getGroupColor(for: selectedGroupIndex))
@@ -40,14 +40,14 @@ struct GroupSelectorView: View {
             }
         }
     }
-    
+
     /// グループの色を取得
     /// - Parameter index: Index
     /// - Returns: グループの色
     private func getGroupColor(for index: Int) -> Color {
         guard groups.indices.contains(index) else { return Color.gray }
         let colorIndex = Int(groups[index].color)
-        
+
         if GroupColor.allCases.indices.contains(colorIndex) {
             return Color(GroupColor.allCases[colorIndex].color)
         } else {

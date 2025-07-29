@@ -1,5 +1,5 @@
-import UIKit
 import RealmSwift
+import UIKit
 
 /// グループ
 class Group: Object {
@@ -11,7 +11,7 @@ class Group: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    
+
     override init() {
         super.init()
         groupID = UUID().uuidString
@@ -21,7 +21,7 @@ class Group: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
-        
+
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID
@@ -29,7 +29,7 @@ class Group: Object {
             self.userID = ""
         }
     }
-    
+
     convenience init(
         groupID: String,
         title: String,
@@ -59,7 +59,7 @@ enum GroupColor: Int, CaseIterable {
     case blue
     case purple
     case gray
-    
+
     var title: String {
         switch self {
         case .red: return LocalizedStrings.red
@@ -72,7 +72,7 @@ enum GroupColor: Int, CaseIterable {
         case .gray: return LocalizedStrings.gray
         }
     }
-    
+
     var color: UIColor {
         switch self {
         case .red: return UIColor.systemRed

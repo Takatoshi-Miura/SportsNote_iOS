@@ -1,6 +1,6 @@
-import UIKit
-import SwiftUI
 import RealmSwift
+import SwiftUI
+import UIKit
 
 /// ノート
 class Note: Object {
@@ -49,7 +49,7 @@ class Note: Object {
         self.target = ""
         self.consciousness = ""
         self.result = ""
-        
+
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID
@@ -179,7 +179,7 @@ enum Weather: Int, CaseIterable {
     case sunny
     case cloudy
     case rainy
-    
+
     var title: String {
         switch self {
         case .sunny: return LocalizedStrings.sunny

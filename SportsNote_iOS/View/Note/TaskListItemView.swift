@@ -60,7 +60,8 @@ struct TaskListSection: View {
                     taskReflections.removeValue(forKey: task)
                 }
             }
-        } message: {}
+        } message: {
+        }
     }
 
     private var emptyStateView: some View {
@@ -100,7 +101,7 @@ struct TaskListItemView: View {
     let task: TaskListData
     @Binding var reflection: String
     var onOptionClick: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
@@ -108,9 +109,9 @@ struct TaskListItemView: View {
                     .padding(.leading, 4)
                     .padding(.top, 2)
                     .disabled(true)
-                
+
                 Spacer()
-                
+
                 // オプションボタン（削除）
                 Button(action: onOptionClick) {
                     Image(systemName: "ellipsis")
@@ -125,7 +126,7 @@ struct TaskListItemView: View {
                     onOptionClick()
                 }
             }
-            
+
             // メモ入力欄
             AutoResizingTextEditor(
                 text: $reflection,

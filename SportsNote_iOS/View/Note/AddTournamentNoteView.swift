@@ -1,12 +1,12 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 struct AddTournamentNoteView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = NoteViewModel()
-    
+
     var onSave: () -> Void
-    
+
     @State private var target: String = ""
     @State private var consciousness: String = ""
     @State private var result: String = ""
@@ -15,7 +15,7 @@ struct AddTournamentNoteView: View {
     @State private var date: Date = Date()
     @State private var selectedWeather: Weather = .sunny
     @State private var temperature: Int = 20
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -26,7 +26,7 @@ struct AddTournamentNoteView: View {
                     temperature: $temperature,
                     onUpdate: {}
                 )
-                
+
                 // 体調
                 TextEditorSection(
                     title: LocalizedStrings.condition,
@@ -34,7 +34,7 @@ struct AddTournamentNoteView: View {
                     text: $condition,
                     onUpdate: {}
                 )
-                
+
                 // 目標
                 TextEditorSection(
                     title: LocalizedStrings.target,
@@ -42,7 +42,7 @@ struct AddTournamentNoteView: View {
                     text: $target,
                     onUpdate: {}
                 )
-                
+
                 // 意識すること
                 TextEditorSection(
                     title: LocalizedStrings.consciousness,
@@ -50,7 +50,7 @@ struct AddTournamentNoteView: View {
                     text: $consciousness,
                     onUpdate: {}
                 )
-                
+
                 // 結果
                 TextEditorSection(
                     title: LocalizedStrings.result,
@@ -58,7 +58,7 @@ struct AddTournamentNoteView: View {
                     text: $result,
                     onUpdate: {}
                 )
-                
+
                 // 反省
                 TextEditorSection(
                     title: LocalizedStrings.reflection,
@@ -89,7 +89,7 @@ struct AddTournamentNoteView: View {
             }
         }
     }
-    
+
     /// 保存処理
     private func saveNote() {
         viewModel.saveTournamentNote(
@@ -102,11 +102,11 @@ struct AddTournamentNoteView: View {
             weather: selectedWeather,
             temperature: temperature
         )
-        
+
         onSave()
         dismiss()
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

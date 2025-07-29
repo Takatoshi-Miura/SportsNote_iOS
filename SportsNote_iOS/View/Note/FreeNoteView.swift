@@ -1,6 +1,6 @@
-import SwiftUI
-import RealmSwift
 import Combine
+import RealmSwift
+import SwiftUI
 
 struct FreeNoteView: View {
     let noteID: String
@@ -8,7 +8,7 @@ struct FreeNoteView: View {
     @State private var title: String = ""
     @State private var detail: String = ""
     @State private var detailMinHeight: CGFloat = 150
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -29,13 +29,15 @@ struct FreeNoteView: View {
                                     updateNote()
                                 }
                         }
-                        
+
                         // 詳細
                         Section(header: Text(LocalizedStrings.detail)) {
-                            AutoResizingTextEditor(text: $detail, placeholder: LocalizedStrings.detail, minHeight: detailMinHeight)
-                                .onChange(of: detail) { _ in
-                                    updateNote()
-                                }
+                            AutoResizingTextEditor(
+                                text: $detail, placeholder: LocalizedStrings.detail, minHeight: detailMinHeight
+                            )
+                            .onChange(of: detail) { _ in
+                                updateNote()
+                            }
                         }
                     }
                     .onAppear {
@@ -63,21 +65,21 @@ struct FreeNoteView: View {
             }
         }
     }
-    
+
     /// フリーノート読み込み
     private func loadData() {
         viewModel.loadNote(id: noteID)
-        
+
         if let note = viewModel.selectedNote {
             self.title = note.title
             self.detail = note.detail
         }
     }
-    
+
     /// フリーノート更新
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
-        
+
         viewModel.saveFreeNote(
             noteID: note.noteID,
             title: title,
@@ -85,7 +87,7 @@ struct FreeNoteView: View {
             created_at: note.created_at
         )
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

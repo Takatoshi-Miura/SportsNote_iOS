@@ -8,7 +8,7 @@ struct AddTaskView: View {
     @State private var selectedGroupIndex: Int = 0
     @State private var measuresTitle: String = ""
     let groups: [Group]
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -19,7 +19,7 @@ struct AddTaskView: View {
                 // 原因
                 Section(header: Text(LocalizedStrings.cause)) {
                     AutoResizingTextEditor(
-                        text: $cause, 
+                        text: $cause,
                         placeholder: LocalizedStrings.cause,
                         minHeight: 50
                     )
@@ -59,20 +59,20 @@ struct AddTaskView: View {
             }
         }
     }
-    
+
     /// 保存処理
     private func saveTask() {
         guard !groups.isEmpty, !taskTitle.isEmpty else { return }
-        
+
         let groupID = groups[selectedGroupIndex].groupID
-        
+
         // 課題を保存
         let newTask = viewModel.saveTask(
             title: taskTitle,
             cause: cause,
             groupID: groupID
         )
-        
+
         // 対策を保存
         if !measuresTitle.isEmpty {
             let measuresViewModel = MeasuresViewModel()
@@ -81,10 +81,10 @@ struct AddTaskView: View {
                 title: measuresTitle
             )
         }
-        
+
         dismiss()
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

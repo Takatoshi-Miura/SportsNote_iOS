@@ -1,29 +1,29 @@
-import Foundation
-import SwiftUI
-import RealmSwift
 import Combine
+import Foundation
+import RealmSwift
+import SwiftUI
 
 @MainActor
 class TaskViewModel: ObservableObject {
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []
     @Published var taskDetail: TaskDetailData?
-    
+
     // タスク更新通知パブリッシャー
     let taskUpdatedPublisher = PassthroughSubject<Void, Never>()
-    
+
     init() {
         fetchAllTasks()
     }
-    
+
     // MARK: - Tasks
-    
+
     /// 全ての課題を取得
     func fetchAllTasks() {
         tasks = RealmManager.shared.getDataList(clazz: TaskData.self)
         convertToTaskListData()
     }
-    
+
     /// 指定したグループIDの課題を取得
     /// - Parameter groupID: グループID
     func fetchTasksByGroupID(groupID: String) {
@@ -40,18 +40,18 @@ class TaskViewModel: ObservableObject {
             taskListData = []
         }
     }
-    
+
     /// TaskDataをTaskListDataに変換する
     private func convertToTaskListData() {
         var taskList = [TaskListData]()
-        
+
         for task in tasks {
             // グループカラーを取得
             let groupColor = getGroupColor(groupID: task.groupID)
-            
+
             // 対策情報を取得
             let measures = getMostPriorityMeasures(taskID: task.taskID)
-            
+
             // TaskListDataを作成
             let taskListItem = TaskListData(
                 taskID: task.taskID,
@@ -66,10 +66,10 @@ class TaskViewModel: ObservableObject {
             )
             taskList.append(taskListItem)
         }
-        
+
         taskListData = taskList
     }
-    
+
     /// グループIDに基づいて色を取得
     /// - Parameter groupID: グループID
     /// - Returns: GroupColorの列挙型
@@ -79,7 +79,7 @@ class TaskViewModel: ObservableObject {
         }
         return GroupColor.gray
     }
-    
+
     /// 最も優先度の高い（orderが低い）対策を取得
     /// - Parameter taskID: 課題ID
     /// - Returns: 対策オブジェクト（存在しない場合はnil）
@@ -87,7 +87,7 @@ class TaskViewModel: ObservableObject {
         let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
         return measuresList.min { $0.order < $1.order }
     }
-    
+
     /// 課題保存処理(更新も兼ねる)
     /// - Parameters:
     ///   - taskID: 課題ID（新規作成時はnil）
@@ -110,7 +110,7 @@ class TaskViewModel: ObservableObject {
         let newTaskID = taskID ?? UUID().uuidString
         let newOrder = order ?? RealmManager.shared.getCount(clazz: TaskData.self)
         let newCreatedAt = created_at ?? Date()
-        
+
         let task = TaskData(
             taskID: newTaskID,
             title: title,
@@ -121,7 +121,7 @@ class TaskViewModel: ObservableObject {
             created_at: newCreatedAt
         )
         RealmManager.shared.saveItem(task)
-        
+
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
@@ -133,21 +133,21 @@ class TaskViewModel: ObservableObject {
                 }
             }
         }
-        
+
         // Refresh task list
         fetchAllTasks()
-        
+
         // タスク詳細情報を表示している場合は、詳細情報も更新
         if let detail = taskDetail, detail.task.taskID == newTaskID {
             fetchTaskDetail(taskID: newTaskID)
         }
-        
+
         // タスク更新通知を送信
         taskUpdatedPublisher.send()
-        
+
         return task
     }
-    
+
     /// 課題の完了状態を切り替え
     /// - Parameter taskID: 課題ID
     func toggleTaskCompletion(taskID: String) {
@@ -163,12 +163,12 @@ class TaskViewModel: ObservableObject {
             )
         }
     }
-    
+
     /// 課題を削除
     /// - Parameter id: 課題ID
     func deleteTask(id: String) {
         RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
-        
+
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
@@ -177,17 +177,17 @@ class TaskViewModel: ObservableObject {
                 }
             }
         }
-        
+
         tasks.removeAll(where: { $0.taskID == id })
         taskListData.removeAll(where: { $0.taskID == id })
         self.objectWillChange.send()
-        
+
         // タスク更新通知を送信
         taskUpdatedPublisher.send()
     }
-    
+
     // MARK: - Task Detail
-    
+
     /// 課題の詳細情報を取得
     /// - Parameter taskID: 課題ID
     func fetchTaskDetail(taskID: String) {
@@ -198,9 +198,9 @@ class TaskViewModel: ObservableObject {
             taskDetail = nil
         }
     }
-    
+
     // MARK: - Measures
-    
+
     /// 対策を削除
     /// - Parameter measuresID: 対策ID
     func deleteMeasure(measuresID: String) {
@@ -208,10 +208,10 @@ class TaskViewModel: ObservableObject {
             let realm = try Realm()
             if let measure = realm.object(ofType: Measures.self, forPrimaryKey: measuresID) {
                 let taskID = measure.taskID
-                
+
                 // Delete measure
                 RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
-                
+
                 // Update task detail if viewing
                 if let detail = taskDetail, detail.task.taskID == taskID {
                     fetchTaskDetail(taskID: taskID)
@@ -221,15 +221,15 @@ class TaskViewModel: ObservableObject {
             print("Error deleting measure: \(error)")
         }
     }
-    
+
     /// 対策の並び順を更新
     /// - Parameter measures: 並び替え後の対策リスト
     func updateMeasuresOrder(measures: [Measures]) {
         guard !measures.isEmpty else { return }
-        
+
         let measuresViewModel = MeasuresViewModel()
         measuresViewModel.updateMeasuresOrder(measures: measures)
-        
+
         // 対策の並び替えが完了したら、詳細画面を更新
         if let detail = taskDetail {
             fetchTaskDetail(taskID: detail.task.taskID)

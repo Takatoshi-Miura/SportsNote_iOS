@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct TaskView: View {
     @Binding var isMenuOpen: Bool
@@ -13,7 +13,7 @@ struct TaskView: View {
     @ObservedObject var taskViewModel = TaskViewModel()
     @State private var refreshTrigger: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
-    
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.task,
@@ -24,8 +24,11 @@ struct TaskView: View {
                         Text(LocalizedStrings.showCompletedTasks)
                     }
                 } label: {
-                    Image(systemName: showCompletedTasks ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                        .imageScale(.large)
+                    Image(
+                        systemName: showCompletedTasks
+                            ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+                    )
+                    .imageScale(.large)
                 }
             },
             content: {
@@ -69,11 +72,11 @@ struct TaskView: View {
                         taskViewModel: taskViewModel
                     )
                 }
-                .id(refreshTrigger) // IDを変更することでViewを強制的に再構築
+                .id(refreshTrigger)  // IDを変更することでViewを強制的に再構築
             },
             actionItems: [
                 (LocalizedStrings.group, { isAddGroupPresented = true }),
-                (LocalizedStrings.task, { isAddTaskPresented = true })
+                (LocalizedStrings.task, { isAddTaskPresented = true }),
             ]
         )
         .navigationDestination(isPresented: $navigateToGroupEdit) {
@@ -96,7 +99,7 @@ struct TaskView: View {
             } else {
                 taskViewModel.fetchAllTasks()
             }
-            
+
             // 画面表示のたびにタスク更新通知を購読し直す
             setupSubscriptions()
         }
@@ -105,7 +108,7 @@ struct TaskView: View {
             cancellables.removeAll()
         }
     }
-    
+
     // パブリッシャーの購読処理を行う関数に切り出し
     private func setupSubscriptions() {
         taskViewModel.taskUpdatedPublisher
@@ -113,7 +116,7 @@ struct TaskView: View {
             .sink { _ in
                 // 強制的に画面を再構築するためにトリガーを切り替え
                 refreshTrigger.toggle()
-                
+
                 // データも明示的に更新
                 if let id = selectedGroupID {
                     taskViewModel.fetchTasksByGroupID(groupID: id)
@@ -123,13 +126,13 @@ struct TaskView: View {
             }
             .store(in: &cancellables)
     }
-    
+
     private func filteredTaskListData() -> [TaskListData] {
         return taskViewModel.taskListData.filter { task in
             showCompletedTasks || !isTaskComplete(taskID: task.taskID)
         }
     }
-    
+
     private func isTaskComplete(taskID: String) -> Bool {
         return taskViewModel.tasks.first(where: { $0.taskID == taskID })?.isComplete ?? false
     }
@@ -227,12 +230,12 @@ private struct GroupChip: View {
 struct GroupColorCircle: View {
     let color: Color
     let size: CGFloat
-    
+
     init(color: Color, size: CGFloat = 16) {
         self.color = color
         self.size = size
     }
-    
+
     var body: some View {
         Circle()
             .fill(color)

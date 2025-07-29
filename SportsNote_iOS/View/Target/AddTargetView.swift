@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 /// 目標追加画面
 struct AddTargetView: View {
@@ -28,7 +28,7 @@ struct AddTargetView: View {
         _selectedYear = State(initialValue: year)
         _selectedMonth = State(initialValue: month)
     }
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -79,7 +79,7 @@ struct AddTargetView: View {
             }
         }
     }
-    
+
     /// NavigationBarのタイトルを取得
     /// - Returns: タイトル
     private func getNavigationTitle() -> String {
@@ -89,7 +89,7 @@ struct AddTargetView: View {
             return String(format: LocalizedStrings.addTitle, LocalizedStrings.monthlyTarget)
         }
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

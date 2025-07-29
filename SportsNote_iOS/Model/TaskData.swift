@@ -13,7 +13,7 @@ open class TaskData: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    
+
     override init() {
         super.init()
         taskID = UUID().uuidString
@@ -25,7 +25,7 @@ open class TaskData: Object {
         isDeleted = false
         created_at = Date()
         updated_at = Date()
-        
+
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID
@@ -33,7 +33,7 @@ open class TaskData: Object {
             self.userID = ""
         }
     }
-    
+
     convenience init(
         taskID: String = UUID().uuidString,
         title: String,
@@ -52,7 +52,7 @@ open class TaskData: Object {
         self.isComplete = isComplete
         self.created_at = created_at
     }
-    
+
     public override static func primaryKey() -> String? {
         return "taskID"
     }
@@ -84,12 +84,12 @@ struct TaskListData: Hashable {
     var memoID: String?
     let order: Int
     var isComplete: Bool
-    
+
     // Hashableプロトコルの実装
     func hash(into hasher: inout Hasher) {
         hasher.combine(taskID)
     }
-    
+
     // Equatableプロトコルの実装
     static func == (lhs: TaskListData, rhs: TaskListData) -> Bool {
         return lhs.taskID == rhs.taskID

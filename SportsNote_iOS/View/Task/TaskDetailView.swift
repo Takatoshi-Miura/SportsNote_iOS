@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -65,7 +65,7 @@ struct TaskDetailView: View {
                     }) {
                         Image(systemName: "checkmark.circle")
                     }
-                    
+
                     Button(action: {
                         showDeleteConfirmation = true
                     }) {
@@ -76,8 +76,9 @@ struct TaskDetailView: View {
             }
         }
         .alert(isPresented: $showCompletionToggleAlert) {
-            let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete) ?
-            LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
+            let title =
+                (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete)
+                ? LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
             return Alert(
                 title: Text(title),
                 primaryButton: .default(Text(LocalizedStrings.ok)) {
@@ -148,17 +149,17 @@ struct TaskDetailView: View {
             created_at: taskData.created_at
         )
     }
-    
+
     /// 対策追加処理
     private func addMeasure() {
         guard !newMeasureTitle.isEmpty else { return }
-        
+
         let measuresViewModel = MeasuresViewModel()
         measuresViewModel.saveMeasures(
             taskID: taskData.taskID,
             title: newMeasureTitle
         )
-        
+
         // Viewを更新
         viewModel.fetchTaskDetail(taskID: taskData.taskID)
 

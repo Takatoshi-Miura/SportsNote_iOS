@@ -1,7 +1,7 @@
-import SwiftUI
-import Foundation
 import Combine
+import Foundation
 import RealmSwift
+import SwiftUI
 
 struct MeasureDetailView: View {
     let measure: Measures
@@ -11,13 +11,13 @@ struct MeasureDetailView: View {
     @StateObject private var memoViewModel = MemoViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
-    
+
     init(measure: Measures) {
         self.measure = measure
         _title = State(initialValue: measure.title)
         _viewModel = StateObject(wrappedValue: MeasuresViewModel())
     }
-    
+
     var body: some View {
         VStack {
             List {
@@ -37,7 +37,7 @@ struct MeasureDetailView: View {
                 .onTapGesture {
                     hideKeyboard()
                 }
-                
+
                 Section(header: Text(LocalizedStrings.note)) {
                     let measuresMemos = memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID)
                     if measuresMemos.isEmpty {
@@ -78,18 +78,19 @@ struct MeasureDetailView: View {
             )
         }
     }
-    
+
     /// ノートIDに基づいて適切な遷移先を返す
     @ViewBuilder
     private func destinationView(for noteID: String) -> some View {
         if let note = RealmManager.shared.getObjectById(id: noteID, type: Note.self),
-           let noteType = NoteType(rawValue: note.noteType) {
+            let noteType = NoteType(rawValue: note.noteType)
+        {
             noteType.destinationView(noteID: noteID)
         } else {
             Text(LocalizedStrings.noteNotFound)
         }
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -98,20 +99,20 @@ struct MeasureDetailView: View {
 
 struct MeasuresMemoRow: View {
     let measuresMemo: MeasuresMemo
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(measuresMemo.detail)
                 .font(.body)
                 .lineLimit(nil)
-            
+
             Text(formatDate(measuresMemo.date))
                 .font(.caption)
                 .foregroundColor(.gray)
         }
         .padding(.vertical, 4)
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium

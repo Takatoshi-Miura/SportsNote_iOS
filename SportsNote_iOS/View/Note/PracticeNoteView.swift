@@ -1,5 +1,5 @@
-import SwiftUI
 import RealmSwift
+import SwiftUI
 
 struct PracticeNoteView: View {
     let noteID: String
@@ -7,7 +7,7 @@ struct PracticeNoteView: View {
     @StateObject private var taskViewModel = TaskViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteConfirmation = false
-    
+
     // 編集用の状態変数
     @State private var date: Date = Date()
     @State private var selectedWeather: Weather = .sunny
@@ -17,7 +17,7 @@ struct PracticeNoteView: View {
     @State private var detail: String = ""
     @State private var reflection: String = ""
     @State private var taskReflections: [TaskListData: String] = [:]
-    
+
     var body: some View {
         ZStack {
             if viewModel.isLoadingNote {
@@ -36,7 +36,7 @@ struct PracticeNoteView: View {
                         temperature: $temperature,
                         onUpdate: updateNote
                     )
-                    
+
                     // 体調
                     TextEditorSection(
                         title: LocalizedStrings.condition,
@@ -44,7 +44,7 @@ struct PracticeNoteView: View {
                         text: $condition,
                         onUpdate: updateNote
                     )
-                    
+
                     // 目的
                     TextEditorSection(
                         title: LocalizedStrings.purpose,
@@ -52,7 +52,7 @@ struct PracticeNoteView: View {
                         text: $purpose,
                         onUpdate: updateNote
                     )
-                    
+
                     // 内容
                     TextEditorSection(
                         title: LocalizedStrings.practiceDetail,
@@ -60,7 +60,7 @@ struct PracticeNoteView: View {
                         text: $detail,
                         onUpdate: updateNote
                     )
-                    
+
                     // 取り組んだ課題
                     Section(header: Text(LocalizedStrings.taskReflection)) {
                         TaskListSection(taskReflections: $taskReflections, unaddedTasks: getUnaddedTasks())
@@ -68,7 +68,7 @@ struct PracticeNoteView: View {
                                 updateNote()
                             }
                     }
-                    
+
                     // 反省
                     TextEditorSection(
                         title: LocalizedStrings.reflection,
@@ -124,37 +124,35 @@ struct PracticeNoteView: View {
             }
         }
     }
-    
+
     private func loadData() {
         viewModel.loadNote(id: noteID)
         viewModel.loadMemos()
         taskViewModel.fetchAllTasks()
     }
-    
+
     /// 未追加のタスクを取得
     private func getUnaddedTasks() -> [TaskListData] {
         let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
         return taskViewModel.taskListData.filter {
-            !$0.isComplete &&
-            !addedTaskIds.contains($0.taskID) &&
-            $0.measuresID != ""
+            !$0.isComplete && !addedTaskIds.contains($0.taskID) && $0.measuresID != ""
         }
     }
-    
+
     // タスクのリフレクションをロードする
     private func loadTaskReflections(note: Note) {
         taskReflections.removeAll()
-        
+
         // ノートに関連するメモを取得
         let noteMemos = viewModel.memos.filter { $0.noteID == note.noteID }
-        
+
         // 各メモをタスクに関連付け
         for memo in noteMemos {
             // TaskListDataをmeasuresIDで検索
             if let taskIndex = taskViewModel.taskListData.firstIndex(where: { $0.measuresID == memo.measuresID }) {
                 // 元のタスクを取得
                 let task = taskViewModel.taskListData[taskIndex]
-                
+
                 // TaskListDataを変更するためにカスタムTaskListDataを作成
                 let taskWithMemo = TaskListData(
                     taskID: task.taskID,
@@ -173,11 +171,11 @@ struct PracticeNoteView: View {
             }
         }
     }
-    
+
     // ノート更新処理
     private func updateNote() {
         guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
-        
+
         viewModel.savePracticeNoteWithReflections(
             noteID: note.noteID,
             purpose: purpose,
@@ -190,7 +188,7 @@ struct PracticeNoteView: View {
             taskReflections: taskReflections
         )
     }
-    
+
     /// キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
