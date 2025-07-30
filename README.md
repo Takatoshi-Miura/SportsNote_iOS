@@ -332,3 +332,14 @@ func loadData() async {
     }
 }
 ```
+
+## コードフォーマット
+
+### swift-format
+プロジェクトでは統一されたコードスタイルを維持するためにswift-formatを使用しています。
+
+#### フォーマット実行
+```bash
+# プロジェクト全体をフォーマット
+swift format format --in-place --recursive ~/SportsNote_iOS/SportsNote_iOS
+```
