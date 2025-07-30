@@ -163,6 +163,18 @@ class NoteViewModel: ObservableObject {
         // Realmに保存
         realmManager.saveItem(note)
 
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                let isUpdate = noteID != nil
+                if isUpdate {
+                    try await FirebaseManager.shared.updateNote(note: note)
+                } else {
+                    try await FirebaseManager.shared.saveNote(note: note)
+                }
+            }
+        }
+
         // データの再取得
         if noteID == nil {
             fetchNotes()
@@ -182,6 +194,16 @@ class NoteViewModel: ObservableObject {
         }
 
         realmManager.logicalDelete(id: id, type: Note.self)
+        
+        // Firebaseへの同期
+        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
+            Task {
+                if let deletedNote = realmManager.getObjectById(id: id, type: Note.self) {
+                    try await FirebaseManager.shared.updateNote(note: deletedNote)
+                }
+            }
+        }
+        
         notes.removeAll(where: { $0.noteID == id })
         updateFilteredNotes()
     }
