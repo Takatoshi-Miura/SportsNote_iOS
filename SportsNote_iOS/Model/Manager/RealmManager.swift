@@ -3,7 +3,7 @@ import UIKit
 
 struct RealmConstants {
     static let databaseName = "sportsnote.realm"
-    static let schemaVersion: UInt64 = 1
+    static let schemaVersion: UInt64 = 0
 }
 
 /// Realmデータベースを管理するクラス
@@ -21,7 +21,10 @@ class RealmManager: Sendable {
             fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent()
                 .appendingPathComponent(RealmConstants.databaseName),
             schemaVersion: RealmConstants.schemaVersion,
-            deleteRealmIfMigrationNeeded: true  // マイグレーションが必要な場合、データ削除
+            migrationBlock: { migration, oldSchemaVersion in
+                // 古いバージョンから新しいバージョンへの安全なマイグレーション処理
+                // 現在はスキーマバージョン0なので、将来の変更時にここに処理を追加
+            }
         )
         Realm.Configuration.defaultConfiguration = config
     }
