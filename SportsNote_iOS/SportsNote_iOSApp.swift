@@ -4,35 +4,38 @@ import SwiftUI
 @main
 struct SportsNote_iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isInitialized = false
 
     init() {
-        // 初期化
+        // 同期的な初期化のみここで実行
         FirebaseApp.configure()
         RealmManager.shared.initRealm()
-
-        // CrashlyticsにuserID情報を付加
-        if let userID = UserDefaults.standard.string(forKey: "userID") {
-            Crashlytics.crashlytics().setUserID(userID)
-        }
-
-        setupFirstLaunch()
     }
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .onAppear {
-                    setupNavigationBarAppearance()
-                    checkAndShowTermsDialog()
-
-                    // For debugging
-                    RealmManager.shared.printRealmFilePath()
-                }
-                .onChange(of: scenePhase) { phase in
-                    if phase == .active {
+            if isInitialized {
+                MainTabView()
+                    .onAppear {
+                        setupNavigationBarAppearance()
                         checkAndShowTermsDialog()
+
+                        // For debugging
+                        RealmManager.shared.printRealmFilePath()
                     }
-                }
+                    .onChange(of: scenePhase) { phase in
+                        if phase == .active {
+                            checkAndShowTermsDialog()
+                        }
+                    }
+            } else {
+                // 初期化中の表示
+                ProgressView(LocalizedStrings.initializing)
+                    .task {
+                        await InitializationManager.shared.initializeApp()
+                        isInitialized = true
+                    }
+            }
         }
     }
 
@@ -43,30 +46,6 @@ struct SportsNote_iOSApp: App {
         }
     }
 
-    /// 起動時の初期化処理
-    private func setupFirstLaunch() {
-        let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
-        if isFirstLaunch {
-            // userID作成
-            let userID = UUID().uuidString
-            UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: userID)
-            UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
-
-            // フリーノート作成
-            let noteViewModel = NoteViewModel()
-            noteViewModel.saveFreeNote(
-                title: LocalizedStrings.freeNote,
-                detail: LocalizedStrings.defaltFreeNoteDetail
-            )
-
-            // 未分類グループ作成
-            let groupViewModel = GroupViewModel()
-            groupViewModel.saveGroup(
-                title: LocalizedStrings.uncategorized,
-                color: GroupColor.gray
-            )
-        }
-    }
 
     func setupNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()

@@ -26,6 +26,7 @@ struct LocalizedStrings {
     static let previous = "previous".localized
     static let next = "next".localized
     static let loading = "loading".localized
+    static let initializing = "initializing".localized
     static let deleteNote = "deleteNote".localized
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     static let error = "error".localized

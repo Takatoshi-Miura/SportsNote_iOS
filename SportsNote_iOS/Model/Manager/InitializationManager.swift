@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import Firebase
+import FirebaseCrashlytics
 
 @MainActor
 class InitializationManager {
@@ -11,13 +13,19 @@ class InitializationManager {
     /// アプリの初期化
     /// - Parameter isLogin: ログイン済みかどうか
     func initializeApp(isLogin: Bool = false) async {
-        RealmManager.shared.initRealm()
-
         let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
         if isFirstLaunch {
             UserDefaultsManager.clearAll()
             UserDefaultsManager.resetUserInfo()
+            // userID作成
+            let userID = UUID().uuidString
+            UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: userID)
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
+        }
+
+        // CrashlyticsにuserID情報を付加
+        if let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String? {
+            Crashlytics.crashlytics().setUserID(userID)
         }
 
         if !isLogin {

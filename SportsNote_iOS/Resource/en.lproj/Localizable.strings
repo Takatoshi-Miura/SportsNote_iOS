@@ -19,6 +19,7 @@
 "previous" = "Previous";
 "next" = "Next";
 "loading" = "Loading...";
+"initializing" = "Initializing...";
 "deleteNote" = "Delete Note";
 "deleteNoteConfirmation" = "Are you sure you want to delete this note?";
 "error" = "Error";

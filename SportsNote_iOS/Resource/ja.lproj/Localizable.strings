@@ -19,6 +19,7 @@
 "previous" = "前へ";
 "next" = "次へ";
 "loading" = "読み込み中...";
+"initializing" = "初期化中...";
 "deleteNote" = "ノートの削除";
 "deleteNoteConfirmation" = "このノートを削除してもよろしいですか？";
 "error" = "エラー";
