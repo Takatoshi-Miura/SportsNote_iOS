@@ -33,6 +33,11 @@ class InitializationManager {
             await createFreeNote()
             await createUncategorizedGroup()
         }
+
+        // ログイン済みの場合、アプリ起動時にデータ同期を実行
+        if !isFirstLaunch && isUserLoggedIn() && Network.isOnline() {
+            await syncAllData()
+        }
     }
 
     /// フリーノートを作成
@@ -81,5 +86,11 @@ class InitializationManager {
     /// - Parameter userId: userId
     func updateAllUserIds(userId: String) async {
         RealmManager.shared.updateAllUserIds(userId: userId)
+    }
+
+    /// ユーザーのログイン状態をチェック
+    /// - Returns: ログイン済みかどうか
+    private func isUserLoggedIn() -> Bool {
+        return UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
     }
 }
