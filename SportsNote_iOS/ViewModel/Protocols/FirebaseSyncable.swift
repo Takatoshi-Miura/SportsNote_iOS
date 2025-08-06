@@ -1,6 +1,7 @@
 import Foundation
 
 /// Firebase同期機能を持つViewModelのプロトコル
+@MainActor
 protocol FirebaseSyncable {
     /// ViewModelが扱うエンティティの型
     associatedtype EntityType
@@ -15,8 +16,9 @@ protocol FirebaseSyncable {
     
     /// 指定されたエンティティをFirebaseに同期する
     /// - Parameter entity: 同期するエンティティ
+    /// - Parameter isUpdate: 更新かどうか（デフォルトはfalse）
     /// - Throws: 同期処理でエラーが発生した場合
-    func syncEntityToFirebase(_ entity: EntityType) async throws
+    func syncEntityToFirebase(_ entity: EntityType, isUpdate: Bool) async throws
 }
 
 extension FirebaseSyncable {

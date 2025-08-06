@@ -62,7 +62,7 @@ struct TaskView: View {
                             taskViewModel.toggleTaskCompletion(taskID: taskID)
                         },
                         refreshAction: {
-                            viewModel.fetchGroups()
+                            viewModel.fetchData()
                             if let id = selectedGroupID {
                                 taskViewModel.fetchTasksByGroupID(groupID: id)
                             } else {
@@ -93,7 +93,7 @@ struct TaskView: View {
         }
         .onAppear {
             // 画面が表示されるたびに最新データを取得
-            viewModel.fetchGroups()
+            viewModel.fetchData()
             if let id = selectedGroupID {
                 taskViewModel.fetchTasksByGroupID(groupID: id)
             } else {
