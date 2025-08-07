@@ -143,7 +143,6 @@
 			);
 			name = SportsNote_iOS;
 			packageProductDependencies = (
-				8D4EF5F52D85171600AC19C1 /* Realm */,
 				8D4EF5F72D85171600AC19C1 /* RealmSwift */,
 				8D8F87342D8CECDA00899E68 /* FirebaseAnalytics */,
 				8D8F87362D8CECDA00899E68 /* FirebaseAuth */,
@@ -656,11 +655,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		8D4EF5F52D85171600AC19C1 /* Realm */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */;
-			productName = Realm;
-		};
 		8D4EF5F72D85171600AC19C1 /* RealmSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */;
