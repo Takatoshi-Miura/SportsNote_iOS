@@ -44,8 +44,7 @@ extension Note: Syncable, @unchecked Sendable {
     }
 }
 
-@MainActor
-final class SyncManager {
+final class SyncManager: Sendable {
     static let shared = SyncManager()
 
     private init() {}
@@ -81,7 +80,7 @@ final class SyncManager {
     ) async throws where T: Syncable, T: Object {
         // Firebase と Realm のデータを取得
         let firebaseArray = try await getFirebaseData()
-        let realmArray = getRealmData()
+        let realmArray = await getRealmData()
 
         // ID をキーとしたマップを作成
         let firebaseMap = Dictionary(uniqueKeysWithValues: firebaseArray.map { ($0.getId(), $0) })

@@ -1,11 +1,10 @@
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 import FirebaseFirestoreCombineSwift
 import Foundation
 
-@MainActor
 final class FirebaseManager: @unchecked Sendable {
 
-    @MainActor static let shared = FirebaseManager()
+    static let shared = FirebaseManager()
     private let db = Firestore.firestore()
 
     private init() {}

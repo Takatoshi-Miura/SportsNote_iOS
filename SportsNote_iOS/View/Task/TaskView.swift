@@ -62,11 +62,13 @@ struct TaskView: View {
                             taskViewModel.toggleTaskCompletion(taskID: taskID)
                         },
                         refreshAction: {
-                            viewModel.fetchData()
-                            if let id = selectedGroupID {
-                                taskViewModel.fetchTasksByGroupID(groupID: id)
-                            } else {
-                                taskViewModel.fetchAllTasks()
+                            Task {
+                                await viewModel.fetchData()
+                                if let id = selectedGroupID {
+                                    taskViewModel.fetchTasksByGroupID(groupID: id)
+                                } else {
+                                    taskViewModel.fetchAllTasks()
+                                }
                             }
                         },
                         taskViewModel: taskViewModel
@@ -93,11 +95,13 @@ struct TaskView: View {
         }
         .onAppear {
             // 画面が表示されるたびに最新データを取得
-            viewModel.fetchData()
-            if let id = selectedGroupID {
-                taskViewModel.fetchTasksByGroupID(groupID: id)
-            } else {
-                taskViewModel.fetchAllTasks()
+            Task {
+                await viewModel.fetchData()
+                if let id = selectedGroupID {
+                    taskViewModel.fetchTasksByGroupID(groupID: id)
+                } else {
+                    taskViewModel.fetchAllTasks()
+                }
             }
 
             // 画面表示のたびにタスク更新通知を購読し直す

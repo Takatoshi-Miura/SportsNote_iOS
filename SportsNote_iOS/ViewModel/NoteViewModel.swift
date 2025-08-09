@@ -194,7 +194,7 @@ class NoteViewModel: ObservableObject {
         }
 
         realmManager.logicalDelete(id: id, type: Note.self)
-        
+
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
@@ -203,7 +203,7 @@ class NoteViewModel: ObservableObject {
                 }
             }
         }
-        
+
         notes.removeAll(where: { $0.noteID == id })
         updateFilteredNotes()
     }

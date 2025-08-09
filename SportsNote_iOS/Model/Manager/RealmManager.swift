@@ -7,8 +7,7 @@ struct RealmConstants {
 }
 
 /// Realmデータベースを管理するクラス
-@MainActor
-class RealmManager: Sendable {
+class RealmManager: @unchecked Sendable {
 
     // シングルトンインスタンス
     static let shared = RealmManager()
@@ -108,7 +107,7 @@ class RealmManager: Sendable {
         do {
             let realm = try Realm()
             // PrimaryKeyで安全に検索
-            let primaryKeyName = getPrimaryKeyName(type)
+            _ = getPrimaryKeyName(type)
 
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {

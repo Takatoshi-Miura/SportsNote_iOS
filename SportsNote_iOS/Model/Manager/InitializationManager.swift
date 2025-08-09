@@ -3,8 +3,7 @@ import SwiftUI
 import Firebase
 import FirebaseCrashlytics
 
-@MainActor
-class InitializationManager {
+class InitializationManager: @unchecked Sendable {
 
     static let shared = InitializationManager()
 
@@ -47,11 +46,13 @@ class InitializationManager {
             return
         }
 
-        let noteViewModel = NoteViewModel()
-        noteViewModel.saveFreeNote(
-            title: LocalizedStrings.freeNote,
-            detail: LocalizedStrings.defaltFreeNoteDetail
-        )
+        Task { @MainActor in
+            let noteViewModel = NoteViewModel()
+            noteViewModel.saveFreeNote(
+                title: LocalizedStrings.freeNote,
+                detail: LocalizedStrings.defaltFreeNoteDetail
+            )
+        }
     }
 
     /// 未分類グループを作成
@@ -59,11 +60,13 @@ class InitializationManager {
     private func createUncategorizedGroup() async {
         let groups = RealmManager.shared.getDataList(clazz: Group.self)
         if groups.isEmpty {
-            let groupViewModel = GroupViewModel()
-            groupViewModel.saveGroup(
-                title: LocalizedStrings.uncategorized,
-                color: GroupColor.gray
-            )
+            await MainActor.run {
+                let groupViewModel = GroupViewModel()
+                groupViewModel.saveGroup(
+                    title: LocalizedStrings.uncategorized,
+                    color: GroupColor.gray
+                )
+            }
         }
     }
 
