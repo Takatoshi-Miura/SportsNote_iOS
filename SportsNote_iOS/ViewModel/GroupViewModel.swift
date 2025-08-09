@@ -34,18 +34,24 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     func save(_ entity: Group, isUpdate: Bool = false) async throws {
         isLoading = true
 
-        // 1. Realm操作はMainActorで実行
-        RealmManager.shared.saveItem(entity)
+        do {
+            // 1. Realm操作はMainActorで実行
+            RealmManager.shared.saveItem(entity)
 
-        // 2. Firebase同期のみバックグラウンドで実行
-        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
-            Task.detached {
-                try await FirebaseManager.shared.saveGroup(group: entity)
+            // 2. Firebase同期のみバックグラウンドで実行
+            if isOnlineAndLoggedIn {
+                Task.detached {
+                    try await FirebaseManager.shared.saveGroup(group: entity)
+                }
             }
+
+            // 3. UI更新
+            groups = RealmManager.shared.getDataList(clazz: Group.self)
+        } catch {
+            handleError(error)
+            throw error
         }
 
-        // 3. UI更新
-        groups = RealmManager.shared.getDataList(clazz: Group.self)
         isLoading = false
     }
 
@@ -80,7 +86,7 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
                 let isUpdate = groupID != nil
                 try await save(group, isUpdate: isUpdate)
             } catch {
-                // エラーは既にhandleErrorで処理されている
+                handleError(error)
             }
         }
     }
@@ -89,20 +95,26 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     func delete(id: String) async throws {
         isLoading = true
 
-        // 1. Realm操作はMainActorで実行
-        RealmManager.shared.logicalDelete(id: id, type: Group.self)
+        do {
+            // 1. Realm操作はMainActorで実行
+            RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
-        // 2. Firebase同期のみバックグラウンドで実行
-        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
-            if let deletedGroup = RealmManager.shared.getObjectById(id: id, type: Group.self) {
-                Task.detached {
-                    try await FirebaseManager.shared.saveGroup(group: deletedGroup)
+            // 2. Firebase同期のみバックグラウンドで実行
+            if isOnlineAndLoggedIn {
+                if let deletedGroup = RealmManager.shared.getObjectById(id: id, type: Group.self) {
+                    Task.detached {
+                        try await FirebaseManager.shared.saveGroup(group: deletedGroup)
+                    }
                 }
             }
+
+            // 3. UI更新
+            groups = RealmManager.shared.getDataList(clazz: Group.self)
+        } catch {
+            handleError(error)
+            throw error
         }
 
-        // 3. UI更新
-        groups = RealmManager.shared.getDataList(clazz: Group.self)
         isLoading = false
     }
 
@@ -113,7 +125,7 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             do {
                 try await delete(id: id)
             } catch {
-                // エラーは既にhandleErrorで処理されている
+                handleError(error)
             }
         }
     }
