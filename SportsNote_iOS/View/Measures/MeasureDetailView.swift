@@ -82,7 +82,7 @@ struct MeasureDetailView: View {
     /// ノートIDに基づいて適切な遷移先を返す
     @ViewBuilder
     private func destinationView(for noteID: String) -> some View {
-        if let note = RealmManager.shared.getObjectById(id: noteID, type: Note.self),
+        if let note = try? RealmManager.shared.getObjectById(id: noteID, type: Note.self),
             let noteType = NoteType(rawValue: note.noteType)
         {
             noteType.destinationView(noteID: noteID)

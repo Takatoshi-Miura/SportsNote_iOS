@@ -23,6 +23,15 @@
 "deleteNote" = "Delete Note";
 "deleteNoteConfirmation" = "Are you sure you want to delete this note?";
 "error" = "Error";
+"retry" = "Retry";
+
+// MARK: Error Dialog Titles
+"errorCriticalTitle" = "Critical Error";
+"errorSystemTitle" = "System Error";
+"errorDatabaseTitle" = "Database Error";
+"errorAuthTitle" = "Authentication Error";
+"errorNetworkTitle" = "Network Error";
+"errorGeneralTitle" = "Error";
 
 // MARK: Error Messages - Realm
 "errorRealmInitFailed" = "Failed to initialize database";

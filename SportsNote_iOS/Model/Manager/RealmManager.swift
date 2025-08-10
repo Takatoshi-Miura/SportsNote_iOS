@@ -15,17 +15,25 @@ class RealmManager: @unchecked Sendable {
     private init() {}
 
     /// Realmを初期化(起動準備)
-    func initRealm() {
-        let config = Realm.Configuration(
-            fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent()
-                .appendingPathComponent(RealmConstants.databaseName),
-            schemaVersion: RealmConstants.schemaVersion,
-            migrationBlock: { migration, oldSchemaVersion in
-                // 古いバージョンから新しいバージョンへの安全なマイグレーション処理
-                // 現在はスキーマバージョン0なので、将来の変更時にここに処理を追加
-            }
-        )
-        Realm.Configuration.defaultConfiguration = config
+    /// - Throws: SportsNoteError初期化に失敗した場合
+    func initRealm() throws {
+        do {
+            let config = Realm.Configuration(
+                fileURL: Realm.Configuration.defaultConfiguration.fileURL?.deletingLastPathComponent()
+                    .appendingPathComponent(RealmConstants.databaseName),
+                schemaVersion: RealmConstants.schemaVersion,
+                migrationBlock: { migration, oldSchemaVersion in
+                    // 古いバージョンから新しいバージョンへの安全なマイグレーション処理
+                    // 現在はスキーマバージョン0なので、将来の変更時にここに処理を追加
+                }
+            )
+            Realm.Configuration.defaultConfiguration = config
+            
+            // 初期化テスト - Realmインスタンスを作成してみる
+            _ = try Realm()
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "initRealm")
+        }
     }
 
     /// Realmファイルのパスを出力
@@ -39,14 +47,15 @@ class RealmManager: @unchecked Sendable {
 
     /// 汎用的なデータ保存メソッド
     /// - Parameter item: 保存するデータ
-    func saveItem<T: Object>(_ item: T) {
+    /// - Throws: SportsNoteError保存に失敗した場合
+    func saveItem<T: Object>(_ item: T) throws {
         do {
             let realm = try Realm()
             try realm.write {
                 realm.add(item, update: .modified)  // `insertOrUpdate`相当
             }
         } catch let error {
-            print("Failed to save item: \(error)")
+            throw ErrorMapper.mapRealmError(error, context: "saveItem-\(String(describing: T.self))")
         }
     }
 
@@ -54,7 +63,8 @@ class RealmManager: @unchecked Sendable {
 
     /// すべてのデータの userID を指定した値に更新する
     /// - Parameter userId: 更新後の userID
-    func updateAllUserIds(userId: String) {
+    /// - Throws: SportsNoteError更新に失敗した場合
+    func updateAllUserIds(userId: String) throws {
         do {
             let realm = try Realm()
             try realm.write {
@@ -67,7 +77,7 @@ class RealmManager: @unchecked Sendable {
                 }
             }
         } catch let error {
-            print("Error updating all userIDs: \(error)")
+            throw ErrorMapper.mapRealmError(error, context: "updateAllUserIds")
         }
     }
 
@@ -97,11 +107,11 @@ class RealmManager: @unchecked Sendable {
 
     /// 汎用的なデータ取得メソッド（ID指定）
     /// - Parameter id: 検索するID（文字列）
-    /// - Returns: 取得データ（存在しない場合やエラーが発生した場合は`nil`）
-    internal func getObjectById<T: Object>(id: String, type: T.Type) -> T? {
+    /// - Returns: 取得データ（存在しない場合は`nil`）
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    internal func getObjectById<T: Object>(id: String, type: T.Type) throws -> T? {
         guard !id.isEmpty else {
-            print("Error: Empty ID provided")
-            return nil
+            throw SportsNoteError.realmReadFailed("Empty ID provided for \(String(describing: T.self))")
         }
 
         do {
@@ -129,15 +139,15 @@ class RealmManager: @unchecked Sendable {
             }
             return nil
         } catch let error {
-            print("Error fetching object by ID \(id): \(error)")
-            return nil
+            throw ErrorMapper.mapRealmError(error, context: "getObjectById-\(String(describing: T.self))-\(id)")
         }
     }
 
     /// 汎用的なデータ一覧取得メソッド
     /// - Parameter clazz: 取得するデータ型のクラス
     /// - Returns: 条件に一致するデータのリスト
-    func getDataList<T: Object>(clazz: T.Type) -> [T] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getDataList<T: Object>(clazz: T.Type) throws -> [T] {
         do {
             let realm = try Realm()
             var results = realm.objects(clazz)
@@ -149,24 +159,23 @@ class RealmManager: @unchecked Sendable {
                 results = results.sorted(byKeyPath: "order", ascending: true)
             }
             return Array(results)
-        } catch {
-            print("Error fetching data list: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getDataList-\(String(describing: T.self))")
         }
     }
 
     /// 汎用的なデータカウント取得メソッド
     /// - Parameter clazz: RealmObjectのクラス型
     /// - Returns: isDeletedがfalseのデータ数
-    func getCount<T: Object>(clazz: T.Type) -> Int {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getCount<T: Object>(clazz: T.Type) throws -> Int {
         do {
             let realm = try Realm()
             return realm.objects(T.self)
                 .filter("isDeleted == false")
                 .count
-        } catch {
-            print("Error fetching count: \(error)")
-            return 0
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getCount-\(String(describing: T.self))")
         }
     }
 
@@ -393,7 +402,8 @@ class RealmManager: @unchecked Sendable {
     /// - Parameters:
     ///   - T: RealmObject を継承したデータ型
     ///   - id: 削除するデータの ID
-    internal func logicalDelete<T: Object>(id: String, type: T.Type) {
+    /// - Throws: SportsNoteError削除に失敗した場合
+    internal func logicalDelete<T: Object>(id: String, type: T.Type) throws {
         do {
             let realm = try Realm()
 
@@ -415,8 +425,8 @@ class RealmManager: @unchecked Sendable {
                     }
                 }
             }
-        } catch {
-            print("Error in logicalDelete: \(error)")
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "logicalDelete-\(String(describing: T.self))-\(id)")
         }
     }
 

@@ -23,6 +23,15 @@
 "deleteNote" = "ノートの削除";
 "deleteNoteConfirmation" = "このノートを削除してもよろしいですか？";
 "error" = "エラー";
+"retry" = "再試行";
+
+// MARK: Error Dialog Titles
+"errorCriticalTitle" = "重大なエラー";
+"errorSystemTitle" = "システムエラー";
+"errorDatabaseTitle" = "データベースエラー";
+"errorAuthTitle" = "認証エラー";
+"errorNetworkTitle" = "ネットワークエラー";
+"errorGeneralTitle" = "エラー";
 
 // MARK: Error Messages - Realm
 "errorRealmInitFailed" = "データベースの初期化に失敗しました";

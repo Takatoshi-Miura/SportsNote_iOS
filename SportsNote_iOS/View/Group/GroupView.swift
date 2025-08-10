@@ -22,13 +22,20 @@ struct GroupView: View {
     var body: some View {
         GroupForm(title: $title, selectedColor: $selectedColor) {
             // グループ情報更新
-            viewModel.saveGroup(
-                groupID: group.groupID,
-                title: title,
-                color: selectedColor,
-                order: group.order,
-                created_at: group.created_at
-            )
+            Task {
+                let updatedGroup = Group(
+                    groupID: group.groupID,
+                    title: title,
+                    color: selectedColor.rawValue,
+                    order: group.order,
+                    created_at: group.created_at
+                )
+                do {
+                    try await viewModel.save(updatedGroup, isUpdate: true)
+                } catch {
+                    // エラーはViewModelで処理される
+                }
+            }
         }
         .background(Color(UIColor.systemBackground))
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.group))
@@ -46,11 +53,27 @@ struct GroupView: View {
         .alert(LocalizedStrings.delete, isPresented: $showingDeleteConfirmation) {
             Button(LocalizedStrings.cancel, role: .cancel) {}
             Button(LocalizedStrings.delete, role: .destructive) {
-                viewModel.deleteGroup(id: group.groupID)
-                dismiss()
+                Task {
+                    do {
+                        try await viewModel.delete(id: group.groupID)
+                        dismiss()
+                    } catch {
+                        // エラーはViewModelで処理される
+                    }
+                }
             }
         } message: {
             Text(LocalizedStrings.deleteGroup)
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert,
+            onRetry: {
+                // データ再取得で回復を試行
+                Task {
+                    await viewModel.fetchData()
+                }
+            }
+        )
     }
 }

@@ -58,15 +58,19 @@ class InitializationManager: @unchecked Sendable {
     /// 未分類グループを作成
     /// ※グループが既に存在する場合は作成しない
     private func createUncategorizedGroup() async {
-        let groups = RealmManager.shared.getDataList(clazz: Group.self)
-        if groups.isEmpty {
-            await MainActor.run {
-                let groupViewModel = GroupViewModel()
-                groupViewModel.saveGroup(
-                    title: LocalizedStrings.uncategorized,
-                    color: GroupColor.gray
-                )
+        do {
+            let groups = try RealmManager.shared.getDataList(clazz: Group.self)
+            if groups.isEmpty {
+                await MainActor.run {
+                    let groupViewModel = GroupViewModel()
+                    groupViewModel.saveGroup(
+                        title: LocalizedStrings.uncategorized,
+                        color: GroupColor.gray
+                    )
+                }
             }
+        } catch {
+            print("未分類グループ作成チェックに失敗しました: \(error.localizedDescription)")
         }
     }
 
@@ -88,7 +92,11 @@ class InitializationManager: @unchecked Sendable {
     /// ユーザIDの更新処理
     /// - Parameter userId: userId
     func updateAllUserIds(userId: String) async {
-        RealmManager.shared.updateAllUserIds(userId: userId)
+        do {
+            try RealmManager.shared.updateAllUserIds(userId: userId)
+        } catch {
+            print("ユーザID更新に失敗しました: \(error.localizedDescription)")
+        }
     }
 
     /// ユーザーのログイン状態をチェック

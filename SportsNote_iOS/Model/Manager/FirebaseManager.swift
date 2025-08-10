@@ -17,22 +17,27 @@ final class FirebaseManager: @unchecked Sendable {
      * @param collectionName コレクション名
      * @param documentID ドキュメントID
      * @param data 保存するデータ
+     * @throws SportsNoteError Firebase保存に失敗した場合
      */
     private func saveDocument(
         collectionName: String,
         documentID: String,
         data: [String: Any]
     ) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection(collectionName)
-                .document(documentID)
-                .setData(data) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                db.collection(collectionName)
+                    .document(documentID)
+                    .setData(data) { error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: ())
+                        }
                     }
-                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapFirebaseError(error, context: "saveDocument-\(collectionName)-\(documentID)")
         }
     }
 
@@ -40,6 +45,7 @@ final class FirebaseManager: @unchecked Sendable {
      * FirebaseにGroupを保存
      *
      * @param group Group
+     * @throws SportsNoteError Firebase保存に失敗した場合
      */
     func saveGroup(group: Group) async throws {
         try await saveDocument(
@@ -191,21 +197,25 @@ final class FirebaseManager: @unchecked Sendable {
     private func getAllDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
         let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: UUID().uuidString)
 
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection(collection)
-                .whereField("userID", isEqualTo: userID)
-                .getDocuments { (querySnapshot, error) in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                        return
-                    }
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                db.collection(collection)
+                    .whereField("userID", isEqualTo: userID)
+                    .getDocuments { (querySnapshot, error) in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                            return
+                        }
 
-                    if let querySnapshot = querySnapshot {
-                        continuation.resume(returning: querySnapshot.documents)
-                    } else {
-                        continuation.resume(returning: [])
+                        if let querySnapshot = querySnapshot {
+                            continuation.resume(returning: querySnapshot.documents)
+                        } else {
+                            continuation.resume(returning: [])
+                        }
                     }
-                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapFirebaseError(error, context: "getAllDocuments-\(collection)")
         }
     }
 

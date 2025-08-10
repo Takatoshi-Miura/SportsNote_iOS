@@ -9,6 +9,8 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     @Published var groups: [Group] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var currentError: SportsNoteError?
+    @Published var showingErrorAlert: Bool = false
 
     init() {
         Task {
@@ -20,14 +22,33 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     func fetchData() async {
         isLoading = true
 
-        // Realm操作はMainActorで直接実行（スレッドセーフ）
-        groups = RealmManager.shared.getDataList(clazz: Group.self)
+        do {
+            // Realm操作はMainActorで実行
+            groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } catch let error {
+            if let sportsNoteError = error as? SportsNoteError {
+                handleSportsNoteError(sportsNoteError)
+            } else {
+                let mappedError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-fetchData")
+                handleSportsNoteError(mappedError)
+            }
+        }
+
         isLoading = false
     }
 
     /// グループ取得（同期版 - 既存のメソッドとの互換性のため）
     private func fetchGroups() {
-        groups = RealmManager.shared.getDataList(clazz: Group.self)
+        do {
+            groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } catch let error {
+            if let sportsNoteError = error as? SportsNoteError {
+                handleSportsNoteError(sportsNoteError)
+            } else {
+                let mappedError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-fetchGroups")
+                handleSportsNoteError(mappedError)
+            }
+        }
     }
 
     /// エンティティを保存（新規作成・更新）する
@@ -36,7 +57,7 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
 
         do {
             // 1. Realm操作はMainActorで実行
-            RealmManager.shared.saveItem(entity)
+            try RealmManager.shared.saveItem(entity)
 
             // 2. Firebase同期のみバックグラウンドで実行
             if isOnlineAndLoggedIn {
@@ -46,10 +67,16 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             }
 
             // 3. UI更新
-            groups = RealmManager.shared.getDataList(clazz: Group.self)
-        } catch {
-            handleError(error)
-            throw error
+            groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } catch let error {
+            let sportsNoteError: SportsNoteError
+            if let existingSportsNoteError = error as? SportsNoteError {
+                sportsNoteError = existingSportsNoteError
+            } else {
+                sportsNoteError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-save")
+            }
+            handleSportsNoteError(sportsNoteError)
+            throw sportsNoteError
         }
 
         isLoading = false
@@ -70,7 +97,17 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         created_at: Date? = nil
     ) {
         let newGroupID = groupID ?? UUID().uuidString
-        let newOrder = order ?? RealmManager.shared.getCount(clazz: Group.self)
+        let newOrder =
+            order
+            ?? {
+                do {
+                    return try RealmManager.shared.getCount(clazz: Group.self)
+                } catch {
+                    handleSportsNoteError(
+                        ErrorMapper.mapRealmError(error, context: "GroupViewModel-saveGroup-getCount"))
+                    return 0
+                }
+            }()
         let newCreatedAt = created_at ?? Date()
 
         let group = Group(
@@ -97,11 +134,11 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
 
         do {
             // 1. Realm操作はMainActorで実行
-            RealmManager.shared.logicalDelete(id: id, type: Group.self)
+            try RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
             // 2. Firebase同期のみバックグラウンドで実行
             if isOnlineAndLoggedIn {
-                if let deletedGroup = RealmManager.shared.getObjectById(id: id, type: Group.self) {
+                if let deletedGroup = try RealmManager.shared.getObjectById(id: id, type: Group.self) {
                     Task.detached {
                         try await FirebaseManager.shared.saveGroup(group: deletedGroup)
                     }
@@ -109,10 +146,16 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             }
 
             // 3. UI更新
-            groups = RealmManager.shared.getDataList(clazz: Group.self)
-        } catch {
-            handleError(error)
-            throw error
+            groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } catch let error {
+            let sportsNoteError: SportsNoteError
+            if let existingSportsNoteError = error as? SportsNoteError {
+                sportsNoteError = existingSportsNoteError
+            } else {
+                sportsNoteError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-delete")
+            }
+            handleSportsNoteError(sportsNoteError)
+            throw sportsNoteError
         }
 
         isLoading = false
@@ -132,14 +175,24 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
 
     /// 指定されたIDのエンティティを取得する
     func fetchById(id: String) async -> Group? {
-        return RealmManager.shared.getObjectById(id: id, type: Group.self)
+        do {
+            return try RealmManager.shared.getObjectById(id: id, type: Group.self)
+        } catch let error {
+            if let sportsNoteError = error as? SportsNoteError {
+                handleSportsNoteError(sportsNoteError)
+            } else {
+                let mappedError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-fetchById")
+                handleSportsNoteError(mappedError)
+            }
+            return nil
+        }
     }
 
     /// Firebaseへの同期処理を実行する
     func syncToFirebase() async throws {
         guard isOnlineAndLoggedIn else { return }
 
-        let allGroups = RealmManager.shared.getDataList(clazz: Group.self)
+        let allGroups = try RealmManager.shared.getDataList(clazz: Group.self)
 
         for group in allGroups {
             try await syncEntityToFirebase(group)

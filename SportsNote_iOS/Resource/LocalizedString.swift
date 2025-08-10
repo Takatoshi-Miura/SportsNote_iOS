@@ -30,6 +30,15 @@ struct LocalizedStrings {
     static let deleteNote = "deleteNote".localized
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     static let error = "error".localized
+    static let retry = "retry".localized
+    
+    // MARK: Error Dialog Titles
+    static let errorCriticalTitle = "errorCriticalTitle".localized
+    static let errorSystemTitle = "errorSystemTitle".localized
+    static let errorDatabaseTitle = "errorDatabaseTitle".localized
+    static let errorAuthTitle = "errorAuthTitle".localized
+    static let errorNetworkTitle = "errorNetworkTitle".localized
+    static let errorGeneralTitle = "errorGeneralTitle".localized
 
     // MARK: Error Messages - Realm
     static let errorRealmInitFailed = "errorRealmInitFailed".localized
