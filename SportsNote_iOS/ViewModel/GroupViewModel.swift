@@ -37,51 +37,6 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         isLoading = false
     }
 
-    /// グループ取得（同期版 - 既存のメソッドとの互換性のため）
-    private func fetchGroups() {
-        do {
-            groups = try RealmManager.shared.getDataList(clazz: Group.self)
-        } catch let error {
-            if let sportsNoteError = error as? SportsNoteError {
-                handleSportsNoteError(sportsNoteError)
-            } else {
-                let mappedError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-fetchGroups")
-                handleSportsNoteError(mappedError)
-            }
-        }
-    }
-
-    /// エンティティを保存（新規作成・更新）する
-    func save(_ entity: Group, isUpdate: Bool = false) async throws {
-        isLoading = true
-
-        do {
-            // 1. Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
-            // 2. Firebase同期のみバックグラウンドで実行
-            if isOnlineAndLoggedIn {
-                Task.detached {
-                    try await FirebaseManager.shared.saveGroup(group: entity)
-                }
-            }
-
-            // 3. UI更新
-            groups = try RealmManager.shared.getDataList(clazz: Group.self)
-        } catch let error {
-            let sportsNoteError: SportsNoteError
-            if let existingSportsNoteError = error as? SportsNoteError {
-                sportsNoteError = existingSportsNoteError
-            } else {
-                sportsNoteError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-save")
-            }
-            handleSportsNoteError(sportsNoteError)
-            throw sportsNoteError
-        }
-
-        isLoading = false
-    }
-
     /// グループ保存処理(更新も兼ねる) - 既存インターフェースとの互換性のため
     /// - Parameters:
     ///   - groupID: グループID
@@ -127,6 +82,46 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             }
         }
     }
+    
+    /// エンティティを保存（新規作成・更新）する
+    func save(_ entity: Group, isUpdate: Bool = false) async throws {
+        isLoading = true
+
+        do {
+            // Realm操作はMainActorで実行
+            try RealmManager.shared.saveItem(entity)
+
+            // Firebase同期のみバックグラウンドで実行
+            Task.detached {
+                try await self.syncEntityToFirebase(entity, isUpdate: isUpdate)
+            }
+
+            // UI更新
+            groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } catch let error {
+            let sportsNoteError: SportsNoteError
+            if let existingSportsNoteError = error as? SportsNoteError {
+                sportsNoteError = existingSportsNoteError
+            } else {
+                sportsNoteError = ErrorMapper.mapRealmError(error, context: "GroupViewModel-save")
+            }
+            handleSportsNoteError(sportsNoteError)
+            throw sportsNoteError
+        }
+
+        isLoading = false
+    }
+    
+    /// エンティティをFirebaseに同期する
+    func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async throws {
+        guard isOnlineAndLoggedIn else { return }
+
+        if isUpdate {
+            try await FirebaseManager.shared.updateGroup(group: entity)
+        } else {
+            try await FirebaseManager.shared.saveGroup(group: entity)
+        }
+    }
 
     /// 指定されたIDのエンティティを削除する
     func delete(id: String) async throws {
@@ -161,17 +156,6 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         isLoading = false
     }
 
-    /// グループ削除処理 - 既存インターフェースとの互換性のため
-    /// - Parameter id: グループID
-    func deleteGroup(id: String) {
-        Task {
-            do {
-                try await delete(id: id)
-            } catch {
-                handleError(error)
-            }
-        }
-    }
 
     /// 指定されたIDのエンティティを取得する
     func fetchById(id: String) async -> Group? {
@@ -196,17 +180,6 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
 
         for group in allGroups {
             try await syncEntityToFirebase(group)
-        }
-    }
-
-    /// 指定されたエンティティをFirebaseに同期する
-    func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async throws {
-        guard isOnlineAndLoggedIn else { return }
-
-        if isUpdate {
-            try await FirebaseManager.shared.updateGroup(group: entity)
-        } else {
-            try await FirebaseManager.shared.saveGroup(group: entity)
         }
     }
 }
