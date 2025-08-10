@@ -31,9 +31,9 @@ class TargetViewModel: ObservableObject {
     ///   - year: 年
     ///   - month: 月
     func fetchTargets(year: Int, month: Int) {
-        yearlyTargets = RealmManager.shared.getDataList(clazz: Target.self)
+        yearlyTargets = (try? RealmManager.shared.getDataList(clazz: Target.self)) ?? []
             .filter { $0.year == year && $0.isYearlyTarget }
-        monthlyTargets = RealmManager.shared.getDataList(clazz: Target.self)
+        monthlyTargets = (try? RealmManager.shared.getDataList(clazz: Target.self)) ?? []
             .filter { $0.year == year && $0.month == month && !$0.isYearlyTarget }
     }
 
@@ -71,7 +71,7 @@ class TargetViewModel: ObservableObject {
             month: month,
             isYearlyTarget: isYearlyTarget
         )
-        RealmManager.shared.saveItem(target)
+        try? RealmManager.shared.saveItem(target)
 
         // Firebaseに反映
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
@@ -89,12 +89,12 @@ class TargetViewModel: ObservableObject {
     /// 目標を削除
     /// - Parameter id: targetID
     private func deleteTarget(id: String) {
-        RealmManager.shared.logicalDelete(id: id, type: Target.self)
+        try? RealmManager.shared.logicalDelete(id: id, type: Target.self)
 
         // Firebaseに反映
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
-                if let deletedTarget = RealmManager.shared.getObjectById(id: id, type: Target.self) {
+                if let deletedTarget = try? RealmManager.shared.getObjectById(id: id, type: Target.self) {
                     try await FirebaseManager.shared.updateTarget(target: deletedTarget)
                 }
             }

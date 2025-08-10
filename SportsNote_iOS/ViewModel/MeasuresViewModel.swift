@@ -13,14 +13,14 @@ class MeasuresViewModel: ObservableObject {
 
     /// 全ての対策を取得
     func fetchAllMeasures() {
-        measuresList = RealmManager.shared.getDataList(clazz: Measures.self)
+        measuresList = (try? RealmManager.shared.getDataList(clazz: Measures.self)) ?? []
     }
 
     /// 対策をIDで取得
     /// - Parameter measuresID: 対策ID
     /// - Returns: 対策オブジェクト (見つからない場合はnil)
     func getMeasuresById(measuresID: String) -> Measures? {
-        return RealmManager.shared.getObjectById(id: measuresID, type: Measures.self)
+        return try? RealmManager.shared.getObjectById(id: measuresID, type: Measures.self)
     }
 
     /// 対策に紐づくメモを取得
@@ -62,7 +62,7 @@ class MeasuresViewModel: ObservableObject {
             order: newOrder,
             created_at: newCreatedAt
         )
-        RealmManager.shared.saveItem(measures)
+        try? RealmManager.shared.saveItem(measures)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
@@ -83,12 +83,12 @@ class MeasuresViewModel: ObservableObject {
     /// 対策を論理削除
     /// - Parameter id: 対策ID
     func deleteMeasures(id: String) {
-        RealmManager.shared.logicalDelete(id: id, type: Measures.self)
+        try? RealmManager.shared.logicalDelete(id: id, type: Measures.self)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
-                if let deletedMeasures = RealmManager.shared.getObjectById(id: id, type: Measures.self) {
+                if let deletedMeasures = try? RealmManager.shared.getObjectById(id: id, type: Measures.self) {
                     try await FirebaseManager.shared.updateMeasures(measures: deletedMeasures)
                 }
             }

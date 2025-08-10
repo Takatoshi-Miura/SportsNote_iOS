@@ -13,19 +13,19 @@ class MemoViewModel: ObservableObject {
 
     /// 全てのメモを取得
     func fetchAllMemos() {
-        memoList = RealmManager.shared.getDataList(clazz: Memo.self)
+        memoList = (try? RealmManager.shared.getDataList(clazz: Memo.self)) ?? []
     }
 
     /// 対策IDに紐づくメモを取得
     /// - Parameter measuresID: 対策ID
     /// - Returns: メモのリスト
     func getMemosByMeasuresID(measuresID: String) -> [MeasuresMemo] {
-        let memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+        let memos = (try? RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)) ?? []
         var measuresMemoList = [MeasuresMemo]()
 
         for memo in memos {
             // Noteデータを取得
-            if let note = RealmManager.shared.getObjectById(id: memo.noteID, type: Note.self) {
+            if let note = try? RealmManager.shared.getObjectById(id: memo.noteID, type: Note.self) {
                 let measuresMemo = MeasuresMemo(
                     memoID: memo.memoID,
                     measuresID: memo.measuresID,
@@ -68,7 +68,7 @@ class MemoViewModel: ObservableObject {
             detail: detail,
             created_at: newCreatedAt
         )
-        RealmManager.shared.saveItem(memo)
+        try? RealmManager.shared.saveItem(memo)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
@@ -94,12 +94,12 @@ class MemoViewModel: ObservableObject {
     /// メモを論理削除
     /// - Parameter memoID: メモID
     func deleteMemo(memoID: String) {
-        RealmManager.shared.logicalDelete(id: memoID, type: Memo.self)
+        try? RealmManager.shared.logicalDelete(id: memoID, type: Memo.self)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
-                if let deletedMemo = RealmManager.shared.getObjectById(id: memoID, type: Memo.self) {
+                if let deletedMemo = try? RealmManager.shared.getObjectById(id: memoID, type: Memo.self) {
                     try await FirebaseManager.shared.updateMemo(memo: deletedMemo)
                 }
             }

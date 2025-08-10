@@ -92,7 +92,7 @@ class NoteViewModel: ObservableObject {
         note.noteType = noteType.rawValue
 
         // 既存のノートからデータを取得
-        if let id = noteID, let existingNote = realmManager.getObjectById(id: id, type: Note.self) {
+        if let id = noteID, let existingNote = try? realmManager.getObjectById(id: id, type: Note.self) {
             // 既存の値で初期化（明示的に上書きされない限り保持される）
             note.title = existingNote.title
             note.purpose = existingNote.purpose
@@ -161,7 +161,7 @@ class NoteViewModel: ObservableObject {
         note.updated_at = Date()
 
         // Realmに保存
-        realmManager.saveItem(note)
+        try? realmManager.saveItem(note)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
@@ -193,12 +193,12 @@ class NoteViewModel: ObservableObject {
             return
         }
 
-        realmManager.logicalDelete(id: id, type: Note.self)
+        try? realmManager.logicalDelete(id: id, type: Note.self)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
-                if let deletedNote = realmManager.getObjectById(id: id, type: Note.self) {
+                if let deletedNote = try? realmManager.getObjectById(id: id, type: Note.self) {
                     try await FirebaseManager.shared.updateNote(note: deletedNote)
                 }
             }
@@ -289,7 +289,7 @@ class NoteViewModel: ObservableObject {
             memo.measuresID = task.measuresID
             memo.noteID = noteID
             memo.detail = reflectionText
-            realmManager.saveItem(memo)
+            try? realmManager.saveItem(memo)
         }
 
         // メモを再読み込み
@@ -353,7 +353,7 @@ class NoteViewModel: ObservableObject {
 
     func loadNote(id: String) {
         isLoadingNote = true
-        selectedNote = realmManager.getObjectById(id: id, type: Note.self)
+        selectedNote = try? realmManager.getObjectById(id: id, type: Note.self)
         loadMemos()
         isLoadingNote = false
     }
@@ -361,7 +361,7 @@ class NoteViewModel: ObservableObject {
     func loadNote() {
         isLoadingNote = true
         if let id = selectedNote?.noteID {
-            selectedNote = realmManager.getObjectById(id: id, type: Note.self)
+            selectedNote = try? realmManager.getObjectById(id: id, type: Note.self)
             loadMemos()
         }
         isLoadingNote = false

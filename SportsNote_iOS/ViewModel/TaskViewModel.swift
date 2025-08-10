@@ -20,7 +20,7 @@ class TaskViewModel: ObservableObject {
 
     /// 全ての課題を取得
     func fetchAllTasks() {
-        tasks = RealmManager.shared.getDataList(clazz: TaskData.self)
+        tasks = (try? RealmManager.shared.getDataList(clazz: TaskData.self)) ?? []
         convertToTaskListData()
     }
 
@@ -74,7 +74,7 @@ class TaskViewModel: ObservableObject {
     /// - Parameter groupID: グループID
     /// - Returns: GroupColorの列挙型
     private func getGroupColor(groupID: String) -> GroupColor {
-        if let group = RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
+        if let group = try? RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
             return GroupColor.allCases[Int(group.color)]
         }
         return GroupColor.gray
@@ -108,7 +108,7 @@ class TaskViewModel: ObservableObject {
         created_at: Date? = nil
     ) -> TaskData {
         let newTaskID = taskID ?? UUID().uuidString
-        let newOrder = order ?? RealmManager.shared.getCount(clazz: TaskData.self)
+        let newOrder = order ?? ((try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0)
         let newCreatedAt = created_at ?? Date()
 
         let task = TaskData(
@@ -120,7 +120,7 @@ class TaskViewModel: ObservableObject {
             isComplete: isComplete,
             created_at: newCreatedAt
         )
-        RealmManager.shared.saveItem(task)
+        try? RealmManager.shared.saveItem(task)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
@@ -151,7 +151,7 @@ class TaskViewModel: ObservableObject {
     /// 課題の完了状態を切り替え
     /// - Parameter taskID: 課題ID
     func toggleTaskCompletion(taskID: String) {
-        if let taskToUpdate = RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
+        if let taskToUpdate = try? RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
             saveTask(
                 taskID: taskToUpdate.taskID,
                 title: taskToUpdate.title,
@@ -167,12 +167,12 @@ class TaskViewModel: ObservableObject {
     /// 課題を削除
     /// - Parameter id: 課題ID
     func deleteTask(id: String) {
-        RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
+        try? RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
 
         // Firebaseへの同期
         if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
             Task {
-                if let deletedTask = RealmManager.shared.getObjectById(id: id, type: TaskData.self) {
+                if let deletedTask = try? RealmManager.shared.getObjectById(id: id, type: TaskData.self) {
                     try await FirebaseManager.shared.updateTask(task: deletedTask)
                 }
             }
@@ -191,7 +191,7 @@ class TaskViewModel: ObservableObject {
     /// 課題の詳細情報を取得
     /// - Parameter taskID: 課題ID
     func fetchTaskDetail(taskID: String) {
-        if let task = RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
+        if let task = try? RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
             let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
             taskDetail = TaskDetailData(task: task, measuresList: measures)
         } else {
@@ -210,7 +210,7 @@ class TaskViewModel: ObservableObject {
                 let taskID = measure.taskID
 
                 // Delete measure
-                RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
+                try? RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
 
                 // Update task detail if viewing
                 if let detail = taskDetail, detail.task.taskID == taskID {

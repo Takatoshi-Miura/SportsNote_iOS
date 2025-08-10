@@ -101,7 +101,7 @@ final class SyncManager: Sendable {
         // Firebase にしかないデータを Realm に保存
         for id in onlyFirebaseID {
             if let item = firebaseMap[id] {
-                RealmManager.shared.saveItem(item)
+                try? RealmManager.shared.saveItem(item)
             }
         }
 
@@ -114,7 +114,7 @@ final class SyncManager: Sendable {
             if realmItem.updated_at > firebaseItem.updated_at {
                 try await updateFirebase(realmItem)
             } else if firebaseItem.updated_at > realmItem.updated_at {
-                RealmManager.shared.saveItem(firebaseItem)
+                try? RealmManager.shared.saveItem(firebaseItem)
             }
         }
     }
@@ -123,7 +123,7 @@ final class SyncManager: Sendable {
     private func syncGroup() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllGroup() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: Group.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: Group.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveGroup(group: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateGroup(group: $0) }
         )
@@ -133,7 +133,7 @@ final class SyncManager: Sendable {
     private func syncTask() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllTask() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: TaskData.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: TaskData.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveTask(task: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateTask(task: $0) }
         )
@@ -143,7 +143,7 @@ final class SyncManager: Sendable {
     private func syncMeasures() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllMeasures() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: Measures.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: Measures.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveMeasures(measures: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateMeasures(measures: $0) }
         )
@@ -153,7 +153,7 @@ final class SyncManager: Sendable {
     private func syncMemo() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllMemo() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: Memo.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: Memo.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveMemo(memo: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateMemo(memo: $0) }
         )
@@ -163,7 +163,7 @@ final class SyncManager: Sendable {
     private func syncTarget() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllTarget() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: Target.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: Target.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveTarget(target: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateTarget(target: $0) }
         )
@@ -173,7 +173,7 @@ final class SyncManager: Sendable {
     private func syncNote() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllNote() },
-            getRealmData: { RealmManager.shared.getDataList(clazz: Note.self) },
+            getRealmData: { (try? RealmManager.shared.getDataList(clazz: Note.self)) ?? [] },
             saveToFirebase: { try await FirebaseManager.shared.saveNote(note: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateNote(note: $0) }
         )

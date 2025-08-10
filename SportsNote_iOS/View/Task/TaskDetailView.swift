@@ -114,7 +114,7 @@ struct TaskDetailView: View {
 
     private func loadData() {
         // グループデータの読み込み
-        groups = RealmManager.shared.getDataList(clazz: Group.self)
+        groups = (try? RealmManager.shared.getDataList(clazz: Group.self)) ?? []
         if groups.isEmpty { return }
 
         // タスクデータの読み込み
