@@ -24,6 +24,44 @@
 "deleteNoteConfirmation" = "このノートを削除してもよろしいですか？";
 "error" = "エラー";
 
+// MARK: Error Messages - Realm
+"errorRealmInitFailed" = "データベースの初期化に失敗しました";
+"errorRealmWriteFailed" = "データの保存に失敗しました";
+"errorRealmReadFailed" = "データの読み込みに失敗しました";
+"errorRealmDeleteFailed" = "データの削除に失敗しました";
+"errorRealmMigrationFailed" = "データベースの更新に失敗しました";
+
+// MARK: Error Messages - Firebase
+"errorFirebaseNotConnected" = "クラウドサービスに接続できません";
+"errorFirebaseAuthFailed" = "認証に失敗しました";
+"errorFirebasePermissionDenied" = "アクセス権限がありません";
+"errorFirebaseDocumentNotFound" = "データが見つかりません";
+"errorFirebaseNetworkError" = "ネットワークエラーが発生しました";
+"errorFirebaseQuotaExceeded" = "利用制限を超過しました";
+"errorFirebaseServerError" = "サーバーエラーが発生しました";
+
+// MARK: Error Messages - Network
+"errorNetworkUnavailable" = "ネットワークに接続されていません";
+"errorNetworkTimeout" = "通信がタイムアウトしました";
+
+// MARK: Error Messages - Unexpected
+"errorUnexpected" = "予期しないエラーが発生しました";
+"errorSystem" = "システムエラーが発生しました";
+"errorUnknown" = "不明なエラーが発生しました";
+"errorCritical" = "重大なエラーが発生しました";
+
+// MARK: Error Recovery Suggestions
+"errorRealmRecovery" = "アプリを再起動してください。問題が続く場合は、アプリを再インストールしてください。";
+"errorRealmInitRecovery" = "アプリを再起動してください。問題が解決しない場合は、端末の空き容量を確認してください。";
+"errorNetworkRecovery" = "ネットワーク接続を確認してから、もう一度お試しください。";
+"errorFirebaseAuthRecovery" = "ログアウトして再度ログインしてください。";
+"errorFirebasePermissionRecovery" = "アカウントの権限を確認してください。問題が続く場合はサポートにお問い合わせください。";
+"errorFirebaseQuotaRecovery" = "しばらく時間をおいてから再度お試しください。";
+"errorFirebaseDocumentRecovery" = "データが削除されている可能性があります。リフレッシュしてください。";
+"errorUnexpectedRecovery" = "アプリを再起動してください。問題が続く場合はサポートにお問い合わせください。";
+"errorCriticalRecovery" = "アプリを再起動してください。解決しない場合は再インストールが必要な場合があります。";
+"errorFirebaseServerRecovery" = "サーバーに一時的な問題が発生しています。しばらく時間をおいてから再度お試しください。";
+
 // MARK: - Color
 "color" = "カラー";
 "red" = "レッド";

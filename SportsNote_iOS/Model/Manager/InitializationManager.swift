@@ -1,7 +1,7 @@
-import Foundation
-import SwiftUI
 import Firebase
 import FirebaseCrashlytics
+import Foundation
+import SwiftUI
 
 class InitializationManager: @unchecked Sendable {
 

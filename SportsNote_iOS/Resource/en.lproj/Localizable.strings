@@ -24,6 +24,44 @@
 "deleteNoteConfirmation" = "Are you sure you want to delete this note?";
 "error" = "Error";
 
+// MARK: Error Messages - Realm
+"errorRealmInitFailed" = "Failed to initialize database";
+"errorRealmWriteFailed" = "Failed to save data";
+"errorRealmReadFailed" = "Failed to read data";
+"errorRealmDeleteFailed" = "Failed to delete data";
+"errorRealmMigrationFailed" = "Failed to update database";
+
+// MARK: Error Messages - Firebase
+"errorFirebaseNotConnected" = "Cannot connect to cloud service";
+"errorFirebaseAuthFailed" = "Authentication failed";
+"errorFirebasePermissionDenied" = "Access permission denied";
+"errorFirebaseDocumentNotFound" = "Data not found";
+"errorFirebaseNetworkError" = "Network error occurred";
+"errorFirebaseQuotaExceeded" = "Usage quota exceeded";
+"errorFirebaseServerError" = "Server error occurred";
+
+// MARK: Error Messages - Network
+"errorNetworkUnavailable" = "Not connected to network";
+"errorNetworkTimeout" = "Communication timed out";
+
+// MARK: Error Messages - Unexpected
+"errorUnexpected" = "An unexpected error occurred";
+"errorSystem" = "A system error occurred";
+"errorUnknown" = "An unknown error occurred";
+"errorCritical" = "A critical error occurred";
+
+// MARK: Error Recovery Suggestions
+"errorRealmRecovery" = "Please restart the app. If the problem persists, reinstall the app.";
+"errorRealmInitRecovery" = "Please restart the app. If the problem continues, check your device's available storage.";
+"errorNetworkRecovery" = "Please check your network connection and try again.";
+"errorFirebaseAuthRecovery" = "Please log out and log in again.";
+"errorFirebasePermissionRecovery" = "Please check your account permissions. Contact support if the problem persists.";
+"errorFirebaseQuotaRecovery" = "Please wait a moment and try again.";
+"errorFirebaseDocumentRecovery" = "The data may have been deleted. Please refresh.";
+"errorUnexpectedRecovery" = "Please restart the app. Contact support if the problem persists.";
+"errorCriticalRecovery" = "Please restart the app. Reinstallation may be required if not resolved.";
+"errorFirebaseServerRecovery" = "There is a temporary server issue. Please try again later.";
+
 // MARK: Color
 "color" = "Color";
 "red" = "Red";

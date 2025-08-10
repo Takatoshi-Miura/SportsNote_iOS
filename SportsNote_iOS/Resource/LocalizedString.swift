@@ -31,6 +31,44 @@ struct LocalizedStrings {
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     static let error = "error".localized
 
+    // MARK: Error Messages - Realm
+    static let errorRealmInitFailed = "errorRealmInitFailed".localized
+    static let errorRealmWriteFailed = "errorRealmWriteFailed".localized
+    static let errorRealmReadFailed = "errorRealmReadFailed".localized
+    static let errorRealmDeleteFailed = "errorRealmDeleteFailed".localized
+    static let errorRealmMigrationFailed = "errorRealmMigrationFailed".localized
+    
+    // MARK: Error Messages - Firebase
+    static let errorFirebaseNotConnected = "errorFirebaseNotConnected".localized
+    static let errorFirebaseAuthFailed = "errorFirebaseAuthFailed".localized
+    static let errorFirebasePermissionDenied = "errorFirebasePermissionDenied".localized
+    static let errorFirebaseDocumentNotFound = "errorFirebaseDocumentNotFound".localized
+    static let errorFirebaseNetworkError = "errorFirebaseNetworkError".localized
+    static let errorFirebaseQuotaExceeded = "errorFirebaseQuotaExceeded".localized
+    static let errorFirebaseServerError = "errorFirebaseServerError".localized
+    
+    // MARK: Error Messages - Network
+    static let errorNetworkUnavailable = "errorNetworkUnavailable".localized
+    static let errorNetworkTimeout = "errorNetworkTimeout".localized
+    
+    // MARK: Error Messages - Unexpected
+    static let errorUnexpected = "errorUnexpected".localized
+    static let errorSystem = "errorSystem".localized
+    static let errorUnknown = "errorUnknown".localized
+    static let errorCritical = "errorCritical".localized
+    
+    // MARK: Error Recovery Suggestions
+    static let errorRealmRecovery = "errorRealmRecovery".localized
+    static let errorRealmInitRecovery = "errorRealmInitRecovery".localized
+    static let errorNetworkRecovery = "errorNetworkRecovery".localized
+    static let errorFirebaseAuthRecovery = "errorFirebaseAuthRecovery".localized
+    static let errorFirebasePermissionRecovery = "errorFirebasePermissionRecovery".localized
+    static let errorFirebaseQuotaRecovery = "errorFirebaseQuotaRecovery".localized
+    static let errorFirebaseDocumentRecovery = "errorFirebaseDocumentRecovery".localized
+    static let errorUnexpectedRecovery = "errorUnexpectedRecovery".localized
+    static let errorCriticalRecovery = "errorCriticalRecovery".localized
+    static let errorFirebaseServerRecovery = "errorFirebaseServerRecovery".localized
+
     // MARK: Task View
     static let showCompletedTasks = "showCompletedTasks".localized
     static let hideCompletedTasks = "hideCompletedTasks".localized
