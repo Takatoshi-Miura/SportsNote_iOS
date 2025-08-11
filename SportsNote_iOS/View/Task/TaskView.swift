@@ -63,7 +63,11 @@ struct TaskView: View {
                         },
                         refreshAction: {
                             Task {
-                                await viewModel.fetchData()
+                                let result = await viewModel.fetchData()
+                                if case .failure(let error) = result {
+                                    viewModel.currentError = error
+                                    viewModel.showingErrorAlert = true
+                                }
                                 if let id = selectedGroupID {
                                     taskViewModel.fetchTasksByGroupID(groupID: id)
                                 } else {
@@ -96,7 +100,11 @@ struct TaskView: View {
         .onAppear {
             // 画面が表示されるたびに最新データを取得
             Task {
-                await viewModel.fetchData()
+                let result = await viewModel.fetchData()
+                if case .failure(let error) = result {
+                    viewModel.currentError = error
+                    viewModel.showingErrorAlert = true
+                }
                 if let id = selectedGroupID {
                     taskViewModel.fetchTasksByGroupID(groupID: id)
                 } else {
@@ -111,6 +119,10 @@ struct TaskView: View {
             // 画面が非表示になるときに購読をキャンセル
             cancellables.removeAll()
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
     }
 
     // パブリッシャーの購読処理を行う関数に切り出し

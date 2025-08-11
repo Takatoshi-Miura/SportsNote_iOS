@@ -5,16 +5,16 @@ protocol CRUDViewModelProtocol: BaseViewModelProtocol {
     /// エンティティを保存（新規作成・更新）する
     /// - Parameter entity: 保存するエンティティ
     /// - Parameter isUpdate: 更新かどうか（デフォルトはfalse）
-    /// - Throws: 保存処理でエラーが発生した場合
-    func save(_ entity: EntityType, isUpdate: Bool) async throws
+    /// - Returns: 成功時は.success(())、失敗時は.failure(SportsNoteError)
+    func save(_ entity: EntityType, isUpdate: Bool) async -> Result<Void, SportsNoteError>
 
     /// 指定されたIDのエンティティを削除する
     /// - Parameter id: 削除するエンティティのID
-    /// - Throws: 削除処理でエラーが発生した場合
-    func delete(id: String) async throws
+    /// - Returns: 成功時は.success(())、失敗時は.failure(SportsNoteError)
+    func delete(id: String) async -> Result<Void, SportsNoteError>
 
     /// 指定されたIDのエンティティを取得する
     /// - Parameter id: 取得するエンティティのID
-    /// - Returns: 取得したエンティティ（存在しない場合はnil）
-    func fetchById(id: String) async -> EntityType?
+    /// - Returns: 成功時は.success(entity)、失敗時は.failure(SportsNoteError)
+    func fetchById(id: String) async -> Result<EntityType?, SportsNoteError>
 }

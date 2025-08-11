@@ -30,10 +30,15 @@ struct GroupView: View {
                     order: group.order,
                     created_at: group.created_at
                 )
-                do {
-                    try await viewModel.save(updatedGroup, isUpdate: true)
-                } catch {
-                    // エラーはViewModelで処理される
+                let result = await viewModel.save(updatedGroup, isUpdate: true)
+                switch result {
+                case .success:
+                    // 保存成功時の処理
+                    break
+                case .failure(let error):
+                    // エラーをView側で明示的に処理
+                    viewModel.currentError = error
+                    viewModel.showingErrorAlert = true
                 }
             }
         }
@@ -54,11 +59,14 @@ struct GroupView: View {
             Button(LocalizedStrings.cancel, role: .cancel) {}
             Button(LocalizedStrings.delete, role: .destructive) {
                 Task {
-                    do {
-                        try await viewModel.delete(id: group.groupID)
+                    let result = await viewModel.delete(id: group.groupID)
+                    switch result {
+                    case .success:
                         dismiss()
-                    } catch {
-                        // エラーはViewModelで処理される
+                    case .failure(let error):
+                        // エラーをView側で明示的に処理
+                        viewModel.currentError = error
+                        viewModel.showingErrorAlert = true
                     }
                 }
             }
