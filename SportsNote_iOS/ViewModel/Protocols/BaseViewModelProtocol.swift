@@ -10,8 +10,6 @@ protocol BaseViewModelProtocol: ObservableObject {
     /// ローディング状態を示すプロパティ
     var isLoading: Bool { get set }
 
-    /// エラーメッセージを保持するプロパティ（既存の互換性のため保持）
-    var errorMessage: String? { get set }
 
     /// 現在発生しているSportsNoteError
     var currentError: SportsNoteError? { get set }
@@ -33,9 +31,8 @@ protocol BaseViewModelProtocol: ObservableObject {
 extension BaseViewModelProtocol {
 
 
-    /// エラーメッセージをクリアしてデータを再取得する
+    /// エラーをクリアしてデータを再取得する
     func refresh() async {
-        self.errorMessage = nil
         self.currentError = nil
         self.showingErrorAlert = false
         let result = await self.fetchData()

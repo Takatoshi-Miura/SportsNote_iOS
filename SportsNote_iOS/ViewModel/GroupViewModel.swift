@@ -8,7 +8,6 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     typealias EntityType = Group
     @Published var groups: [Group] = []
     @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
     @Published var currentError: SportsNoteError?
     @Published var showingErrorAlert: Bool = false
 
@@ -38,13 +37,14 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     ///   - color: カラー
     ///   - order: 並び順
     ///   - created_at: 作成日時
+    /// - Returns: 保存結果
     func saveGroup(
         groupID: String? = nil,
         title: String,
         color: GroupColor,
         order: Int? = nil,
         created_at: Date? = nil
-    ) {
+    ) async -> Result<Void, SportsNoteError> {
         let newGroupID = groupID ?? UUID().uuidString
         let newOrder =
             order
@@ -66,13 +66,8 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             created_at: newCreatedAt
         )
 
-        Task {
-            let isUpdate = groupID != nil
-            let result = await save(group, isUpdate: isUpdate)
-            if case .failure = result {
-                // エラーはView側で処理される
-            }
-        }
+        let isUpdate = groupID != nil
+        return await save(group, isUpdate: isUpdate)
     }
 
     /// エンティティを保存（新規作成・更新）する

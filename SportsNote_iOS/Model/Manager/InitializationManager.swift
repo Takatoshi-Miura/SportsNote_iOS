@@ -61,13 +61,11 @@ class InitializationManager: @unchecked Sendable {
         do {
             let groups = try RealmManager.shared.getDataList(clazz: Group.self)
             if groups.isEmpty {
-                await MainActor.run {
-                    let groupViewModel = GroupViewModel()
-                    groupViewModel.saveGroup(
-                        title: LocalizedStrings.uncategorized,
-                        color: GroupColor.gray
-                    )
-                }
+                let groupViewModel = await GroupViewModel()
+                let _ = await groupViewModel.saveGroup(
+                    title: LocalizedStrings.uncategorized,
+                    color: GroupColor.gray
+                )
             }
         } catch {
             print("未分類グループ作成チェックに失敗しました: \(error.localizedDescription)")

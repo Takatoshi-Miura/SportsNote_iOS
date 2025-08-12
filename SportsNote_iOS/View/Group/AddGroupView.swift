@@ -32,8 +32,15 @@ struct AddGroupView: View {
                     // 保存
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(LocalizedStrings.save) {
-                            viewModel.saveGroup(title: title, color: selectedColor)
-                            dismiss()
+                            Task {
+                                let result = await viewModel.saveGroup(title: title, color: selectedColor)
+                                if case .success = result {
+                                    dismiss()
+                                } else if case .failure(let error) = result {
+                                    viewModel.currentError = error
+                                    viewModel.showingErrorAlert = true
+                                }
+                            }
                         }
                         .disabled(title.isEmpty)
                     }
