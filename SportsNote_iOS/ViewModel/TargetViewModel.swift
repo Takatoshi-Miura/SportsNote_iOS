@@ -31,9 +31,13 @@ class TargetViewModel: ObservableObject {
     ///   - year: 年
     ///   - month: 月
     func fetchTargets(year: Int, month: Int) {
-        yearlyTargets = (try? RealmManager.shared.getDataList(clazz: Target.self)) ?? []
+        yearlyTargets =
+            (try? RealmManager.shared.getDataList(clazz: Target.self))
+            ?? []
             .filter { $0.year == year && $0.isYearlyTarget }
-        monthlyTargets = (try? RealmManager.shared.getDataList(clazz: Target.self)) ?? []
+        monthlyTargets =
+            (try? RealmManager.shared.getDataList(clazz: Target.self))
+            ?? []
             .filter { $0.year == year && $0.month == month && !$0.isYearlyTarget }
     }
 

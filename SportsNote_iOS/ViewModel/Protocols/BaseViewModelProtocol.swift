@@ -22,7 +22,6 @@ protocol BaseViewModelProtocol: ObservableObject {
     func fetchData() async -> Result<Void, SportsNoteError>
 
 
-
     /// データをリフレッシュする統一メソッド
     func refresh() async
 }
