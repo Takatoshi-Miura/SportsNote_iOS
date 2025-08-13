@@ -6,8 +6,8 @@ protocol FirebaseSyncable {
     associatedtype EntityType
 
     /// Firebaseへの同期処理を実行する
-    /// - Throws: 同期処理でエラーが発生した場合
-    func syncToFirebase() async throws
+    /// - Returns: 同期処理の結果
+    func syncToFirebase() async -> Result<Void, SportsNoteError>
 
     /// オンライン状態かつログイン済みかを判定する
     /// Firebase同期が可能な状態かを確認するために使用
@@ -16,8 +16,8 @@ protocol FirebaseSyncable {
     /// 指定されたエンティティをFirebaseに同期する
     /// - Parameter entity: 同期するエンティティ
     /// - Parameter isUpdate: 更新かどうか（デフォルトはfalse）
-    /// - Throws: 同期処理でエラーが発生した場合
-    func syncEntityToFirebase(_ entity: EntityType, isUpdate: Bool) async throws
+    /// - Returns: 同期処理の結果
+    func syncEntityToFirebase(_ entity: EntityType, isUpdate: Bool) async -> Result<Void, SportsNoteError>
 }
 
 extension FirebaseSyncable {

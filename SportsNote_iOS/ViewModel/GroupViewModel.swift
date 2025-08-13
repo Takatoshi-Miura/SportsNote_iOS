@@ -95,11 +95,13 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
 
             // Firebase同期のみバックグラウンドで実行
             Task.detached { [weak self] in
-                do {
-                    try await self?.syncEntityToFirebase(entity, isUpdate: isUpdate)
-                } catch {
+                let syncResult = await self?.syncEntityToFirebase(entity, isUpdate: isUpdate)
+                if case .failure(let error) = syncResult {
                     await MainActor.run { [weak self] in
-                        self?.handleSyncError(error)
+                        if self?.currentError == nil {
+                            self?.currentError = error
+                            self?.showingErrorAlert = true
+                        }
                     }
                 }
             }
@@ -120,13 +122,19 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     /// - Parameters:
     ///   - entity: エンティティ
     ///   - isUpdate: 更新要否
-    func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async throws {
-        guard isOnlineAndLoggedIn else { return }
+    func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
 
-        if isUpdate {
-            try await FirebaseManager.shared.updateGroup(group: entity)
-        } else {
-            try await FirebaseManager.shared.saveGroup(group: entity)
+        do {
+            if isUpdate {
+                try await FirebaseManager.shared.updateGroup(group: entity)
+            } else {
+                try await FirebaseManager.shared.saveGroup(group: entity)
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "GroupViewModel-syncEntityToFirebase")
+            return .failure(sportsNoteError)
         }
     }
 
@@ -143,14 +151,14 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             try RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
             // 2. Firebase同期のみバックグラウンドで実行
-            if isOnlineAndLoggedIn {
-                if let deletedGroup = try RealmManager.shared.getObjectById(id: id, type: Group.self) {
-                    Task.detached { [weak self] in
-                        do {
-                            try await FirebaseManager.shared.saveGroup(group: deletedGroup)
-                        } catch {
-                            await MainActor.run { [weak self] in
-                                self?.handleSyncError(error)
+            if let deletedGroup = try RealmManager.shared.getObjectById(id: id, type: Group.self) {
+                Task.detached { [weak self] in
+                    let syncResult = await self?.syncEntityToFirebase(deletedGroup, isUpdate: true)
+                    if case .failure(let error) = syncResult {
+                        await MainActor.run { [weak self] in
+                            if self?.currentError == nil {
+                                self?.currentError = error
+                                self?.showingErrorAlert = true
                             }
                         }
                     }
@@ -189,13 +197,22 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     }
 
     /// Firebaseへの同期処理を実行
-    func syncToFirebase() async throws {
-        guard isOnlineAndLoggedIn else { return }
+    func syncToFirebase() async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
 
-        let allGroups = try RealmManager.shared.getDataList(clazz: Group.self)
+        do {
+            let allGroups = try RealmManager.shared.getDataList(clazz: Group.self)
 
-        for group in allGroups {
-            try await syncEntityToFirebase(group)
+            for group in allGroups {
+                let result = await syncEntityToFirebase(group)
+                if case .failure(let error) = result {
+                    return .failure(error)
+                }
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-syncToFirebase")
+            return .failure(sportsNoteError)
         }
     }
 }
@@ -209,31 +226,12 @@ extension GroupViewModel {
     private func updateErrorState(for result: Result<Void, SportsNoteError>) {
         switch result {
         case .success:
-            clearErrorState()
+            currentError = nil
+            showingErrorAlert = false
         case .failure(let error):
-            handleError(error)
+            currentError = error
+            showingErrorAlert = true
         }
-    }
-    
-    /// 成功時にエラー状態をクリアする統一メソッド
-    private func clearErrorState() {
-        currentError = nil
-        showingErrorAlert = false
-    }
-    
-    /// エラー状態を設定し、UI更新を行う統一メソッド
-    /// - Parameter error: SportsNoteError
-    private func handleError(_ error: SportsNoteError) {
-        currentError = error
-        showingErrorAlert = true
     }
 
-    /// Firebase同期エラーを処理する
-    /// - Parameter error: Error
-    private func handleSyncError(_ error: Error) {
-        let sportsNoteError = convertToSportsNoteError(error, context: "Firebase同期")
-        if currentError == nil {
-            handleError(sportsNoteError)
-        }
-    }
 }
