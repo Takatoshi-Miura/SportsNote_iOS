@@ -14,7 +14,7 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
     }
-    
+
     // MARK: - CURD処理
 
     /// データを取得
@@ -23,18 +23,18 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         isLoading = true
         defer { isLoading = false }
 
-        let result: Result<Void, SportsNoteError>
         do {
             // Realm操作はMainActorで実行
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            result = .success(())
+            currentError = nil
+            showingErrorAlert = false
+            return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchData")
-            result = .failure(sportsNoteError)
+            currentError = sportsNoteError
+            showingErrorAlert = true
+            return .failure(sportsNoteError)
         }
-
-        updateErrorState(for: result)
-        return result
     }
 
     /// グループ保存処理(更新も兼ねる) - 既存インターフェースとの互換性のため
@@ -88,40 +88,37 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         isLoading = true
         defer { isLoading = false }
 
-        let result: Result<Void, SportsNoteError>
         do {
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
-            // Firebase同期のみバックグラウンドで実行
-            Task.detached { [weak self] in
-                let syncResult = await self?.syncEntityToFirebase(entity, isUpdate: isUpdate)
+            // Firebase同期を非同期で実行（MainActorを維持）
+            Task {
+                let syncResult = await syncEntityToFirebase(entity, isUpdate: isUpdate)
                 if case .failure(let error) = syncResult {
-                    await MainActor.run { [weak self] in
-                        if self?.currentError == nil {
-                            self?.currentError = error
-                            self?.showingErrorAlert = true
-                        }
-                    }
+                    currentError = error
+                    showingErrorAlert = true
                 }
             }
 
             // UI更新
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            result = .success(())
+            currentError = nil
+            showingErrorAlert = false
+            return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-save")
-            result = .failure(sportsNoteError)
+            currentError = sportsNoteError
+            showingErrorAlert = true
+            return .failure(sportsNoteError)
         }
-
-        updateErrorState(for: result)
-        return result
     }
 
     /// エンティティをFirebaseに同期する
     /// - Parameters:
     ///   - entity: エンティティ
     ///   - isUpdate: 更新要否
+    /// - Returns: Result
     func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
         guard isOnlineAndLoggedIn else { return .success(()) }
 
@@ -145,93 +142,55 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         isLoading = true
         defer { isLoading = false }
 
-        let result: Result<Void, SportsNoteError>
         do {
-            // 1. Realm操作はMainActorで実行
+            // Realm操作はMainActorで実行
             try RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
-            // 2. Firebase同期のみバックグラウンドで実行
+            // Firebase同期を非同期で実行（MainActorを維持）
             if let deletedGroup = try RealmManager.shared.getObjectById(id: id, type: Group.self) {
-                Task.detached { [weak self] in
-                    let syncResult = await self?.syncEntityToFirebase(deletedGroup, isUpdate: true)
+                Task {
+                    let syncResult = await syncEntityToFirebase(deletedGroup, isUpdate: true)
                     if case .failure(let error) = syncResult {
-                        await MainActor.run { [weak self] in
-                            if self?.currentError == nil {
-                                self?.currentError = error
-                                self?.showingErrorAlert = true
-                            }
-                        }
+                        currentError = error
+                        showingErrorAlert = true
                     }
                 }
             }
 
-            // 3. UI更新
+            // UI更新
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            result = .success(())
+            currentError = nil
+            showingErrorAlert = false
+            return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-delete")
-            result = .failure(sportsNoteError)
+            currentError = sportsNoteError
+            showingErrorAlert = true
+            return .failure(sportsNoteError)
         }
-
-        updateErrorState(for: result)
-        return result
     }
 
     /// 指定されたIDのエンティティを取得
     /// - Parameter id: ID
     /// - Returns: Result
     func fetchById(id: String) async -> Result<Group?, SportsNoteError> {
-        let result: Result<Group?, SportsNoteError>
         do {
             let group = try RealmManager.shared.getObjectById(id: id, type: Group.self)
-            result = .success(group)
+            currentError = nil
+            showingErrorAlert = false
+            return .success(group)
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchById")
-            result = .failure(sportsNoteError)
-        }
-
-        // Void型に変換してエラー状態を更新
-        let voidResult = result.map { _ in () }
-        updateErrorState(for: voidResult)
-        return result
-    }
-
-    /// Firebaseへの同期処理を実行
-    func syncToFirebase() async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            let allGroups = try RealmManager.shared.getDataList(clazz: Group.self)
-
-            for group in allGroups {
-                let result = await syncEntityToFirebase(group)
-                if case .failure(let error) = result {
-                    return .failure(error)
-                }
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-syncToFirebase")
+            currentError = sportsNoteError
+            showingErrorAlert = true
             return .failure(sportsNoteError)
         }
     }
-}
 
-extension GroupViewModel {
-    
-    // MARK: - エラー処理
-
-    /// 結果に基づいてエラー状態を自動更新する
-    /// - Parameter result: Result
-    private func updateErrorState(for result: Result<Void, SportsNoteError>) {
-        switch result {
-        case .success:
-            currentError = nil
-            showingErrorAlert = false
-        case .failure(let error):
-            currentError = error
-            showingErrorAlert = true
-        }
+    /// Firebaseへの同期処理を実行
+    /// プロトコル準拠用のため未実装
+    func syncToFirebase() async -> Result<Void, SportsNoteError> {
+        return .success(())
     }
 
 }
