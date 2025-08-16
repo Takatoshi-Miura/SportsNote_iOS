@@ -23,7 +23,13 @@ struct NoteView: View {
 
                     VStack(spacing: 0) {
                         SearchBarView(searchText: $searchQuery) {
-                            viewModel.fetchNotes()
+                            Task {
+                                let result = await viewModel.fetchData()
+                                if case .failure(let error) = result {
+                                    viewModel.currentError = error
+                                    viewModel.showingErrorAlert = true
+                                }
+                            }
                         }
                         NoteListView(viewModel: viewModel)
                             .background(Color(.systemBackground))
@@ -31,7 +37,13 @@ struct NoteView: View {
                                 if !searchQuery.isEmpty {
                                     viewModel.searchNotes(query: searchQuery)
                                 } else {
-                                    viewModel.fetchNotes()
+                                    Task {
+                                        let result = await viewModel.fetchData()
+                                        if case .failure(let error) = result {
+                                            viewModel.currentError = error
+                                            viewModel.showingErrorAlert = true
+                                        }
+                                    }
                                 }
                             }
                     }
@@ -39,7 +51,13 @@ struct NoteView: View {
                         if !newValue.isEmpty {
                             viewModel.searchNotes(query: newValue)
                         } else {
-                            viewModel.fetchNotes()
+                            Task {
+                                let result = await viewModel.fetchData()
+                                if case .failure(let error) = result {
+                                    viewModel.currentError = error
+                                    viewModel.showingErrorAlert = true
+                                }
+                            }
                         }
                     }
                 }
@@ -51,14 +69,37 @@ struct NoteView: View {
         )
         .sheet(isPresented: $isPracticeNotePresented) {
             AddPracticeNoteView(onSave: {
-                viewModel.fetchNotes()
+                Task {
+                    let result = await viewModel.fetchData()
+                    if case .failure(let error) = result {
+                        viewModel.currentError = error
+                        viewModel.showingErrorAlert = true
+                    }
+                }
             })
         }
         .sheet(isPresented: $isTournamentNotePresented) {
             AddTournamentNoteView(onSave: {
-                viewModel.fetchNotes()
+                Task {
+                    let result = await viewModel.fetchData()
+                    if case .failure(let error) = result {
+                        viewModel.currentError = error
+                        viewModel.showingErrorAlert = true
+                    }
+                }
             })
         }
+        .task {
+            let result = await viewModel.fetchData()
+            if case .failure(let error) = result {
+                viewModel.currentError = error
+                viewModel.showingErrorAlert = true
+            }
+        }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
     }
 
     /// キーボードを閉じる
@@ -141,7 +182,13 @@ struct NoteListView: View {
                     .if(noteType != .free) { view in
                         view.swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
-                                viewModel.deleteNote(id: note.noteID)
+                                Task {
+                                    let result = await viewModel.delete(id: note.noteID)
+                                    if case .failure(let error) = result {
+                                        viewModel.currentError = error
+                                        viewModel.showingErrorAlert = true
+                                    }
+                                }
                             } label: {
                                 Label(LocalizedStrings.delete, systemImage: "trash")
                             }

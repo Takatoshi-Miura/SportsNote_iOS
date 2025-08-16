@@ -12,7 +12,7 @@ struct FreeNoteView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if viewModel.isLoadingNote {
+                if viewModel.isLoading {
                     VStack {
                         Text("Loading note...")
                             .foregroundColor(.gray)
@@ -78,7 +78,7 @@ struct FreeNoteView: View {
 
     /// フリーノート更新
     private func updateNote() {
-        guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
+        guard !viewModel.isLoading, let note = viewModel.selectedNote else { return }
 
         viewModel.saveFreeNote(
             noteID: note.noteID,

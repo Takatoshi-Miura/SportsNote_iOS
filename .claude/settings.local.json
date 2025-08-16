@@ -3,7 +3,8 @@
     "allow": [
       "Bash(find:*)",
       "Bash(xcodebuild:*)",
-      "Bash(xcrun swift-format:*)"
+      "Bash(xcrun swift-format:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

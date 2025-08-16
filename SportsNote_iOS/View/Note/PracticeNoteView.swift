@@ -20,7 +20,7 @@ struct PracticeNoteView: View {
 
     var body: some View {
         ZStack {
-            if viewModel.isLoadingNote {
+            if viewModel.isLoading {
                 VStack {
                     Text(LocalizedStrings.loading)
                         .foregroundColor(.gray)
@@ -174,7 +174,7 @@ struct PracticeNoteView: View {
 
     // ノート更新処理
     private func updateNote() {
-        guard !viewModel.isLoadingNote, let note = viewModel.selectedNote else { return }
+        guard !viewModel.isLoading, let note = viewModel.selectedNote else { return }
 
         viewModel.savePracticeNoteWithReflections(
             noteID: note.noteID,
