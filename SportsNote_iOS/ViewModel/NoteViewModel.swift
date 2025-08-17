@@ -243,33 +243,6 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
         return note
     }
-    
-    /// 練習ノートの保存処理
-    @discardableResult
-    private func savePracticeNote(
-        noteID: String? = nil,
-        purpose: String,
-        detail: String,
-        reflection: String? = nil,
-        condition: String? = nil,
-        date: Date = Date(),
-        weather: Weather = .sunny,
-        temperature: Int = 0,
-        created_at: Date? = nil
-    ) -> Note {
-        return saveNote(
-            noteID: noteID,
-            noteType: .practice,
-            purpose: purpose,
-            detail: detail,
-            reflection: reflection,
-            condition: condition,
-            date: date,
-            weather: weather,
-            temperature: temperature,
-            created_at: created_at
-        )
-    }
 
     /// 練習ノートの保存処理とタスクリフレクションの更新
     /// - Parameters:
@@ -310,6 +283,33 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
         // タスクリフレクションを更新
         updateTaskReflections(noteID: note.noteID, taskReflections: taskReflections)
+    }
+    
+    /// 練習ノートの保存処理
+    @discardableResult
+    private func savePracticeNote(
+        noteID: String? = nil,
+        purpose: String,
+        detail: String,
+        reflection: String? = nil,
+        condition: String? = nil,
+        date: Date = Date(),
+        weather: Weather = .sunny,
+        temperature: Int = 0,
+        created_at: Date? = nil
+    ) -> Note {
+        return saveNote(
+            noteID: noteID,
+            noteType: .practice,
+            purpose: purpose,
+            detail: detail,
+            reflection: reflection,
+            condition: condition,
+            date: date,
+            weather: weather,
+            temperature: temperature,
+            created_at: created_at
+        )
     }
 
     /// 課題の振り返りメモを保存・更新
@@ -426,8 +426,6 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         }
     }
 
-    // MARK: - FirebaseSyncable実装
-
     /// エンティティをFirebaseに同期
     /// - Parameters:
     ///   - entity: 同期するエンティティ
@@ -467,18 +465,18 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
         }
     }
-
-    // MARK: - Search Methods
-
+    
+    /// ノートを文字列で検索
+    /// - Parameter query: 検索文字列
     func searchNotes(query: String) {
         let searchResults = realmManager.searchNotesByQuery(query: query)
         notes = searchResults
     }
-
-    // MARK: - Filter Methods
-
+    
+    /// ノートを日付でフィルタリング
+    /// - Parameter date: 日付
+    /// - Returns: [Note]
     func filterNotesByDate(_ date: Date) -> [Note] {
-        // RealmManagerに処理を委譲し、日付でのフィルタリングを確実に行う
         return realmManager.getNotesByDate(selectedDate: date)
     }
 
