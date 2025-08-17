@@ -86,7 +86,13 @@ struct TargetView: View {
 
             // 初回だけ全ノートを読み込み
             if noteViewModel.notes.isEmpty {
-                noteViewModel.fetchNotes()
+                Task {
+                    let result = await noteViewModel.fetchData()
+                    if case .failure(let error) = result {
+                        noteViewModel.currentError = error
+                        noteViewModel.showingErrorAlert = true
+                    }
+                }
             } else if let date = selectedDate {
                 noteViewModel.notes = noteViewModel.filterNotesByDate(date)
             }

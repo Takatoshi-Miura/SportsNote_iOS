@@ -22,9 +22,9 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         // 初期化のみ実行、データ取得はView側で明示的に実行
     }
 
-    // MARK: - CURD処理
+    // MARK: - READ処理
 
-    /// データを取得
+    /// ノート一覧を取得
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
         isLoading = true
@@ -41,112 +41,32 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         } else {
             notes = allNotes
         }
-        updateFilteredNotes()
         return .success(())
     }
-
-    // MARK: - Fetch Methods
-
-    func fetchNotes() {
+    
+    /// ノートを取得
+    /// - Parameter id: noteID
+    func loadNote(id: String) {
         Task {
-            let result = await fetchData()
-            if case .failure(let error) = result {
+            let result = await fetchById(id: id)
+            switch result {
+            case .success(let note):
+                selectedNote = note
+                loadMemos()
+            case .failure(let error):
                 currentError = error
                 showingErrorAlert = true
             }
         }
     }
-
-    private func updateFilteredNotes() {
-        practiceNotes = notes.filter { $0.noteType == NoteType.practice.rawValue }
-        tournamentNotes = notes.filter { $0.noteType == NoteType.tournament.rawValue }
-        freeNotes = notes.filter { $0.noteType == NoteType.free.rawValue }
-    }
-
-    // MARK: - CRUDViewModelProtocol実装
-
-    /// エンティティを保存
-    /// - Parameters:
-    ///   - entity: 保存するNote
-    ///   - isUpdate: 更新フラグ
-    /// - Returns: Result
-    func save(_ entity: Note, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 1. Realm操作はMainActorで実行
-            try realmManager.saveItem(entity)
-
-            // 2. Firebase同期はバックグラウンドで実行
-            if isOnlineAndLoggedIn {
-                Task {
-                    let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                    if case .failure(let error) = result, currentError == nil {
-                        await MainActor.run {
-                            currentError = error
-                            showingErrorAlert = true
-                        }
-                    }
-                }
-            }
-
-            // 3. UI更新
-            let result = await fetchData()
-            return result
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-save")
-            return .failure(sportsNoteError)
+    
+    /// ノートに紐づくメモを取得
+    private func loadMemos() {
+        if let noteID = selectedNote?.noteID {
+            memos = realmManager.getMemosByNoteID(noteID: noteID)
         }
     }
-
-    /// エンティティを削除
-    /// - Parameter id: 削除するエンティティのID
-    /// - Returns: Result
-    func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // フリーノートの削除を防ぐ
-            if let note = notes.first(where: { $0.noteID == id }),
-                note.noteType == NoteType.free.rawValue
-            {
-                return .failure(.systemError("フリーノートは削除できません"))
-            }
-
-            // 1. Realm操作はMainActorで実行
-            try realmManager.logicalDelete(id: id, type: Note.self)
-
-            // 2. Firebase同期はバックグラウンドで実行
-            if isOnlineAndLoggedIn {
-                Task {
-                    do {
-                        if let deletedNote = try realmManager.getObjectById(id: id, type: Note.self) {
-                            let result = await syncEntityToFirebase(deletedNote, isUpdate: true)
-                            if case .failure(let error) = result, currentError == nil {
-                                await MainActor.run {
-                                    currentError = error
-                                    showingErrorAlert = true
-                                }
-                            }
-                        }
-                    } catch {
-                        // ログのみ
-                    }
-                }
-            }
-
-            // 3. UI更新
-            notes.removeAll(where: { $0.noteID == id })
-            updateFilteredNotes()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-delete")
-            return .failure(sportsNoteError)
-        }
-    }
-
+    
     /// IDでエンティティを取得
     /// - Parameter id: エンティティのID
     /// - Returns: Result
@@ -159,58 +79,44 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .failure(sportsNoteError)
         }
     }
+    
+    // MARK: - CREATE, UPDATE処理
 
-    // MARK: - FirebaseSyncable実装
-
-    /// エンティティをFirebaseに同期
+    /// エンティティを保存
     /// - Parameters:
-    ///   - entity: 同期するエンティティ
+    ///   - entity: 保存するNote
     ///   - isUpdate: 更新フラグ
     /// - Returns: Result
-    func syncEntityToFirebase(_ entity: Note, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
+    func save(_ entity: Note, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
 
         do {
-            if isUpdate {
-                try await FirebaseManager.shared.updateNote(note: entity)
-            } else {
-                try await FirebaseManager.shared.saveNote(note: entity)
-            }
-            return .success(())
-        } catch {
-            return .failure(ErrorMapper.mapFirebaseError(error, context: "NoteViewModel-syncEntityToFirebase"))
-        }
-    }
+            // Realm操作はMainActorで実行
+            try realmManager.saveItem(entity)
 
-    /// 全データをFirebaseに同期
-    /// - Returns: Result
-    func syncToFirebase() async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            let allNotes = try realmManager.getDataList(clazz: Note.self)
-            for note in allNotes {
-                let result = await syncEntityToFirebase(note)
-                if case .failure = result {
-                    // 1つでも失敗したら処理を続行するがエラーを返す
-                    return result
+            // Firebase同期はバックグラウンドで実行
+            if isOnlineAndLoggedIn {
+                Task {
+                    let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
+                    if case .failure(let error) = result, currentError == nil {
+                        await MainActor.run {
+                            currentError = error
+                            showingErrorAlert = true
+                        }
+                    }
                 }
             }
-            return .success(())
+
+            // UI更新
+            let result = await fetchData()
+            return result
         } catch {
-            return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
+            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-save")
+            return .failure(sportsNoteError)
         }
     }
-
-    // MARK: - Search Methods
-
-    func searchNotes(query: String) {
-        let searchResults = realmManager.searchNotesByQuery(query: query)
-        notes = searchResults
-    }
-
-    // MARK: - 既存メソッド（互換性のため）
-
+    
     /// ノート保存処理(新規作成と更新を兼ねる)
     /// - Parameters:
     ///   - noteID: ノートID（更新時に指定、新規作成時はnil）
@@ -337,17 +243,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
         return note
     }
-
-    func deleteNote(id: String) {
-        Task {
-            let result = await delete(id: id)
-            if case .failure(let error) = result {
-                currentError = error
-                showingErrorAlert = true
-            }
-        }
-    }
-
+    
     /// 練習ノートの保存処理
     @discardableResult
     private func savePracticeNote(
@@ -481,48 +377,109 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             created_at: created_at
         )
     }
+    
+    // MARK: - DELETE処理
+
+    /// エンティティを削除
+    /// - Parameter id: 削除するエンティティのID
+    /// - Returns: Result
+    func delete(id: String) async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // フリーノートの削除を防ぐ
+            if let note = notes.first(where: { $0.noteID == id }),
+                note.noteType == NoteType.free.rawValue
+            {
+                return .failure(.systemError("フリーノートは削除できません"))
+            }
+
+            // Realm操作はMainActorで実行
+            try realmManager.logicalDelete(id: id, type: Note.self)
+
+            // Firebase同期はバックグラウンドで実行
+            if isOnlineAndLoggedIn {
+                Task {
+                    do {
+                        if let deletedNote = try realmManager.getObjectById(id: id, type: Note.self) {
+                            let result = await syncEntityToFirebase(deletedNote, isUpdate: true)
+                            if case .failure(let error) = result, currentError == nil {
+                                await MainActor.run {
+                                    currentError = error
+                                    showingErrorAlert = true
+                                }
+                            }
+                        }
+                    } catch {
+                        // ログのみ
+                    }
+                }
+            }
+
+            // UI更新
+            notes.removeAll(where: { $0.noteID == id })
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-delete")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    // MARK: - FirebaseSyncable実装
+
+    /// エンティティをFirebaseに同期
+    /// - Parameters:
+    ///   - entity: 同期するエンティティ
+    ///   - isUpdate: 更新フラグ
+    /// - Returns: Result
+    func syncEntityToFirebase(_ entity: Note, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
+
+        do {
+            if isUpdate {
+                try await FirebaseManager.shared.updateNote(note: entity)
+            } else {
+                try await FirebaseManager.shared.saveNote(note: entity)
+            }
+            return .success(())
+        } catch {
+            return .failure(ErrorMapper.mapFirebaseError(error, context: "NoteViewModel-syncEntityToFirebase"))
+        }
+    }
+
+    /// 全データをFirebaseに同期
+    /// - Returns: Result
+    func syncToFirebase() async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
+
+        do {
+            let allNotes = try realmManager.getDataList(clazz: Note.self)
+            for note in allNotes {
+                let result = await syncEntityToFirebase(note)
+                if case .failure = result {
+                    // 1つでも失敗したら処理を続行するがエラーを返す
+                    return result
+                }
+            }
+            return .success(())
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
+        }
+    }
+
+    // MARK: - Search Methods
+
+    func searchNotes(query: String) {
+        let searchResults = realmManager.searchNotesByQuery(query: query)
+        notes = searchResults
+    }
 
     // MARK: - Filter Methods
 
     func filterNotesByDate(_ date: Date) -> [Note] {
         // RealmManagerに処理を委譲し、日付でのフィルタリングを確実に行う
         return realmManager.getNotesByDate(selectedDate: date)
-    }
-
-    // MARK: - Note Detail Methods
-
-    /// 指定IDのノートを読み込んでselectedNoteに設定
-    /// - Parameter id: 読み込むノートのID
-    func loadSelectedNote(id: String) async {
-        let result = await fetchById(id: id)
-        switch result {
-        case .success(let note):
-            selectedNote = note
-            loadMemos()
-        case .failure(let error):
-            currentError = error
-            showingErrorAlert = true
-        }
-    }
-
-    func loadNote(id: String) {
-        Task {
-            await loadSelectedNote(id: id)
-        }
-    }
-
-    func loadNote() {
-        Task {
-            if let id = selectedNote?.noteID {
-                await loadSelectedNote(id: id)
-            }
-        }
-    }
-
-    func loadMemos() {
-        if let noteID = selectedNote?.noteID {
-            memos = realmManager.getMemosByNoteID(noteID: noteID)
-        }
     }
 
 }

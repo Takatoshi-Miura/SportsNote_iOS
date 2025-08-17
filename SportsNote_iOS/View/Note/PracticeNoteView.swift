@@ -101,8 +101,15 @@ struct PracticeNoteView: View {
                 message: Text(LocalizedStrings.deleteNoteConfirmation),
                 primaryButton: .destructive(Text(LocalizedStrings.delete)) {
                     if let note = viewModel.selectedNote {
-                        viewModel.deleteNote(id: note.noteID)
-                        dismiss()
+                        Task {
+                            let result = await viewModel.delete(id: note.noteID)
+                            if case .failure(let error) = result {
+                                viewModel.currentError = error
+                                viewModel.showingErrorAlert = true
+                            } else {
+                                dismiss()
+                            }
+                        }
                     }
                 },
                 secondaryButton: .cancel(Text(LocalizedStrings.cancel))
@@ -111,6 +118,10 @@ struct PracticeNoteView: View {
         .onAppear {
             loadData()
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
         .onChange(of: viewModel.selectedNote) { newNote in
             if let note = newNote {
                 self.purpose = note.purpose
@@ -127,7 +138,6 @@ struct PracticeNoteView: View {
 
     private func loadData() {
         viewModel.loadNote(id: noteID)
-        viewModel.loadMemos()
         taskViewModel.fetchAllTasks()
     }
 

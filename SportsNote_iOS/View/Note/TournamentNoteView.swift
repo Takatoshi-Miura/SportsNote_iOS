@@ -102,8 +102,15 @@ struct TournamentNoteView: View {
                             message: Text(LocalizedStrings.deleteNoteConfirmation),
                             primaryButton: .destructive(Text(LocalizedStrings.delete)) {
                                 if let note = viewModel.selectedNote {
-                                    viewModel.deleteNote(id: note.noteID)
-                                    dismiss()
+                                    Task {
+                                        let result = await viewModel.delete(id: note.noteID)
+                                        if case .failure(let error) = result {
+                                            viewModel.currentError = error
+                                            viewModel.showingErrorAlert = true
+                                        } else {
+                                            dismiss()
+                                        }
+                                    }
                                 }
                             },
                             secondaryButton: .cancel(Text(LocalizedStrings.cancel))
@@ -115,6 +122,10 @@ struct TournamentNoteView: View {
         .onAppear {
             loadData()
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
         .onChange(of: viewModel.selectedNote) { newNote in
             if let note = newNote {
                 self.target = note.target
@@ -131,7 +142,6 @@ struct TournamentNoteView: View {
 
     private func loadData() {
         viewModel.loadNote(id: noteID)
-        viewModel.loadMemos()
     }
 
     private func updateNote() {
