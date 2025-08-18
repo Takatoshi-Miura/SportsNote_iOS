@@ -54,8 +54,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
                 selectedNote = note
                 loadMemos()
             case .failure(let error):
-                currentError = error
-                showingErrorAlert = true
+                showErrorAlert(error)
             }
         }
     }
@@ -101,8 +100,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
                     let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
                     if case .failure(let error) = result, currentError == nil {
                         await MainActor.run {
-                            currentError = error
-                            showingErrorAlert = true
+                            showErrorAlert(error)
                         }
                     }
                 }
@@ -236,8 +234,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             let isUpdate = noteID != nil
             let result = await save(note, isUpdate: isUpdate)
             if case .failure(let error) = result {
-                currentError = error
-                showingErrorAlert = true
+                showErrorAlert(error)
             }
         }
 
@@ -406,8 +403,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
                             let result = await syncEntityToFirebase(deletedNote, isUpdate: true)
                             if case .failure(let error) = result, currentError == nil {
                                 await MainActor.run {
-                                    currentError = error
-                                    showingErrorAlert = true
+                                    showErrorAlert(error)
                                 }
                             }
                         }

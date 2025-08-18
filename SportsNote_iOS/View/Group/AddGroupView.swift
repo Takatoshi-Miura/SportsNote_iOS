@@ -37,8 +37,7 @@ struct AddGroupView: View {
                                 if case .success = result {
                                     dismiss()
                                 } else if case .failure(let error) = result {
-                                    viewModel.currentError = error
-                                    viewModel.showingErrorAlert = true
+                                    viewModel.showErrorAlert(error)
                                 }
                             }
                         }

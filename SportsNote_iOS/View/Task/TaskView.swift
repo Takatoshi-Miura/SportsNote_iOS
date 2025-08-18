@@ -65,8 +65,7 @@ struct TaskView: View {
                             Task {
                                 let result = await viewModel.fetchData()
                                 if case .failure(let error) = result {
-                                    viewModel.currentError = error
-                                    viewModel.showingErrorAlert = true
+                                    viewModel.showErrorAlert(error)
                                 }
                                 if let id = selectedGroupID {
                                     taskViewModel.fetchTasksByGroupID(groupID: id)
@@ -102,8 +101,7 @@ struct TaskView: View {
             Task {
                 let result = await viewModel.fetchData()
                 if case .failure(let error) = result {
-                    viewModel.currentError = error
-                    viewModel.showingErrorAlert = true
+                    viewModel.showErrorAlert(error)
                 }
                 if let id = selectedGroupID {
                     taskViewModel.fetchTasksByGroupID(groupID: id)

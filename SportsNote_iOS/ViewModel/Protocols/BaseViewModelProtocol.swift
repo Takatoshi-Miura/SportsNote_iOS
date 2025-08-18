@@ -29,16 +29,26 @@ protocol BaseViewModelProtocol: ObservableObject {
 /// BaseViewModelProtocolのデフォルト実装
 extension BaseViewModelProtocol {
 
+    /// エラーアラートを表示
+    /// - Parameter error: 表示するSportsNoteError
+    func showErrorAlert(_ error: SportsNoteError) {
+        currentError = error
+        showingErrorAlert = true
+    }
+    
+    /// エラーアラートを非表示
+    func hideErrorAlert() {
+        currentError = nil
+        showingErrorAlert = false
+    }
 
     /// エラーをクリアしてデータを再取得する
     func refresh() async {
-        self.currentError = nil
-        self.showingErrorAlert = false
+        hideErrorAlert()
         let result = await self.fetchData()
         if case .failure(let error) = result {
             // 再取得に失敗した場合はエラー状態を再設定
-            self.currentError = error
-            self.showingErrorAlert = true
+            showErrorAlert(error)
         }
     }
 

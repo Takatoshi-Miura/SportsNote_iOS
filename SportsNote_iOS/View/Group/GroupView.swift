@@ -37,8 +37,7 @@ struct GroupView: View {
                     break
                 case .failure(let error):
                     // エラーをView側で明示的に処理
-                    viewModel.currentError = error
-                    viewModel.showingErrorAlert = true
+                    viewModel.showErrorAlert(error)
                 }
             }
         }
@@ -65,8 +64,7 @@ struct GroupView: View {
                         dismiss()
                     case .failure(let error):
                         // エラーをView側で明示的に処理
-                        viewModel.currentError = error
-                        viewModel.showingErrorAlert = true
+                        viewModel.showErrorAlert(error)
                     }
                 }
             }
@@ -79,7 +77,10 @@ struct GroupView: View {
             onRetry: {
                 // データ再取得で回復を試行
                 Task {
-                    await viewModel.fetchData()
+                    let result = await viewModel.fetchData()
+                    if case .failure(let error) = result {
+                        viewModel.showErrorAlert(error)
+                    }
                 }
             }
         )

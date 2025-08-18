@@ -26,13 +26,10 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         do {
             // Realm操作はMainActorで実行
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            currentError = nil
-            showingErrorAlert = false
+            hideErrorAlert()
             return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchData")
-            currentError = sportsNoteError
-            showingErrorAlert = true
             return .failure(sportsNoteError)
         }
     }
@@ -96,20 +93,16 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
             Task {
                 let syncResult = await syncEntityToFirebase(entity, isUpdate: isUpdate)
                 if case .failure(let error) = syncResult {
-                    currentError = error
-                    showingErrorAlert = true
+                    showErrorAlert(error)
                 }
             }
 
             // UI更新
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            currentError = nil
-            showingErrorAlert = false
+            hideErrorAlert()
             return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-save")
-            currentError = sportsNoteError
-            showingErrorAlert = true
             return .failure(sportsNoteError)
         }
     }
@@ -151,21 +144,17 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
                 Task {
                     let syncResult = await syncEntityToFirebase(deletedGroup, isUpdate: true)
                     if case .failure(let error) = syncResult {
-                        currentError = error
-                        showingErrorAlert = true
+                        showErrorAlert(error)
                     }
                 }
             }
 
             // UI更新
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            currentError = nil
-            showingErrorAlert = false
+            hideErrorAlert()
             return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-delete")
-            currentError = sportsNoteError
-            showingErrorAlert = true
             return .failure(sportsNoteError)
         }
     }
@@ -176,13 +165,10 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     func fetchById(id: String) async -> Result<Group?, SportsNoteError> {
         do {
             let group = try RealmManager.shared.getObjectById(id: id, type: Group.self)
-            currentError = nil
-            showingErrorAlert = false
+            hideErrorAlert()
             return .success(group)
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchById")
-            currentError = sportsNoteError
-            showingErrorAlert = true
             return .failure(sportsNoteError)
         }
     }
