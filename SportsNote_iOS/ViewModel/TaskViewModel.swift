@@ -4,19 +4,135 @@ import RealmSwift
 import SwiftUI
 
 @MainActor
-class TaskViewModel: ObservableObject {
+class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @preconcurrency CRUDViewModelProtocol, @preconcurrency FirebaseSyncable {
+    typealias EntityType = TaskData
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []
     @Published var taskDetail: TaskDetailData?
+    @Published var isLoading: Bool = false
+    @Published var currentError: SportsNoteError?
+    @Published var showingErrorAlert: Bool = false
 
     // タスク更新通知パブリッシャー
     let taskUpdatedPublisher = PassthroughSubject<Void, Never>()
 
     init() {
-        fetchAllTasks()
+        // 初期化のみ実行、データ取得はView側で明示的に実行
     }
 
-    // MARK: - Tasks
+    // MARK: - CRUD処理
+
+    /// データを取得（プロトコル準拠）
+    /// - Returns: Result
+    func fetchData() async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // Realm操作はMainActorで実行
+            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            convertToTaskListData()
+            hideErrorAlert()
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchData")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    /// 課題保存処理（プロトコル準拠）
+    /// - Parameters:
+    ///   - entity: 保存するTaskData
+    ///   - isUpdate: 更新かどうか
+    /// - Returns: Result
+    func save(_ entity: TaskData, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // 1. Realm操作はMainActorで実行
+            try RealmManager.shared.saveItem(entity)
+
+            // 2. Firebase同期はバックグラウンドで実行
+            Task {
+                let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
+                if case .failure(let error) = result {
+                    // Firebase同期エラーは既存エラーがない場合のみ設定
+                    await MainActor.run {
+                        if currentError == nil {
+                            showErrorAlert(error)
+                        }
+                    }
+                }
+            }
+
+            // 3. UI更新
+            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            convertToTaskListData()
+
+            // タスク更新通知を送信
+            taskUpdatedPublisher.send()
+
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-save")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    /// 課題削除処理（プロトコル準拠）
+    /// - Parameter id: 削除する課題ID
+    /// - Returns: Result
+    func delete(id: String) async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // 1. Realm操作はMainActorで実行
+            try RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
+
+            // 2. Firebase同期はバックグラウンドで実行
+            Task {
+                if let deletedTask = try? RealmManager.shared.getObjectById(id: id, type: TaskData.self) {
+                    let result = await syncEntityToFirebase(deletedTask, isUpdate: true)
+                    if case .failure(let error) = result {
+                        await MainActor.run {
+                            if currentError == nil {
+                                showErrorAlert(error)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. UI更新
+            tasks.removeAll(where: { $0.taskID == id })
+            taskListData.removeAll(where: { $0.taskID == id })
+
+            // タスク更新通知を送信
+            taskUpdatedPublisher.send()
+
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-delete")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    /// 指定IDの課題を取得（プロトコル準拠）
+    /// - Parameter id: 課題ID
+    /// - Returns: Result
+    func fetchById(id: String) async -> Result<TaskData?, SportsNoteError> {
+        do {
+            let task = try RealmManager.shared.getObjectById(id: id, type: TaskData.self)
+            return .success(task)
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchById")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    // MARK: - Legacy Methods (従来インターフェース)
 
     /// 全ての課題を取得
     func fetchAllTasks() {
@@ -233,6 +349,53 @@ class TaskViewModel: ObservableObject {
         // 対策の並び替えが完了したら、詳細画面を更新
         if let detail = taskDetail {
             fetchTaskDetail(taskID: detail.task.taskID)
+        }
+    }
+
+    // MARK: - Firebase同期処理
+
+    /// 指定された課題をFirebaseに同期する
+    /// - Parameters:
+    ///   - entity: 同期する課題
+    ///   - isUpdate: 更新かどうか
+    /// - Returns: 同期処理の結果
+    func syncEntityToFirebase(_ entity: TaskData, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { 
+            return .success(()) 
+        }
+
+        do {
+            if isUpdate {
+                try await FirebaseManager.shared.updateTask(task: entity)
+            } else {
+                try await FirebaseManager.shared.saveTask(task: entity)
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "TaskViewModel-syncEntityToFirebase")
+            return .failure(sportsNoteError)
+        }
+    }
+
+    /// 全ての課題をFirebaseに同期する
+    /// - Returns: 同期処理の結果
+    func syncToFirebase() async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { 
+            return .success(()) 
+        }
+
+        do {
+            let allTasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            for task in allTasks {
+                let result = await syncEntityToFirebase(task)
+                if case .failure(let error) = result {
+                    return .failure(error)
+                }
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-syncToFirebase")
+            return .failure(sportsNoteError)
         }
     }
 }
