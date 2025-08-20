@@ -40,10 +40,16 @@ struct TaskView: View {
                         selectedGroupID: selectedGroupID,
                         onGroupSelected: { groupID in
                             selectedGroupID = groupID
-                            if let id = groupID {
-                                taskViewModel.fetchTasksByGroupID(groupID: id)
-                            } else {
-                                taskViewModel.fetchAllTasks()
+                            Task {
+                                let result: Result<Void, SportsNoteError>
+                                if let id = groupID {
+                                    result = await taskViewModel.fetchTasksByGroupID(groupID: id)
+                                } else {
+                                    result = await taskViewModel.fetchData()
+                                }
+                                if case .failure(let error) = result {
+                                    taskViewModel.showErrorAlert(error)
+                                }
                             }
                         },
                         onGroupEdit: { group in
@@ -56,10 +62,20 @@ struct TaskView: View {
                         taskListData: filteredTaskListData(),
                         tasks: taskViewModel.tasks,
                         onDelete: { taskID in
-                            taskViewModel.deleteTask(id: taskID)
+                            Task {
+                                let result = await taskViewModel.delete(id: taskID)
+                                if case .failure(let error) = result {
+                                    taskViewModel.showErrorAlert(error)
+                                }
+                            }
                         },
                         onToggleCompletion: { taskID in
-                            taskViewModel.toggleTaskCompletion(taskID: taskID)
+                            Task {
+                                let result = await taskViewModel.toggleTaskCompletion(taskID: taskID)
+                                if case .failure(let error) = result {
+                                    taskViewModel.showErrorAlert(error)
+                                }
+                            }
                         },
                         refreshAction: {
                             Task {
@@ -67,10 +83,15 @@ struct TaskView: View {
                                 if case .failure(let error) = result {
                                     viewModel.showErrorAlert(error)
                                 }
+                                
+                                let taskResult: Result<Void, SportsNoteError>
                                 if let id = selectedGroupID {
-                                    taskViewModel.fetchTasksByGroupID(groupID: id)
+                                    taskResult = await taskViewModel.fetchTasksByGroupID(groupID: id)
                                 } else {
-                                    taskViewModel.fetchAllTasks()
+                                    taskResult = await taskViewModel.fetchData()
+                                }
+                                if case .failure(let error) = taskResult {
+                                    taskViewModel.showErrorAlert(error)
                                 }
                             }
                         },
@@ -103,10 +124,15 @@ struct TaskView: View {
                 if case .failure(let error) = result {
                     viewModel.showErrorAlert(error)
                 }
+                
+                let taskResult: Result<Void, SportsNoteError>
                 if let id = selectedGroupID {
-                    taskViewModel.fetchTasksByGroupID(groupID: id)
+                    taskResult = await taskViewModel.fetchTasksByGroupID(groupID: id)
                 } else {
-                    taskViewModel.fetchAllTasks()
+                    taskResult = await taskViewModel.fetchData()
+                }
+                if case .failure(let error) = taskResult {
+                    taskViewModel.showErrorAlert(error)
                 }
             }
 
@@ -121,6 +147,10 @@ struct TaskView: View {
             currentError: $viewModel.currentError,
             showingAlert: $viewModel.showingErrorAlert
         )
+        .errorAlert(
+            currentError: $taskViewModel.currentError,
+            showingAlert: $taskViewModel.showingErrorAlert
+        )
     }
 
     // パブリッシャーの購読処理を行う関数に切り出し
@@ -132,10 +162,16 @@ struct TaskView: View {
                 refreshTrigger.toggle()
 
                 // データも明示的に更新
-                if let id = selectedGroupID {
-                    taskViewModel.fetchTasksByGroupID(groupID: id)
-                } else {
-                    taskViewModel.fetchAllTasks()
+                Task {
+                    let result: Result<Void, SportsNoteError>
+                    if let id = selectedGroupID {
+                        result = await taskViewModel.fetchTasksByGroupID(groupID: id)
+                    } else {
+                        result = await taskViewModel.fetchData()
+                    }
+                    if case .failure(let error) = result {
+                        taskViewModel.showErrorAlert(error)
+                    }
                 }
             }
             .store(in: &cancellables)

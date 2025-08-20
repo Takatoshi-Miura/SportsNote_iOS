@@ -118,7 +118,9 @@ struct TaskDetailView: View {
         if groups.isEmpty { return }
 
         // タスクデータの読み込み
-        viewModel.fetchTaskDetail(taskID: taskData.taskID)
+        Task {
+            _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
+        }
 
         // 初期値をセット
         taskTitle = taskData.title
@@ -161,7 +163,9 @@ struct TaskDetailView: View {
         )
 
         // Viewを更新
-        viewModel.fetchTaskDetail(taskID: taskData.taskID)
+        Task {
+            _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
+        }
 
         newMeasureTitle = ""
     }
@@ -212,7 +216,9 @@ struct MeasuresListView: View {
                     if isReorderingMeasures {
                         var updatedMeasures = detail.measuresList
                         updatedMeasures.move(fromOffsets: source, toOffset: destination)
-                        viewModel.updateMeasuresOrder(measures: updatedMeasures)
+                        Task {
+                            _ = await viewModel.updateMeasuresOrder(measures: updatedMeasures)
+                        }
                     }
                 }
             }

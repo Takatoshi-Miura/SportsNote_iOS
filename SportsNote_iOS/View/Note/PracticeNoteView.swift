@@ -138,7 +138,9 @@ struct PracticeNoteView: View {
 
     private func loadData() {
         viewModel.loadNote(id: noteID)
-        taskViewModel.fetchAllTasks()
+        Task {
+            _ = await taskViewModel.fetchData()
+        }
     }
 
     /// 未追加のタスクを取得

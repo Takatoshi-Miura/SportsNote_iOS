@@ -134,26 +134,25 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
     // MARK: - Legacy Methods (従来インターフェース)
 
-    /// 全ての課題を取得
-    func fetchAllTasks() {
-        tasks = (try? RealmManager.shared.getDataList(clazz: TaskData.self)) ?? []
-        convertToTaskListData()
-    }
 
-    /// 指定したグループIDの課題を取得
+    /// 指定したグループIDの課題を取得（新Resultパターン対応）
     /// - Parameter groupID: グループID
-    func fetchTasksByGroupID(groupID: String) {
+    /// - Returns: Result
+    func fetchTasksByGroupID(groupID: String) async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
-            let realm = try Realm()
-            tasks = realm.objects(TaskData.self)
-                .filter("groupID == %@ AND isDeleted == false", groupID)
-                .sorted(byKeyPath: "order", ascending: true)
-                .map { $0 }
+            // RealmManagerを使用してグループIDでフィルタリング
+            let allTasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            tasks = allTasks.filter { $0.groupID == groupID && !$0.isDeleted }
+                .sorted { $0.order < $1.order }
             convertToTaskListData()
+            hideErrorAlert()
+            return .success(())
         } catch {
-            print("Error fetching tasks by group ID: \(error)")
-            tasks = []
-            taskListData = []
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchTasksByGroupID")
+            return .failure(sportsNoteError)
         }
     }
 
@@ -251,11 +250,15 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         }
 
         // Refresh task list
-        fetchAllTasks()
+        Task {
+            _ = await fetchData()
+        }
 
         // タスク詳細情報を表示している場合は、詳細情報も更新
         if let detail = taskDetail, detail.task.taskID == newTaskID {
-            fetchTaskDetail(taskID: newTaskID)
+            Task {
+                _ = await fetchTaskDetail(taskID: newTaskID)
+            }
         }
 
         // タスク更新通知を送信
@@ -304,51 +307,131 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
     // MARK: - Task Detail
 
-    /// 課題の詳細情報を取得
+    /// 課題の詳細情報を取得（新Resultパターン対応）
     /// - Parameter taskID: 課題ID
-    func fetchTaskDetail(taskID: String) {
-        if let task = try? RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
-            let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
-            taskDetail = TaskDetailData(task: task, measuresList: measures)
-        } else {
-            taskDetail = nil
+    /// - Returns: Result
+    func fetchTaskDetail(taskID: String) async -> Result<Void, SportsNoteError> {
+        do {
+            if let task = try RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
+                let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+                taskDetail = TaskDetailData(task: task, measuresList: measures)
+                return .success(())
+            } else {
+                taskDetail = nil
+                return .success(())
+            }
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchTaskDetail")
+            return .failure(sportsNoteError)
         }
     }
 
     // MARK: - Measures
 
-    /// 対策を削除
+    /// 対策を削除（新Resultパターン対応）
     /// - Parameter measuresID: 対策ID
-    func deleteMeasure(measuresID: String) {
+    /// - Returns: Result
+    func deleteMeasure(measuresID: String) async -> Result<Void, SportsNoteError> {
         do {
-            let realm = try Realm()
-            if let measure = realm.object(ofType: Measures.self, forPrimaryKey: measuresID) {
+            if let measure = try RealmManager.shared.getObjectById(id: measuresID, type: Measures.self) {
                 let taskID = measure.taskID
 
                 // Delete measure
-                try? RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
+                try RealmManager.shared.logicalDelete(id: measuresID, type: Measures.self)
 
                 // Update task detail if viewing
                 if let detail = taskDetail, detail.task.taskID == taskID {
-                    fetchTaskDetail(taskID: taskID)
+                    let detailResult = await fetchTaskDetail(taskID: taskID)
+                    if case .failure(let error) = detailResult {
+                        return .failure(error)
+                    }
                 }
             }
+            return .success(())
         } catch {
-            print("Error deleting measure: \(error)")
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-deleteMeasure")
+            return .failure(sportsNoteError)
         }
     }
 
-    /// 対策の並び順を更新
+    /// 対策の並び順を更新（新Resultパターン対応）
     /// - Parameter measures: 並び替え後の対策リスト
-    func updateMeasuresOrder(measures: [Measures]) {
-        guard !measures.isEmpty else { return }
+    /// - Returns: Result
+    func updateMeasuresOrder(measures: [Measures]) async -> Result<Void, SportsNoteError> {
+        guard !measures.isEmpty else { 
+            return .success(()) 
+        }
 
         let measuresViewModel = MeasuresViewModel()
+        // TODO: MeasuresViewModelも将来的にResultパターンに対応する
         measuresViewModel.updateMeasuresOrder(measures: measures)
 
         // 対策の並び替えが完了したら、詳細画面を更新
         if let detail = taskDetail {
-            fetchTaskDetail(taskID: detail.task.taskID)
+            let detailResult = await fetchTaskDetail(taskID: detail.task.taskID)
+            if case .failure(let error) = detailResult {
+                return .failure(error)
+            }
+        }
+        
+        return .success(())
+    }
+
+    // MARK: - 便利メソッド（View層向け）
+
+    /// 新しい課題を保存（View層向けの簡易メソッド）
+    /// - Parameters:
+    ///   - title: 課題タイトル
+    ///   - cause: 原因
+    ///   - groupID: グループID
+    /// - Returns: 保存された課題データとResult
+    func saveNewTask(title: String, cause: String, groupID: String) async -> Result<TaskData, SportsNoteError> {
+        let newTaskID = UUID().uuidString
+        let newOrder = (try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0
+        
+        let newTask = TaskData(
+            taskID: newTaskID,
+            title: title,
+            cause: cause,
+            groupID: groupID,
+            order: newOrder,
+            isComplete: false,
+            created_at: Date()
+        )
+        
+        let result = await save(newTask, isUpdate: false)
+        switch result {
+        case .success:
+            return .success(newTask)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// 課題の完了状態を切り替え（新Resultパターン対応）
+    /// - Parameter taskID: 課題ID
+    /// - Returns: Result
+    func toggleTaskCompletion(taskID: String) async -> Result<Void, SportsNoteError> {
+        do {
+            guard let taskToUpdate = try RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) else {
+                let error = SportsNoteError.systemError("Task not found: \(taskID)")
+                return .failure(error)
+            }
+            
+            let updatedTask = TaskData(
+                taskID: taskToUpdate.taskID,
+                title: taskToUpdate.title,
+                cause: taskToUpdate.cause,
+                groupID: taskToUpdate.groupID,
+                order: taskToUpdate.order,
+                isComplete: !taskToUpdate.isComplete,
+                created_at: taskToUpdate.created_at
+            )
+            
+            return await save(updatedTask, isUpdate: true)
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-toggleTaskCompletion")
+            return .failure(sportsNoteError)
         }
     }
 

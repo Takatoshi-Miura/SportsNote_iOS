@@ -58,31 +58,47 @@ struct AddTaskView: View {
                 }
             }
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
     }
 
-    /// 保存処理
+    /// 保存処理（新Resultパターン対応）
     private func saveTask() {
         guard !groups.isEmpty, !taskTitle.isEmpty else { return }
 
         let groupID = groups[selectedGroupIndex].groupID
 
-        // 課題を保存
-        let newTask = viewModel.saveTask(
-            title: taskTitle,
-            cause: cause,
-            groupID: groupID
-        )
-
-        // 対策を保存
-        if !measuresTitle.isEmpty {
-            let measuresViewModel = MeasuresViewModel()
-            measuresViewModel.saveMeasures(
-                taskID: newTask.taskID,
-                title: measuresTitle
+        Task {
+            // 課題を保存
+            let result = await viewModel.saveNewTask(
+                title: taskTitle,
+                cause: cause,
+                groupID: groupID
             )
+            
+            switch result {
+            case .success(let newTask):
+                // 対策を保存
+                if !measuresTitle.isEmpty {
+                    let measuresViewModel = MeasuresViewModel()
+                    measuresViewModel.saveMeasures(
+                        taskID: newTask.taskID,
+                        title: measuresTitle
+                    )
+                }
+                
+                await MainActor.run {
+                    dismiss()
+                }
+            case .failure(let error):
+                // エラーをViewModelに設定（ViewModelがUIでエラー表示）
+                await MainActor.run {
+                    viewModel.showErrorAlert(error)
+                }
+            }
         }
-
-        dismiss()
     }
 
     /// キーボードを閉じる

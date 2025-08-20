@@ -49,7 +49,9 @@ struct TaskSelectionView: View {
                 }
             }
             .onAppear {
-                taskViewModel.fetchAllTasks()
+                Task {
+                    _ = await taskViewModel.fetchData()
+                }
             }
             .navigationTitle(LocalizedStrings.selectTask)
             .navigationBarTitleDisplayMode(.inline)
