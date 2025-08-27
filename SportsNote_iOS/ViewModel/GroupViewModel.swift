@@ -179,4 +179,16 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
         return .success(())
     }
 
+    // MARK: - Static Utility Methods
+
+    /// グループIDに基づいて色を取得する静的メソッド
+    /// - Parameter groupID: グループID
+    /// - Returns: GroupColorの列挙型
+    static func getGroupColor(groupID: String) -> GroupColor {
+        if let group = try? RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
+            return GroupColor.allCases[Int(group.color)]
+        }
+        return GroupColor.gray
+    }
+
 }

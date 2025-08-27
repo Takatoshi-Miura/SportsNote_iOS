@@ -2,6 +2,27 @@ import RealmSwift
 import SwiftUI
 
 struct TaskDetailView: View {
+    private enum AlertType {
+        case completionToggle
+        case deleteConfirmation
+        case error
+    }
+    
+    private struct AlertItem: Identifiable {
+        let type: AlertType
+        
+        var id: String {
+            switch type {
+            case .completionToggle:
+                return "completionToggle"
+            case .deleteConfirmation:
+                return "deleteConfirmation"
+            case .error:
+                return "error"
+            }
+        }
+    }
+    
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
     @State private var taskTitle: String = ""
@@ -10,8 +31,7 @@ struct TaskDetailView: View {
     @State private var newMeasureTitle = ""
     @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
-    @State private var showCompletionToggleAlert = false
-    @State private var showDeleteConfirmation = false
+    @State private var alertType: AlertType?
 
     let taskData: TaskData
 
@@ -61,13 +81,13 @@ struct TaskDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
                     Button(action: {
-                        showCompletionToggleAlert = true
+                        alertType = .completionToggle
                     }) {
                         Image(systemName: "checkmark.circle")
                     }
 
                     Button(action: {
-                        showDeleteConfirmation = true
+                        alertType = .deleteConfirmation
                     }) {
                         Image(systemName: "trash")
                             .foregroundColor(.red)
@@ -75,33 +95,58 @@ struct TaskDetailView: View {
                 }
             }
         }
-        .alert(isPresented: $showCompletionToggleAlert) {
-            let title =
-                (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete)
-                ? LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
-            return Alert(
-                title: Text(title),
-                primaryButton: .default(Text(LocalizedStrings.ok)) {
-                    viewModel.toggleTaskCompletion(taskID: taskData.taskID)
-                    dismiss()
-                },
-                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
-            )
+        .alert(item: Binding<AlertItem?>(
+            get: { alertType.map(AlertItem.init) },
+            set: { _ in alertType = nil }
+        )) { alertItem in
+            switch alertItem.type {
+            case .completionToggle:
+                let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete)
+                    ? LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
+                return Alert(
+                    title: Text(title),
+                    primaryButton: .default(Text(LocalizedStrings.ok)) {
+                        Task {
+                            let result = await viewModel.toggleTaskCompletion(taskID: taskData.taskID)
+                            await MainActor.run {
+                                switch result {
+                                case .success:
+                                    dismiss()
+                                case .failure(let error):
+                                    viewModel.showErrorAlert(error)
+                                }
+                            }
+                        }
+                    },
+                    secondaryButton: .cancel(Text(LocalizedStrings.cancel))
+                )
+            case .deleteConfirmation:
+                return Alert(
+                    title: Text(LocalizedStrings.delete),
+                    message: Text(String(format: LocalizedStrings.deleteTask)),
+                    primaryButton: .destructive(Text(LocalizedStrings.delete)) {
+                        Task {
+                            let result = await viewModel.delete(id: taskData.taskID)
+                            await MainActor.run {
+                                switch result {
+                                case .success:
+                                    dismiss()
+                                case .failure(let error):
+                                    viewModel.showErrorAlert(error)
+                                }
+                            }
+                        }
+                    },
+                    secondaryButton: .cancel(Text(LocalizedStrings.cancel))
+                )
+            case .error:
+                return Alert(
+                    title: Text(LocalizedStrings.error),
+                    message: Text(viewModel.currentError?.localizedDescription ?? LocalizedStrings.errorUnknown),
+                    dismissButton: .default(Text(LocalizedStrings.ok))
+                )
+            }
         }
-        .background(
-            EmptyView()
-                .alert(isPresented: $showDeleteConfirmation) {
-                    Alert(
-                        title: Text(LocalizedStrings.delete),
-                        message: Text(String(format: LocalizedStrings.deleteTask)),
-                        primaryButton: .destructive(Text(LocalizedStrings.delete)) {
-                            viewModel.deleteTask(id: taskData.taskID)
-                            dismiss()
-                        },
-                        secondaryButton: .cancel(Text(LocalizedStrings.cancel))
-                    )
-                }
-        )
         .onAppear {
             loadData()
         }
@@ -110,6 +155,17 @@ struct TaskDetailView: View {
             viewModel.taskUpdatedPublisher.send()
         }
         .environment(\.editMode, .constant(isReorderingMeasures ? .active : .inactive))
+        .onChange(of: viewModel.showingErrorAlert) { showingAlert in
+            if showingAlert {
+                alertType = .error
+            }
+        }
+        .onChange(of: alertType) { newAlertType in
+            if newAlertType == nil {
+                // アラートが閉じられたらエラー状態をクリア
+                viewModel.hideErrorAlert()
+            }
+        }
     }
 
     private func loadData() {

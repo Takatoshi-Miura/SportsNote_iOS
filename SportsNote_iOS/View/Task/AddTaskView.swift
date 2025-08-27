@@ -64,7 +64,7 @@ struct AddTaskView: View {
         )
     }
 
-    /// 保存処理（新Resultパターン対応）
+    /// 保存処理
     private func saveTask() {
         guard !groups.isEmpty, !taskTitle.isEmpty else { return }
 
@@ -93,7 +93,6 @@ struct AddTaskView: View {
                     dismiss()
                 }
             case .failure(let error):
-                // エラーをViewModelに設定（ViewModelがUIでエラー表示）
                 await MainActor.run {
                     viewModel.showErrorAlert(error)
                 }
