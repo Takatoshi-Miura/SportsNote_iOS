@@ -12,14 +12,27 @@ MVVMアーキテクチャを採用し、ローカルのRealmデータベース�
 
 ### ビルドと実行
 ```bash
+# プロジェクトディレクトリに移動
+cd /Users/it6210/Documents/Program/Github/SportsNote_iOS
+
+# 🚨 ビルド前必須: swift-formatの実行（コード品質確保）
+# 全ViewModelファイルにswift-formatを適用
+find SportsNote_iOS/ViewModel -name "*.swift"
+
+# 特定ファイルにswift-formatを適用する場合
+# xcrun swift-format --configuration .swift-format --in-place SportsNote_iOS/ViewModel/GroupViewModel.swift
+
 # Xcodeでプロジェクトを開く
 open SportsNote_iOS.xcodeproj
 
-# コマンドラインからビルド（xcodebuildが利用可能な場合）
-xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 15' build
+# コマンドラインからビルド
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16' build
+
+# ビルド結果の確認（エラー・警告・結果のみ表示）
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16' build 2>&1 | grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" | tail -10
 
 # テスト実行
-xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 15' test
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
 ### 依存関係
