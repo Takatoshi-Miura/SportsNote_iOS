@@ -59,20 +59,15 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
     /// - Parameter groupID: グループID
     /// - Returns: Result
     func fetchTasksByGroupID(groupID: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // グループIDでフィルタリング
-            let allTasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            tasks = allTasks.filter { $0.groupID == groupID && !$0.isDeleted }
-                .sorted { $0.order < $1.order }
+        let result = await fetchData()
+        switch result {
+        case .success:
+            // fetchData()で取得済みのデータをグループIDでフィルタリング
+            tasks = tasks.filter { $0.groupID == groupID }
             convertToTaskListData()
-            hideErrorAlert()
             return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchTasksByGroupID")
-            return .failure(sportsNoteError)
+        case .failure(let error):
+            return .failure(error)
         }
     }
 
@@ -80,8 +75,10 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
     /// - Parameter taskID: 課題ID
     /// - Returns: Result
     func fetchTaskDetail(taskID: String) async -> Result<Void, SportsNoteError> {
-        do {
-            if let task = try RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) {
+        let taskResult = await fetchById(id: taskID)
+        switch taskResult {
+        case .success(let task):
+            if let task = task {
                 let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
                 taskDetail = TaskDetailData(task: task, measuresList: measures)
                 return .success(())
@@ -89,100 +86,74 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
                 taskDetail = nil
                 return .success(())
             }
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchTaskDetail")
-            return .failure(sportsNoteError)
+        case .failure(let error):
+            return .failure(error)
         }
     }
 
-    /// 課題保存処理(更新も兼ねる)
-    /// - Parameters:
-    ///   - taskID: 課題ID（新規作成時はnil）
-    ///   - title: 課題タイトル
-    ///   - cause: 原因
-    ///   - groupID: グループID
-    ///   - isComplete: 完了状態
-    ///   - order: 表示順序（指定がない場合は自動計算）
-    ///   - created_at: 作成日時（指定がない場合は現在時刻）
-    @discardableResult
-    func saveTask(
-        taskID: String? = nil,
-        title: String,
-        cause: String,
-        groupID: String,
-        order: Int? = nil,
-        isComplete: Bool = false,
-        created_at: Date? = nil
-    ) -> TaskData {
-        let newTaskID = taskID ?? UUID().uuidString
-        let newOrder = order ?? ((try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0)
-        let newCreatedAt = created_at ?? Date()
-
-        let task = TaskData(
-            taskID: newTaskID,
-            title: title,
-            cause: cause,
-            groupID: groupID,
-            order: newOrder,
-            isComplete: isComplete,
-            created_at: newCreatedAt
-        )
-        try? RealmManager.shared.saveItem(task)
-
-        // Firebaseへの同期
-        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
-            Task {
-                let isUpdate = taskID != nil
-                if isUpdate {
-                    try await FirebaseManager.shared.updateTask(task: task)
-                } else {
-                    try await FirebaseManager.shared.saveTask(task: task)
-                }
-            }
-        }
-
-        // Refresh task list
-        Task {
-            _ = await fetchData()
-        }
-
-        // タスク詳細情報を表示している場合は、詳細情報も更新
-        if let detail = taskDetail, detail.task.taskID == newTaskID {
-            Task {
-                _ = await fetchTaskDetail(taskID: newTaskID)
-            }
-        }
-
-        // タスク更新通知を送信
-        taskUpdatedPublisher.send()
-
-        return task
-    }
-
-    /// 新しい課題を保存（View層向けの簡易メソッド）
+    /// 課題と対策を新規保存
     /// - Parameters:
     ///   - title: 課題タイトル
     ///   - cause: 原因
     ///   - groupID: グループID
+    ///   - measuresTitle: 対策タイトル（nilの場合は対策を保存しない）
     /// - Returns: 保存された課題データとResult
-    func saveNewTask(title: String, cause: String, groupID: String) async -> Result<TaskData, SportsNoteError> {
-        let newTaskID = UUID().uuidString
-        let newOrder = (try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0
-
-        let newTask = TaskData(
-            taskID: newTaskID,
-            title: title,
-            cause: cause,
-            groupID: groupID,
-            order: newOrder,
-            isComplete: false,
-            created_at: Date()
-        )
-
-        let result = await save(newTask, isUpdate: false)
-        switch result {
+    func saveNewTaskWithMeasures(
+        title: String, cause: String, groupID: String, measuresTitle: String? = nil
+    ) async -> Result<TaskData, SportsNoteError> {
+        // 課題を保存
+        let newTask = createTaskData(title: title, cause: cause, groupID: groupID)
+        let taskResult = await save(newTask, isUpdate: false)
+        switch taskResult {
         case .success:
+            // 対策タイトルが指定されている場合は対策も保存
+            if let measuresTitle = measuresTitle, !measuresTitle.isEmpty {
+                let measuresViewModel = MeasuresViewModel()
+                measuresViewModel.saveMeasures(
+                    taskID: newTask.taskID,
+                    title: measuresTitle
+                )
+            }
             return .success(newTask)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// 既存課題の詳細を更新
+    /// - Parameters:
+    ///   - taskID: 更新対象の課題ID
+    ///   - title: 新しい課題タイトル
+    ///   - cause: 新しい原因
+    ///   - groupID: 新しいグループID
+    /// - Returns: Result
+    func updateTask(
+        taskID: String, title: String, cause: String, groupID: String
+    ) async -> Result<Void, SportsNoteError> {
+        // バリデーション
+        guard !title.isEmpty else {
+            let error = SportsNoteError.systemError("タイトルは必須項目です")
+            return .failure(error)
+        }
+
+        let taskResult = await fetchById(id: taskID)
+        switch taskResult {
+        case .success(let existingTask):
+            guard let existingTask = existingTask else {
+                let error = SportsNoteError.systemError("Task not found: \(taskID)")
+                return .failure(error)
+            }
+
+            // 新しいTaskDataオブジェクトを構築
+            let updatedTask = createTaskData(
+                title: title,
+                cause: cause,
+                groupID: groupID,
+                basedOn: existingTask
+            )
+
+            // 既存のsaveメソッドを使用して更新
+            return await save(updatedTask, isUpdate: true)
         case .failure(let error):
             return .failure(error)
         }
@@ -192,26 +163,25 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
     /// - Parameter taskID: 課題ID
     /// - Returns: Result
     func toggleTaskCompletion(taskID: String) async -> Result<Void, SportsNoteError> {
-        do {
-            guard let taskToUpdate = try RealmManager.shared.getObjectById(id: taskID, type: TaskData.self) else {
+        let taskResult = await fetchById(id: taskID)
+        switch taskResult {
+        case .success(let taskToUpdate):
+            guard let taskToUpdate = taskToUpdate else {
                 let error = SportsNoteError.systemError("Task not found: \(taskID)")
                 return .failure(error)
             }
 
-            let updatedTask = TaskData(
-                taskID: taskToUpdate.taskID,
+            let updatedTask = createTaskData(
                 title: taskToUpdate.title,
                 cause: taskToUpdate.cause,
                 groupID: taskToUpdate.groupID,
-                order: taskToUpdate.order,
-                isComplete: !taskToUpdate.isComplete,
-                created_at: taskToUpdate.created_at
+                basedOn: taskToUpdate,
+                overrideIsComplete: !taskToUpdate.isComplete
             )
 
             return await save(updatedTask, isUpdate: true)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-toggleTaskCompletion")
-            return .failure(sportsNoteError)
+        case .failure(let error):
+            return .failure(error)
         }
     }
 
@@ -268,7 +238,8 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
 
             // 2. Firebase同期はバックグラウンドで実行
             Task {
-                if let deletedTask = try? RealmManager.shared.getObjectById(id: id, type: TaskData.self) {
+                let taskResult = await fetchById(id: id)
+                if case .success(let deletedTask) = taskResult, let deletedTask = deletedTask {
                     let result = await syncEntityToFirebase(deletedTask, isUpdate: true)
                     if case .failure(let error) = result {
                         await MainActor.run {
@@ -291,6 +262,49 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-delete")
             return .failure(sportsNoteError)
+        }
+    }
+
+    /// TaskDataオブジェクトを作成（新規・更新両対応）
+    /// - Parameters:
+    ///   - title: 課題タイトル
+    ///   - cause: 原因
+    ///   - groupID: グループID
+    ///   - basedOn: 更新ベースとなる既存TaskData（nilの場合は新規作成）
+    ///   - overrideIsComplete: 完了状態を明示的に変更する場合の値
+    /// - Returns: 作成されたTaskData
+    private func createTaskData(
+        title: String,
+        cause: String,
+        groupID: String,
+        basedOn existingTask: TaskData? = nil,
+        overrideIsComplete: Bool? = nil
+    ) -> TaskData {
+        if let existingTask = existingTask {
+            // 更新の場合: 既存データをベースに新しいTaskDataを作成
+            return TaskData(
+                taskID: existingTask.taskID,
+                title: title,
+                cause: cause,
+                groupID: groupID,
+                order: existingTask.order,
+                isComplete: overrideIsComplete ?? existingTask.isComplete,
+                created_at: existingTask.created_at
+            )
+        } else {
+            // 新規作成の場合: 新しいTaskDataを作成
+            let newTaskID = UUID().uuidString
+            let newOrder = (try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0
+
+            return TaskData(
+                taskID: newTaskID,
+                title: title,
+                cause: cause,
+                groupID: groupID,
+                order: newOrder,
+                isComplete: false,
+                created_at: Date()
+            )
         }
     }
 
@@ -323,6 +337,8 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         taskListData = taskList
     }
 
+    // MARK: - Measures
+    
     /// 最も優先度の高い（orderが低い）対策を取得
     /// - Parameter taskID: 課題ID
     /// - Returns: 対策オブジェクト（存在しない場合はnil）
@@ -330,8 +346,6 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
         return measuresList.min { $0.order < $1.order }
     }
-
-    // MARK: - Measures
 
     /// 対策の並び順を更新（新Resultパターン対応）
     /// - Parameter measures: 並び替え後の対策リスト

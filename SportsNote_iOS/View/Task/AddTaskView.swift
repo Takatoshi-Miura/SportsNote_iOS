@@ -52,7 +52,21 @@ struct AddTaskView: View {
                 // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
-                        saveTask()
+                        Task {
+                            let result = await viewModel.saveNewTaskWithMeasures(
+                                title: taskTitle,
+                                cause: cause,
+                                groupID: groups[selectedGroupIndex].groupID,
+                                measuresTitle: measuresTitle.isEmpty ? nil : measuresTitle
+                            )
+                            
+                            switch result {
+                            case .success:
+                                dismiss()
+                            case .failure(let error):
+                                viewModel.showErrorAlert(error)
+                            }
+                        }
                     }
                     .disabled(taskTitle.isEmpty || groups.isEmpty)
                 }
@@ -62,42 +76,6 @@ struct AddTaskView: View {
             currentError: $viewModel.currentError,
             showingAlert: $viewModel.showingErrorAlert
         )
-    }
-
-    /// 保存処理
-    private func saveTask() {
-        guard !groups.isEmpty, !taskTitle.isEmpty else { return }
-
-        let groupID = groups[selectedGroupIndex].groupID
-
-        Task {
-            // 課題を保存
-            let result = await viewModel.saveNewTask(
-                title: taskTitle,
-                cause: cause,
-                groupID: groupID
-            )
-            
-            switch result {
-            case .success(let newTask):
-                // 対策を保存
-                if !measuresTitle.isEmpty {
-                    let measuresViewModel = MeasuresViewModel()
-                    measuresViewModel.saveMeasures(
-                        taskID: newTask.taskID,
-                        title: measuresTitle
-                    )
-                }
-                
-                await MainActor.run {
-                    dismiss()
-                }
-            case .failure(let error):
-                await MainActor.run {
-                    viewModel.showErrorAlert(error)
-                }
-            }
-        }
     }
 
     /// キーボードを閉じる

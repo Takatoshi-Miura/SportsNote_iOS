@@ -7,10 +7,10 @@ struct TaskDetailView: View {
         case deleteConfirmation
         case error
     }
-    
+
     private struct AlertItem: Identifiable {
         let type: AlertType
-        
+
         var id: String {
             switch type {
             case .completionToggle:
@@ -22,7 +22,7 @@ struct TaskDetailView: View {
             }
         }
     }
-    
+
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
     @State private var taskTitle: String = ""
@@ -41,7 +41,18 @@ struct TaskDetailView: View {
             Section(header: Text(LocalizedStrings.title)) {
                 TextField(LocalizedStrings.title, text: $taskTitle)
                     .onChange(of: taskTitle) { _ in
-                        updateTask()
+                        Task {
+                            guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                            let result = await viewModel.updateTask(
+                                taskID: taskData.taskID,
+                                title: taskTitle,
+                                cause: cause,
+                                groupID: groups[selectedGroupIndex].groupID
+                            )
+                            if case .failure(let error) = result {
+                                viewModel.showErrorAlert(error)
+                            }
+                        }
                     }
             }
             // 原因
@@ -52,7 +63,18 @@ struct TaskDetailView: View {
                     minHeight: 50
                 )
                 .onChange(of: cause) { _ in
-                    updateTask()
+                    Task {
+                        guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                        let result = await viewModel.updateTask(
+                            taskID: taskData.taskID,
+                            title: taskTitle,
+                            cause: cause,
+                            groupID: groups[selectedGroupIndex].groupID
+                        )
+                        if case .failure(let error) = result {
+                            viewModel.showErrorAlert(error)
+                        }
+                    }
                 }
             }
             // グループ
@@ -62,7 +84,18 @@ struct TaskDetailView: View {
                         selectedGroupIndex: $selectedGroupIndex,
                         groups: groups,
                         onSelectionChanged: {
-                            updateTask()
+                            Task {
+                                guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                                let result = await viewModel.updateTask(
+                                    taskID: taskData.taskID,
+                                    title: taskTitle,
+                                    cause: cause,
+                                    groupID: groups[selectedGroupIndex].groupID
+                                )
+                                if case .failure(let error) = result {
+                                    viewModel.showErrorAlert(error)
+                                }
+                            }
                         }
                     )
                 }
@@ -95,13 +128,17 @@ struct TaskDetailView: View {
                 }
             }
         }
-        .alert(item: Binding<AlertItem?>(
-            get: { alertType.map(AlertItem.init) },
-            set: { _ in alertType = nil }
-        )) { alertItem in
+        .alert(
+            item: Binding<AlertItem?>(
+                get: { alertType.map(AlertItem.init) },
+                set: { _ in alertType = nil }
+            )
+        ) { alertItem in
             switch alertItem.type {
             case .completionToggle:
-                let title = (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete)
+                // 完了状態を切り替え
+                let title =
+                    (viewModel.taskDetail?.task.isComplete ?? taskData.isComplete)
                     ? LocalizedStrings.inCompleteMessage : LocalizedStrings.completeMessage
                 return Alert(
                     title: Text(title),
@@ -121,6 +158,7 @@ struct TaskDetailView: View {
                     secondaryButton: .cancel(Text(LocalizedStrings.cancel))
                 )
             case .deleteConfirmation:
+                // 削除確認
                 return Alert(
                     title: Text(LocalizedStrings.delete),
                     message: Text(String(format: LocalizedStrings.deleteTask)),
@@ -140,6 +178,7 @@ struct TaskDetailView: View {
                     secondaryButton: .cancel(Text(LocalizedStrings.cancel))
                 )
             case .error:
+                // エラー
                 return Alert(
                     title: Text(LocalizedStrings.error),
                     message: Text(viewModel.currentError?.localizedDescription ?? LocalizedStrings.errorUnknown),
@@ -189,23 +228,6 @@ struct TaskDetailView: View {
             // グループIDに一致するものがなければ、最初のグループを選択
             selectedGroupIndex = 0
         }
-    }
-
-    private func updateTask() {
-        guard !groups.isEmpty, !taskTitle.isEmpty else { return }
-        guard groups.indices.contains(selectedGroupIndex) else { return }
-
-        let groupID = groups[selectedGroupIndex].groupID
-
-        viewModel.saveTask(
-            taskID: taskData.taskID,
-            title: taskTitle,
-            cause: cause,
-            groupID: groupID,
-            order: taskData.order,
-            isComplete: taskData.isComplete,
-            created_at: taskData.created_at
-        )
     }
 
     /// 対策追加処理
