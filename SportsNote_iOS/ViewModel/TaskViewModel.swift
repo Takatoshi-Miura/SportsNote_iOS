@@ -109,10 +109,14 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             // 対策タイトルが指定されている場合は対策も保存
             if let measuresTitle = measuresTitle, !measuresTitle.isEmpty {
                 let measuresViewModel = MeasuresViewModel()
-                measuresViewModel.saveMeasures(
+                let newMeasures = Measures(
+                    measuresID: UUID().uuidString,
                     taskID: newTask.taskID,
-                    title: measuresTitle
+                    title: measuresTitle,
+                    order: 0,
+                    created_at: Date()
                 )
+                let _ = await measuresViewModel.save(newMeasures, isUpdate: false)
             }
             return .success(newTask)
         case .failure(let error):
@@ -338,7 +342,7 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
     }
 
     // MARK: - Measures
-    
+
     /// 最も優先度の高い（orderが低い）対策を取得
     /// - Parameter taskID: 課題ID
     /// - Returns: 対策オブジェクト（存在しない場合はnil）
@@ -356,8 +360,10 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         }
 
         let measuresViewModel = MeasuresViewModel()
-        // TODO: MeasuresViewModelも将来的にResultパターンに対応する
-        measuresViewModel.updateMeasuresOrder(measures: measures)
+        let result = await measuresViewModel.updateMeasuresOrder(measures: measures)
+        if case .failure(let error) = result {
+            return .failure(error)
+        }
 
         // 対策の並び替えが完了したら、詳細画面を更新
         if let detail = taskDetail {

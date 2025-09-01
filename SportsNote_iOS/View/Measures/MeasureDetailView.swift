@@ -71,12 +71,22 @@ struct MeasureDetailView: View {
                 title: Text(LocalizedStrings.delete),
                 message: Text(String(format: LocalizedStrings.deleteMeasures)),
                 primaryButton: .destructive(Text(LocalizedStrings.delete)) {
-                    viewModel.deleteMeasures(id: measure.measuresID)
-                    dismiss()
+                    Task {
+                        let result = await viewModel.delete(id: measure.measuresID)
+                        if case .failure(let error) = result {
+                            viewModel.showErrorAlert(error)
+                        } else {
+                            dismiss()
+                        }
+                    }
                 },
                 secondaryButton: .cancel(Text(LocalizedStrings.cancel))
             )
         }
+        .errorAlert(
+            currentError: $viewModel.currentError,
+            showingAlert: $viewModel.showingErrorAlert
+        )
     }
 
     /// ノートIDに基づいて適切な遷移先を返す

@@ -4,7 +4,8 @@ import SwiftUI
 
 @MainActor
 class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol,
-                        @preconcurrency CRUDViewModelProtocol, @preconcurrency FirebaseSyncable {
+    @preconcurrency CRUDViewModelProtocol, @preconcurrency FirebaseSyncable
+{
     typealias EntityType = Measures
     @Published var measuresList: [Measures] = []
     @Published var memos: [Memo] = []
@@ -51,15 +52,18 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
 
     /// 対策に紐づくメモを取得
     /// - Parameter measuresID: 対策ID
-    func fetchMemosByMeasuresID(measuresID: String) {
+    /// - Returns: Result
+    func fetchMemosByMeasuresID(measuresID: String) async -> Result<Void, SportsNoteError> {
         memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+        return .success(())
     }
 
     /// 課題IDに紐づく対策を取得
     /// - Parameter taskID: 課題ID
-    /// - Returns: 対策のリスト
-    func getMeasuresByTaskID(taskID: String) -> [Measures] {
-        return RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+    /// - Returns: Result<[Measures], SportsNoteError>
+    func getMeasuresByTaskID(taskID: String) async -> Result<[Measures], SportsNoteError> {
+        let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+        return .success(measures)
     }
 
     /// 対策を保存する
@@ -103,7 +107,7 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
         }
 
         // リストを更新
-        let _ = await fetchData()
+        measuresList = (try? RealmManager.shared.getDataList(clazz: Measures.self)) ?? []
     }
 
     /// 対策保存処理（プロトコル準拠）
@@ -180,18 +184,28 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
 
     /// 対策の並び順を更新
     /// - Parameter measures: 並び替え後の対策リスト
-    func updateMeasuresOrder(measures: [Measures]) {
-        guard !measures.isEmpty else { return }
+    /// - Returns: Result
+    func updateMeasuresOrder(measures: [Measures]) async -> Result<Void, SportsNoteError> {
+        guard !measures.isEmpty else {
+            return .success(())
+        }
 
         for (index, measure) in measures.enumerated() {
-            saveMeasures(
+            let updatedMeasures = Measures(
                 measuresID: measure.measuresID,
                 taskID: measure.taskID,
                 title: measure.title,
                 order: index,
                 created_at: measure.created_at
             )
+
+            let result = await save(updatedMeasures, isUpdate: true)
+            if case .failure(let error) = result {
+                return .failure(error)
+            }
         }
+
+        return .success(())
     }
 
     // MARK: - FirebaseSyncable準拠
