@@ -65,14 +65,21 @@ struct AddTargetView: View {
                 // 保存
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(LocalizedStrings.save) {
-                        viewModel.saveTarget(
-                            title: title,
-                            year: selectedYear,
-                            month: selectedMonth,
-                            isYearlyTarget: isYearly
-                        )
-                        onSave()
-                        dismiss()
+                        Task {
+                            let result = await viewModel.saveTarget(
+                                title: title,
+                                year: selectedYear,
+                                month: selectedMonth,
+                                isYearlyTarget: isYearly
+                            )
+                            switch result {
+                            case .success:
+                                onSave()
+                                dismiss()
+                            case .failure(let error):
+                                viewModel.showErrorAlert(error)
+                            }
+                        }
                     }
                     .disabled(title.isEmpty)
                 }
