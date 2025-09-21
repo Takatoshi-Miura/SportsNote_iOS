@@ -66,23 +66,32 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
         return .success(measures)
     }
 
-    /// 対策を保存する
+    /// 最も優先度の高い（orderが低い）対策を取得
+    /// - Parameter taskID: 課題ID
+    /// - Returns: Result<Measures?, SportsNoteError>
+    func getMostPriorityMeasures(taskID: String) async -> Result<Measures?, SportsNoteError> {
+        let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+        let mostPriorityMeasures = measuresList.min { $0.order < $1.order }
+        return .success(mostPriorityMeasures)
+    }
+
+    /// 対策を保存する（既存インターフェースとの互換性のため）
     /// - Parameters:
     ///   - measuresID: 対策ID (新規作成時はnil)
     ///   - taskID: 課題ID
     ///   - title: 対策タイトル
     ///   - order: 並び順 (指定しない場合は自動計算)
     ///   - created_at: 作成日時
-    /// - Returns: 保存した対策
+    /// - Returns: Result
     func saveMeasures(
         measuresID: String? = nil,
         taskID: String,
         title: String,
         order: Int? = nil,
         created_at: Date? = nil
-    ) {
+    ) async -> Result<Void, SportsNoteError> {
         let newMeasuresID = measuresID ?? UUID().uuidString
-        let newOrder = order ?? RealmManager.shared.getMeasuresByTaskID(taskID: taskID).count
+        let newOrder = order ?? getDefaultOrderForTask(taskID: taskID)
         let newCreatedAt = created_at ?? Date()
 
         let measures = Measures(
@@ -92,22 +101,16 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
             order: newOrder,
             created_at: newCreatedAt
         )
-        try? RealmManager.shared.saveItem(measures)
 
-        // Firebaseへの同期
-        if Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false) {
-            Task {
-                let isUpdate = measuresID != nil
-                if isUpdate {
-                    try await FirebaseManager.shared.updateMeasures(measures: measures)
-                } else {
-                    try await FirebaseManager.shared.saveMeasures(measures: measures)
-                }
-            }
-        }
+        let isUpdate = measuresID != nil
+        return await save(measures, isUpdate: isUpdate)
+    }
 
-        // リストを更新
-        measuresList = (try? RealmManager.shared.getDataList(clazz: Measures.self)) ?? []
+    /// 指定課題のデフォルトの並び順を取得する
+    /// - Parameter taskID: 課題ID
+    /// - Returns: 並び順
+    private func getDefaultOrderForTask(taskID: String) -> Int {
+        return RealmManager.shared.getMeasuresByTaskID(taskID: taskID).count
     }
 
     /// 対策保存処理（プロトコル準拠）
@@ -208,7 +211,7 @@ class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol
         return .success(())
     }
 
-    // MARK: - FirebaseSyncable準拠
+    // MARK: - Firebase同期処理
 
     /// 指定された対策をFirebaseに同期する
     /// - Parameters:

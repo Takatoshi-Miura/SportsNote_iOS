@@ -79,9 +79,15 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         switch taskResult {
         case .success(let task):
             if let task = task {
-                let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
-                taskDetail = TaskDetailData(task: task, measuresList: measures)
-                return .success(())
+                let measuresViewModel = MeasuresViewModel()
+                let measuresResult = await measuresViewModel.getMeasuresByTaskID(taskID: taskID)
+                switch measuresResult {
+                case .success(let measures):
+                    taskDetail = TaskDetailData(task: task, measuresList: measures)
+                    return .success(())
+                case .failure(let error):
+                    return .failure(error)
+                }
             } else {
                 taskDetail = nil
                 return .success(())
@@ -109,14 +115,14 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             // 対策タイトルが指定されている場合は対策も保存
             if let measuresTitle = measuresTitle, !measuresTitle.isEmpty {
                 let measuresViewModel = MeasuresViewModel()
-                let newMeasures = Measures(
-                    measuresID: UUID().uuidString,
+                let result = await measuresViewModel.saveMeasures(
                     taskID: newTask.taskID,
                     title: measuresTitle,
-                    order: 0,
-                    created_at: Date()
+                    order: 0
                 )
-                let _ = await measuresViewModel.save(newMeasures, isUpdate: false)
+                if case .failure(let error) = result {
+                    return .failure(error)
+                }
             }
             return .success(newTask)
         case .failure(let error):
@@ -341,17 +347,19 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         taskListData = taskList
     }
 
-    // MARK: - Measures
+    // MARK: - Measures委譲メソッド
 
-    /// 最も優先度の高い（orderが低い）対策を取得
+    /// 最も優先度の高い（orderが低い）対策を取得（MeasuresViewModelへの委譲）
     /// - Parameter taskID: 課題ID
     /// - Returns: 対策オブジェクト（存在しない場合はnil）
     private func getMostPriorityMeasures(taskID: String) -> Measures? {
+        // 同期的な処理が必要なため、RealmManagerを直接使用
+        // 将来的にはconvertToTaskListData()の非同期化を検討
         let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
         return measuresList.min { $0.order < $1.order }
     }
 
-    /// 対策の並び順を更新（新Resultパターン対応）
+    /// 対策の並び順を更新（MeasuresViewModelへの委譲メソッド）
     /// - Parameter measures: 並び替え後の対策リスト
     /// - Returns: Result
     func updateMeasuresOrder(measures: [Measures]) async -> Result<Void, SportsNoteError> {
@@ -359,6 +367,7 @@ class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .success(())
         }
 
+        // MeasuresViewModelに委譲
         let measuresViewModel = MeasuresViewModel()
         let result = await measuresViewModel.updateMeasuresOrder(measures: measures)
         if case .failure(let error) = result {

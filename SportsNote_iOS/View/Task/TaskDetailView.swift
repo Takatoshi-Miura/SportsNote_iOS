@@ -235,10 +235,15 @@ struct TaskDetailView: View {
         guard !newMeasureTitle.isEmpty else { return }
 
         let measuresViewModel = MeasuresViewModel()
-        measuresViewModel.saveMeasures(
-            taskID: taskData.taskID,
-            title: newMeasureTitle
-        )
+        Task {
+            let result = await measuresViewModel.saveMeasures(
+                taskID: taskData.taskID,
+                title: newMeasureTitle
+            )
+            if case .failure(let error) = result {
+                measuresViewModel.showErrorAlert(error)
+            }
+        }
 
         // Viewを更新
         Task {

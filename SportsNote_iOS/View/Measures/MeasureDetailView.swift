@@ -24,13 +24,18 @@ struct MeasureDetailView: View {
                 Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $title)
                         .onChange(of: title) { newValue in
-                            viewModel.saveMeasures(
-                                measuresID: measure.measuresID,
-                                taskID: measure.taskID,
-                                title: newValue,
-                                order: measure.order,
-                                created_at: measure.created_at
-                            )
+                            Task {
+                                let result = await viewModel.saveMeasures(
+                                    measuresID: measure.measuresID,
+                                    taskID: measure.taskID,
+                                    title: newValue,
+                                    order: measure.order,
+                                    created_at: measure.created_at
+                                )
+                                if case .failure(let error) = result {
+                                    viewModel.showErrorAlert(error)
+                                }
+                            }
                         }
                 }
                 .contentShape(Rectangle())
