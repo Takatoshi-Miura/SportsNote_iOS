@@ -234,23 +234,32 @@ struct TaskDetailView: View {
     private func addMeasure() {
         guard !newMeasureTitle.isEmpty else { return }
 
+        // 対策の保存は非同期のため、タイトルをコピーしておかないと保存前にクリアされてしまう
+        let titleToSave = newMeasureTitle
+        
+        // 次の行を空欄で表示するためにクリアする
+        newMeasureTitle = ""
+
         let measuresViewModel = MeasuresViewModel()
         Task {
             let result = await measuresViewModel.saveMeasures(
                 taskID: taskData.taskID,
-                title: newMeasureTitle
+                title: titleToSave
             )
-            if case .failure(let error) = result {
-                measuresViewModel.showErrorAlert(error)
+
+            await MainActor.run {
+                if case .failure(let error) = result {
+                    // エラー時は入力値を復元
+                    newMeasureTitle = titleToSave
+                    measuresViewModel.showErrorAlert(error)
+                } else {
+                    // 成功時のみViewを更新
+                    Task {
+                        _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
+                    }
+                }
             }
         }
-
-        // Viewを更新
-        Task {
-            _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
-        }
-
-        newMeasureTitle = ""
     }
 }
 
