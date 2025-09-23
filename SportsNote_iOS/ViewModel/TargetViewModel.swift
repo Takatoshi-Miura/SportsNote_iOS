@@ -17,8 +17,23 @@ class TargetViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, 
     @Published var currentYear: Int = Calendar.current.component(.year, from: Date())
     @Published var currentMonth: Int = Calendar.current.component(.month, from: Date())
 
+    // Combine自動更新用
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
-        // 初期化のみ実行、データ取得はView側で明示的に実行
+        // 年月が変わったときに自動的にデータを更新する（新Resultパターン対応）
+        $currentYear
+            .combineLatest($currentMonth)
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] year, month in
+                Task { @MainActor in
+                    let result = await self?.fetchTargetsByYearMonth(year: year, month: month)
+                    if case .failure(let error) = result {
+                        self?.showErrorAlert(error)
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - BaseViewModelProtocol準拠
