@@ -44,33 +44,37 @@ struct MeasureDetailView: View {
                 }
 
                 Section(header: Text(LocalizedStrings.note)) {
-                    let measuresMemos = memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID)
-                    if measuresMemos.isEmpty {
+                    switch memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID) {
+                    case .success(let measuresMemos):
+                        if measuresMemos.isEmpty {
+                            Text(LocalizedStrings.noNotesYet)
+                                .foregroundColor(.gray)
+                                .italic()
+                        } else {
+                            ForEach(measuresMemos, id: \.memoID) { measuresMemo in
+                                NavigationLink(destination: destinationView(for: measuresMemo.noteID)) {
+                                    MeasuresMemoRow(measuresMemo: measuresMemo)
+                                }
+                            }
+                        }
+                    case .failure:
                         Text(LocalizedStrings.noNotesYet)
                             .foregroundColor(.gray)
                             .italic()
-                    } else {
-                        ForEach(measuresMemos, id: \.memoID) { measuresMemo in
-                            NavigationLink(destination: destinationView(for: measuresMemo.noteID)) {
-                                MeasuresMemoRow(measuresMemo: measuresMemo)
-                            }
-                        }
                     }
                 }
             }
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showDeleteConfirmation = true
-                }) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                }
+        .navigationBarItems(trailing:
+            Button(action: {
+                showDeleteConfirmation = true
+            }) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
             }
-        }
+        )
         .alert(isPresented: $showDeleteConfirmation) {
             Alert(
                 title: Text(LocalizedStrings.delete),

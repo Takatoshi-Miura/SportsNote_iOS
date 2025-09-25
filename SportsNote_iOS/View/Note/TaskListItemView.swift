@@ -54,8 +54,16 @@ struct TaskListSection: View {
             Button(LocalizedStrings.delete, role: .destructive) {
                 if let task = selectedTaskForDeletion {
                     if let deleteMemoID = task.memoID {
-                        let memoViewModel = MemoViewModel()
-                        memoViewModel.deleteMemo(memoID: deleteMemoID)
+                        Task {
+                            let memoViewModel = MemoViewModel()
+                            let result = await memoViewModel.deleteMemo(memoID: deleteMemoID)
+                            switch result {
+                            case .success:
+                                print("Memo deleted successfully")
+                            case .failure(let error):
+                                print("Failed to delete memo: \(error)")
+                            }
+                        }
                     }
                     taskReflections.removeValue(forKey: task)
                 }
