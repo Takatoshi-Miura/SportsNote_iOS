@@ -35,7 +35,7 @@ extension BaseViewModelProtocol {
         currentError = error
         showingErrorAlert = true
     }
-    
+
     /// エラーアラートを非表示
     func hideErrorAlert() {
         currentError = nil

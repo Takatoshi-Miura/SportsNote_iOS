@@ -43,7 +43,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         }
         return .success(())
     }
-    
+
     /// ノートを取得
     /// - Parameter id: noteID
     func loadNote(id: String) {
@@ -58,14 +58,14 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             }
         }
     }
-    
+
     /// ノートに紐づくメモを取得
     private func loadMemos() {
         if let noteID = selectedNote?.noteID {
             memos = realmManager.getMemosByNoteID(noteID: noteID)
         }
     }
-    
+
     /// IDでエンティティを取得
     /// - Parameter id: エンティティのID
     /// - Returns: Result
@@ -78,7 +78,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .failure(sportsNoteError)
         }
     }
-    
+
     // MARK: - CREATE, UPDATE処理
 
     /// エンティティを保存
@@ -114,7 +114,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .failure(sportsNoteError)
         }
     }
-    
+
     /// ノート保存処理(新規作成と更新を兼ねる)
     /// - Parameters:
     ///   - noteID: ノートID（更新時に指定、新規作成時はnil）
@@ -281,7 +281,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
         // タスクリフレクションを更新
         updateTaskReflections(noteID: note.noteID, taskReflections: taskReflections)
     }
-    
+
     /// 練習ノートの保存処理
     @discardableResult
     private func savePracticeNote(
@@ -374,7 +374,7 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             created_at: created_at
         )
     }
-    
+
     // MARK: - DELETE処理
 
     /// エンティティを削除
@@ -461,14 +461,14 @@ class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
             return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
         }
     }
-    
+
     /// ノートを文字列で検索
     /// - Parameter query: 検索文字列
     func searchNotes(query: String) {
         let searchResults = realmManager.searchNotesByQuery(query: query)
         notes = searchResults
     }
-    
+
     /// ノートを日付でフィルタリング
     /// - Parameter date: 日付
     /// - Returns: [Note]

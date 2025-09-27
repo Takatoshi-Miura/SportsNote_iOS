@@ -236,7 +236,7 @@ struct TaskDetailView: View {
 
         // 対策の保存は非同期のため、タイトルをコピーしておかないと保存前にクリアされてしまう
         let titleToSave = newMeasureTitle
-        
+
         // 次の行を空欄で表示するためにクリアする
         newMeasureTitle = ""
 

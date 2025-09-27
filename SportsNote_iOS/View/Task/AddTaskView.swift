@@ -59,7 +59,7 @@ struct AddTaskView: View {
                                 groupID: groups[selectedGroupIndex].groupID,
                                 measuresTitle: measuresTitle.isEmpty ? nil : measuresTitle
                             )
-                            
+
                             switch result {
                             case .success:
                                 dismiss()

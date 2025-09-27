@@ -6,7 +6,7 @@ struct ErrorAlertModifier: ViewModifier {
     @Binding var currentError: SportsNoteError?
     @Binding var showingAlert: Bool
     var onRetry: (() -> Void)?
-    
+
     func body(content: Content) -> some View {
         content
             .alert(
@@ -25,13 +25,13 @@ struct ErrorAlertModifier: ViewModifier {
                 }
             }
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// エラー種別に応じたアラートタイトル
     private var alertTitle: String {
         guard let error = currentError else { return LocalizedStrings.error }
-        
+
         switch error {
         case .criticalError(_, _):
             return "🚨 \(LocalizedStrings.errorCriticalTitle)"
@@ -47,19 +47,19 @@ struct ErrorAlertModifier: ViewModifier {
             return "ℹ️ \(LocalizedStrings.errorGeneralTitle)"
         }
     }
-    
+
     /// エラー種別に応じたアラートメッセージ
     private func alertMessage(for error: SportsNoteError) -> Text {
         var message = error.errorDescription ?? LocalizedStrings.errorUnknown
-        
+
         // 回復提案がある場合は追加
         if let recovery = error.recoverySuggestion {
             message += "\n\n" + recovery
         }
-        
+
         return Text(message)
     }
-    
+
     /// エラー種別に応じたアラートボタン
     @ViewBuilder
     private func alertButtons(for error: SportsNoteError) -> some View {
@@ -81,7 +81,7 @@ struct ErrorAlertModifier: ViewModifier {
             Button(LocalizedStrings.cancel, role: .cancel) {
                 showingAlert = false
             }
-            
+
             // 再試行ボタン（onRetryが提供されている場合のみ）
             if let retry = onRetry {
                 Button(LocalizedStrings.retry) {
@@ -119,40 +119,40 @@ extension View {
 // MARK: - Preview
 
 #if DEBUG
-struct ErrorAlertModifier_Previews: PreviewProvider {
-    @State static var showingAlert = true
-    @State static var currentError: SportsNoteError? = .networkUnavailable
-    
-    static var previews: some View {
-        VStack {
-            Text("エラーアラートのプレビュー")
-                .padding()
-            
-            Button("ネットワークエラーを表示") {
-                currentError = .networkUnavailable
-                showingAlert = true
+    struct ErrorAlertModifier_Previews: PreviewProvider {
+        @State static var showingAlert = true
+        @State static var currentError: SportsNoteError? = .networkUnavailable
+
+        static var previews: some View {
+            VStack {
+                Text("エラーアラートのプレビュー")
+                    .padding()
+
+                Button("ネットワークエラーを表示") {
+                    currentError = .networkUnavailable
+                    showingAlert = true
+                }
+
+                Button("重大エラーを表示") {
+                    currentError = .criticalError(
+                        NSError(domain: "Test", code: 0),
+                        context: "Preview"
+                    )
+                    showingAlert = true
+                }
+
+                Button("データベースエラーを表示") {
+                    currentError = .realmInitializationFailed
+                    showingAlert = true
+                }
             }
-            
-            Button("重大エラーを表示") {
-                currentError = .criticalError(
-                    NSError(domain: "Test", code: 0),
-                    context: "Preview"
-                )
-                showingAlert = true
-            }
-            
-            Button("データベースエラーを表示") {
-                currentError = .realmInitializationFailed
-                showingAlert = true
-            }
+            .errorAlert(
+                currentError: $currentError,
+                showingAlert: $showingAlert,
+                onRetry: {
+                    print("再試行が実行されました")
+                }
+            )
         }
-        .errorAlert(
-            currentError: $currentError,
-            showingAlert: $showingAlert,
-            onRetry: {
-                print("再試行が実行されました")
-            }
-        )
     }
-}
 #endif

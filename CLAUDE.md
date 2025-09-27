@@ -16,11 +16,14 @@ MVVMアーキテクチャを採用し、ローカルのRealmデータベース�
 cd /Users/it6210/Documents/Program/Github/SportsNote_iOS
 
 # 🚨 ビルド前必須: swift-formatの実行（コード品質確保）
-# 全ViewModelファイルにswift-formatを適用
-find SportsNote_iOS/ViewModel -name "*.swift"
+# 全ViewModelファイルにswift-formatを適用（推奨）
+find SportsNote_iOS/ViewModel -name "*.swift" -exec xcrun swift-format --configuration .swift-format --in-place {} \;
 
 # 特定ファイルにswift-formatを適用する場合
 # xcrun swift-format --configuration .swift-format --in-place SportsNote_iOS/ViewModel/GroupViewModel.swift
+
+# 全プロジェクトにswift-formatを適用（慎重に実行）
+# find SportsNote_iOS -name "*.swift" -exec xcrun swift-format --configuration .swift-format --in-place {} \;
 
 # Xcodeでプロジェクトを開く
 open SportsNote_iOS.xcodeproj
@@ -34,6 +37,11 @@ xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination
 # テスト実行
 xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
+
+### swift-format設定
+- **設定ファイル場所**: `/Users/it6210/Documents/Program/Github/SportsNote_iOS/.swift-format`
+- **フォーマット形式**: JSON設定ファイル（120文字/行、4スペースインデント等）
+- **適用タイミング**: ビルド前に必須実行（コード品質確保）
 
 ### 依存関係
 - Swift Package Managerを使用（依存関係はXcodeが自動解決）

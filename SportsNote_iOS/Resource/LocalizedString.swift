@@ -31,7 +31,7 @@ struct LocalizedStrings {
     static let deleteNoteConfirmation = "deleteNoteConfirmation".localized
     static let error = "error".localized
     static let retry = "retry".localized
-    
+
     // MARK: Error Dialog Titles
     static let errorCriticalTitle = "errorCriticalTitle".localized
     static let errorSystemTitle = "errorSystemTitle".localized
@@ -46,7 +46,7 @@ struct LocalizedStrings {
     static let errorRealmReadFailed = "errorRealmReadFailed".localized
     static let errorRealmDeleteFailed = "errorRealmDeleteFailed".localized
     static let errorRealmMigrationFailed = "errorRealmMigrationFailed".localized
-    
+
     // MARK: Error Messages - Firebase
     static let errorFirebaseNotConnected = "errorFirebaseNotConnected".localized
     static let errorFirebaseAuthFailed = "errorFirebaseAuthFailed".localized
@@ -55,17 +55,17 @@ struct LocalizedStrings {
     static let errorFirebaseNetworkError = "errorFirebaseNetworkError".localized
     static let errorFirebaseQuotaExceeded = "errorFirebaseQuotaExceeded".localized
     static let errorFirebaseServerError = "errorFirebaseServerError".localized
-    
+
     // MARK: Error Messages - Network
     static let errorNetworkUnavailable = "errorNetworkUnavailable".localized
     static let errorNetworkTimeout = "errorNetworkTimeout".localized
-    
+
     // MARK: Error Messages - Unexpected
     static let errorUnexpected = "errorUnexpected".localized
     static let errorSystem = "errorSystem".localized
     static let errorUnknown = "errorUnknown".localized
     static let errorCritical = "errorCritical".localized
-    
+
     // MARK: Error Recovery Suggestions
     static let errorRealmRecovery = "errorRealmRecovery".localized
     static let errorRealmInitRecovery = "errorRealmInitRecovery".localized

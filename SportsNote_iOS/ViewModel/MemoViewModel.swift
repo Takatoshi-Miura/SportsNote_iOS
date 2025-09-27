@@ -168,37 +168,32 @@ class MemoViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @p
     /// - Parameter measuresID: 対策ID
     /// - Returns: Result<[MeasuresMemo], SportsNoteError>
     func getMemosByMeasuresID(measuresID: String) -> Result<[MeasuresMemo], SportsNoteError> {
-        do {
-            let memos = try RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
-            var measuresMemoList = [MeasuresMemo]()
+        let memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+        var measuresMemoList = [MeasuresMemo]()
 
-            for memo in memos {
-                do {
-                    // Noteデータを取得
-                    if let note = try RealmManager.shared.getObjectById(id: memo.noteID, type: Note.self) {
-                        let measuresMemo = MeasuresMemo(
-                            memoID: memo.memoID,
-                            measuresID: memo.measuresID,
-                            noteID: memo.noteID,
-                            detail: memo.detail,
-                            date: note.date
-                        )
-                        measuresMemoList.append(measuresMemo)
-                    }
-                } catch {
-                    // Note取得に失敗した場合はログ出力してスキップ
-                    print("Failed to get note for memo \(memo.memoID): \(error)")
-                    continue
+        for memo in memos {
+            do {
+                // Noteデータを取得
+                if let note = try RealmManager.shared.getObjectById(id: memo.noteID, type: Note.self) {
+                    let measuresMemo = MeasuresMemo(
+                        memoID: memo.memoID,
+                        measuresID: memo.measuresID,
+                        noteID: memo.noteID,
+                        detail: memo.detail,
+                        date: note.date
+                    )
+                    measuresMemoList.append(measuresMemo)
                 }
+            } catch {
+                // Note取得に失敗した場合はログ出力してスキップ
+                print("Failed to get note for memo \(memo.memoID): \(error)")
+                continue
             }
-
-            // 日付の降順でソート
-            let sortedList = measuresMemoList.sorted { $0.date > $1.date }
-            return .success(sortedList)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-getMemosByMeasuresID")
-            return .failure(sportsNoteError)
         }
+
+        // 日付の降順でソート
+        let sortedList = measuresMemoList.sorted { $0.date > $1.date }
+        return .success(sortedList)
     }
 
     /// メモを保存する（既存インターフェースとの互換性のため）

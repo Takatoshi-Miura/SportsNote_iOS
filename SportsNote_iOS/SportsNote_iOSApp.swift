@@ -9,7 +9,7 @@ struct SportsNote_iOSApp: App {
     init() {
         // 同期的な初期化のみここで実行
         FirebaseApp.configure()
-        
+
         do {
             try RealmManager.shared.initRealm()
         } catch {

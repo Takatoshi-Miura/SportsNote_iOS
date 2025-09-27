@@ -4,14 +4,14 @@ import RealmSwift
 /// SportsNoteアプリ専用のエラー型
 /// FirebaseとRealmの例外を体系的に管理し、予期しないエラーも含めて対応
 enum SportsNoteError: LocalizedError {
-    
+
     // MARK: - Realmエラー
     case realmInitializationFailed
     case realmWriteFailed(String)
     case realmReadFailed(String)
     case realmDeleteFailed(String)
     case realmMigrationFailed
-    
+
     // MARK: - Firebaseエラー
     case firebaseNotConnected
     case firebaseAuthenticationFailed
@@ -20,17 +20,17 @@ enum SportsNoteError: LocalizedError {
     case firebaseNetworkError
     case firebaseQuotaExceeded
     case firebaseServerError
-    
+
     // MARK: - ネットワークエラー
     case networkUnavailable
     case networkTimeout
-    
+
     // MARK: - 予期しないエラー
-    case unexpectedError(Error)                    // 予期しない一般的なエラー
-    case systemError(String)                       // システムレベルのエラー
-    case unknownError(String)                      // 分類不可能なエラー
-    case criticalError(Error, context: String)    // 重大なエラー（コンテキスト情報付き）
-    
+    case unexpectedError(Error)  // 予期しない一般的なエラー
+    case systemError(String)  // システムレベルのエラー
+    case unknownError(String)  // 分類不可能なエラー
+    case criticalError(Error, context: String)  // 重大なエラー（コンテキスト情報付き）
+
     /// ローカライズされたエラーメッセージ
     var errorDescription: String? {
         switch self {
@@ -45,7 +45,7 @@ enum SportsNoteError: LocalizedError {
             return "\(LocalizedStrings.errorRealmDeleteFailed): \(detail)"
         case .realmMigrationFailed:
             return LocalizedStrings.errorRealmMigrationFailed
-            
+
         // Firebaseエラー
         case .firebaseNotConnected:
             return LocalizedStrings.errorFirebaseNotConnected
@@ -61,13 +61,13 @@ enum SportsNoteError: LocalizedError {
             return LocalizedStrings.errorFirebaseQuotaExceeded
         case .firebaseServerError:
             return LocalizedStrings.errorFirebaseServerError
-            
+
         // ネットワークエラー
         case .networkUnavailable:
             return LocalizedStrings.errorNetworkUnavailable
         case .networkTimeout:
             return LocalizedStrings.errorNetworkTimeout
-            
+
         // 予期しないエラー
         case .unexpectedError(let error):
             return "\(LocalizedStrings.errorUnexpected): \(error.localizedDescription)"
@@ -79,7 +79,7 @@ enum SportsNoteError: LocalizedError {
             return "\(LocalizedStrings.errorCritical) [\(context)]: \(error.localizedDescription)"
         }
     }
-    
+
     /// ユーザー向けの回復提案
     var recoverySuggestion: String? {
         switch self {
@@ -88,7 +88,7 @@ enum SportsNoteError: LocalizedError {
             return LocalizedStrings.errorRealmRecovery
         case .realmInitializationFailed, .realmMigrationFailed:
             return LocalizedStrings.errorRealmInitRecovery
-            
+
         // Firebaseエラーの回復提案
         case .firebaseNetworkError, .networkUnavailable, .networkTimeout:
             return LocalizedStrings.errorNetworkRecovery
@@ -100,13 +100,13 @@ enum SportsNoteError: LocalizedError {
             return LocalizedStrings.errorFirebaseQuotaRecovery
         case .firebaseDocumentNotFound:
             return LocalizedStrings.errorFirebaseDocumentRecovery
-            
+
         // 予期しないエラーの回復提案
         case .unexpectedError, .systemError, .unknownError:
             return LocalizedStrings.errorUnexpectedRecovery
         case .criticalError:
             return LocalizedStrings.errorCriticalRecovery
-            
+
         // その他のエラー
         case .firebaseNotConnected, .firebaseServerError:
             return LocalizedStrings.errorFirebaseServerRecovery
@@ -117,7 +117,7 @@ enum SportsNoteError: LocalizedError {
 // MARK: - ErrorMapper
 /// FirebaseとRealmのエラーをSportsNoteErrorに変換するヘルパー
 struct ErrorMapper {
-    
+
     /// RealmエラーをSportsNoteErrorに変換
     /// - Parameters:
     ///   - error: 発生したエラー
@@ -137,7 +137,7 @@ struct ErrorMapper {
                 return .realmInitializationFailed
             }
         }
-        
+
         // NSErrorの場合の処理
         if let nsError = error as NSError? {
             // ファイルシステムエラー
@@ -152,16 +152,16 @@ struct ErrorMapper {
                 }
             }
         }
-        
+
         // メモリ関連のエラーチェック
         if error.localizedDescription.lowercased().contains("memory") {
             return .criticalError(error, context: "Realm-Memory-\(context)")
         }
-        
+
         // 予期しないRealmエラー
         return .unexpectedError(error)
     }
-    
+
     /// FirebaseエラーをSportsNoteErrorに変換
     /// - Parameters:
     ///   - error: 発生したエラー
@@ -176,13 +176,13 @@ struct ErrorMapper {
                 return .firebasePermissionDenied
             case 5:  // NOT_FOUND
                 return .firebaseDocumentNotFound
-            case 14: // UNAVAILABLE
+            case 14:  // UNAVAILABLE
                 return .firebaseNetworkError
             case 8:  // RESOURCE_EXHAUSTED
                 return .firebaseQuotaExceeded
-            case 16: // UNAUTHENTICATED
+            case 16:  // UNAUTHENTICATED
                 return .firebaseAuthenticationFailed
-            case 13: // INTERNAL
+            case 13:  // INTERNAL
                 return .firebaseServerError
             case 4:  // DEADLINE_EXCEEDED
                 return .networkTimeout
@@ -194,7 +194,7 @@ struct ErrorMapper {
                 return .unexpectedError(error)
             }
         }
-        
+
         // ネットワーク関連のエラーチェック
         if let nsError = error as NSError?, nsError.domain == NSURLErrorDomain {
             switch nsError.code {
@@ -206,11 +206,11 @@ struct ErrorMapper {
                 return .firebaseNetworkError
             }
         }
-        
+
         // 完全に不明なエラー
         return .unknownError("Firebase Error: \(error.localizedDescription)")
     }
-    
+
     /// システムエラーを統一的にマッピング
     /// - Parameters:
     ///   - error: 発生したエラー
@@ -218,17 +218,17 @@ struct ErrorMapper {
     /// - Returns: 変換されたSportsNoteError
     static func mapSystemError(_ error: Error, context: String) -> SportsNoteError {
         let errorDescription = error.localizedDescription.lowercased()
-        
+
         // メモリ不足エラー
         if errorDescription.contains("memory") || errorDescription.contains("malloc") {
             return .criticalError(error, context: "Memory-\(context)")
         }
-        
+
         // ファイルシステムエラー
         if errorDescription.contains("file") || errorDescription.contains("disk") {
             return .systemError("FileSystem-\(context): \(error.localizedDescription)")
         }
-        
+
         // その他のシステムエラー
         return .systemError("\(context): \(error.localizedDescription)")
     }

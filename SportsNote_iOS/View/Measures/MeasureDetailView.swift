@@ -67,13 +67,14 @@ struct MeasureDetailView: View {
         }
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.measures))
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarItems(trailing:
-            Button(action: {
-                showDeleteConfirmation = true
-            }) {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
-            }
+        .navigationBarItems(
+            trailing:
+                Button(action: {
+                    showDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
         )
         .alert(isPresented: $showDeleteConfirmation) {
             Alert(

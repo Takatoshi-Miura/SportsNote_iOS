@@ -28,7 +28,7 @@ class RealmManager: @unchecked Sendable {
                 }
             )
             Realm.Configuration.defaultConfiguration = config
-            
+
             // 初期化テスト - Realmインスタンスを作成してみる
             _ = try Realm()
         } catch let error {
