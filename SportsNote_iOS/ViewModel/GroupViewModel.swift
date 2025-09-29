@@ -11,6 +11,11 @@ class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @
     @Published var currentError: SportsNoteError?
     @Published var showingErrorAlert: Bool = false
 
+    /// グループが削除可能かどうかを判定
+    var canDelete: Bool {
+        return groups.count > 1
+    }
+
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
     }

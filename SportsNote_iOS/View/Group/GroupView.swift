@@ -50,8 +50,9 @@ struct GroupView: View {
                     showingDeleteConfirmation = true
                 }) {
                     Image(systemName: "trash")
-                        .foregroundColor(.red)
+                        .foregroundColor(viewModel.canDelete ? .red : .gray)
                 }
+                .disabled(!viewModel.canDelete)
             }
         }
         .alert(LocalizedStrings.delete, isPresented: $showingDeleteConfirmation) {
