@@ -87,11 +87,11 @@ struct AddPracticeNoteView: View {
             .onAppear {
                 Task {
                     _ = await taskViewModel.fetchData()
-                }
-                // 未完了かつmeasuresIDが空でないタスクを追加
-                taskViewModel.taskListData.forEach { task in
-                    if !task.isComplete && task.measuresID != "" {
-                        taskReflections[task] = ""
+                    // 未完了かつmeasuresIDが空でないタスクを追加
+                    taskViewModel.taskListData.forEach { task in
+                        if !task.isComplete && task.measuresID != "" {
+                            taskReflections[task] = ""
+                        }
                     }
                 }
             }
