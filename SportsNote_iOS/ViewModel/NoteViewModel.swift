@@ -2,9 +2,7 @@ import RealmSwift
 import SwiftUI
 
 @MainActor
-class NoteViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @preconcurrency CRUDViewModelProtocol,
-    @preconcurrency FirebaseSyncable
-{
+class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
     typealias EntityType = Note
     @Published var notes: [Note] = []
     @Published var selectedNote: Note?

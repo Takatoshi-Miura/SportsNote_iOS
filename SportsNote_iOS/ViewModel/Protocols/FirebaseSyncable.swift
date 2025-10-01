@@ -1,6 +1,7 @@
 import Foundation
 
 /// Firebase同期機能を持つViewModelのプロトコル
+@MainActor
 protocol FirebaseSyncable {
     /// ViewModelが扱うエンティティの型
     associatedtype EntityType

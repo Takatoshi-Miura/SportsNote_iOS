@@ -1,6 +1,7 @@
 import Foundation
 
 /// CRUD操作を行うViewModelのプロトコル
+@MainActor
 protocol CRUDViewModelProtocol: BaseViewModelProtocol {
     /// エンティティを保存（新規作成・更新）する
     /// - Parameter entity: 保存するエンティティ

@@ -2,9 +2,7 @@ import RealmSwift
 import SwiftUI
 
 @MainActor
-class GroupViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @preconcurrency CRUDViewModelProtocol,
-    @preconcurrency FirebaseSyncable
-{
+class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
     typealias EntityType = Group
     @Published var groups: [Group] = []
     @Published var isLoading: Bool = false

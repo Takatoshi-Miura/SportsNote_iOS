@@ -4,9 +4,7 @@ import RealmSwift
 import SwiftUI
 
 @MainActor
-class TaskViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol, @preconcurrency CRUDViewModelProtocol,
-    @preconcurrency FirebaseSyncable
-{
+class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
     typealias EntityType = TaskData
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []

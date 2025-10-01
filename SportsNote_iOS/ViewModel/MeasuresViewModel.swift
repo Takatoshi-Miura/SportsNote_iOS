@@ -3,9 +3,7 @@ import RealmSwift
 import SwiftUI
 
 @MainActor
-class MeasuresViewModel: ObservableObject, @preconcurrency BaseViewModelProtocol,
-    @preconcurrency CRUDViewModelProtocol, @preconcurrency FirebaseSyncable
-{
+class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
     typealias EntityType = Measures
     @Published var measuresList: [Measures] = []
     @Published var memos: [Memo] = []

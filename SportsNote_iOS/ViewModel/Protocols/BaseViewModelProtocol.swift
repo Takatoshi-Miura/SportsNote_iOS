@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 
 /// すべてのViewModelが実装すべき基本プロトコル
+@MainActor
 protocol BaseViewModelProtocol: ObservableObject {
     /// ViewModelが扱うエンティティの型
     associatedtype EntityType
