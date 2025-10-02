@@ -94,14 +94,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
             // Firebase同期はバックグラウンドで実行
             if isOnlineAndLoggedIn {
-                Task {
-                    let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                    if case .failure(let error) = result, currentError == nil {
-                        await MainActor.run {
-                            showErrorAlert(error)
-                        }
-                    }
-                }
+                performBackgroundSync(entity, isUpdate: isUpdate)
             }
 
             // UI更新
@@ -398,12 +391,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 Task {
                     do {
                         if let deletedNote = try realmManager.getObjectById(id: id, type: Note.self) {
-                            let result = await syncEntityToFirebase(deletedNote, isUpdate: true)
-                            if case .failure(let error) = result, currentError == nil {
-                                await MainActor.run {
-                                    showErrorAlert(error)
-                                }
-                            }
+                            performBackgroundSync(deletedNote, isUpdate: true)
                         }
                     } catch {
                         // ログのみ

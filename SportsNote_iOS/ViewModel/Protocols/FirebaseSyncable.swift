@@ -28,3 +28,19 @@ extension FirebaseSyncable {
         return Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
     }
 }
+
+extension FirebaseSyncable where Self: BaseViewModelProtocol {
+    /// Firebase同期をバックグラウンドで実行する共通メソッド
+    /// エラー発生時は既存のエラーがない場合のみshowErrorAlertを呼び出す
+    /// - Parameters:
+    ///   - entity: 同期するエンティティ
+    ///   - isUpdate: 更新かどうか（デフォルトはfalse）
+    func performBackgroundSync(_ entity: EntityType, isUpdate: Bool = false) {
+        Task {
+            let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
+            if case .failure(let error) = result, currentError == nil {
+                showErrorAlert(error)
+            }
+        }
+    }
+}

@@ -125,17 +125,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
             try RealmManager.shared.saveItem(entity)
 
             // 2. Firebase同期はバックグラウンドで実行
-            Task {
-                let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                if case .failure(let error) = result {
-                    // Firebase同期エラーは既存エラーがない場合のみ設定
-                    await MainActor.run {
-                        if currentError == nil {
-                            showErrorAlert(error)
-                        }
-                    }
-                }
-            }
+            performBackgroundSync(entity, isUpdate: isUpdate)
 
             // 3. UI更新
             measuresList = try RealmManager.shared.getDataList(clazz: Measures.self)
@@ -162,14 +152,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
             Task {
                 let measureResult = await fetchById(id: id)
                 if case .success(let deletedMeasures) = measureResult, let deletedMeasures = deletedMeasures {
-                    let result = await syncEntityToFirebase(deletedMeasures, isUpdate: true)
-                    if case .failure(let error) = result {
-                        await MainActor.run {
-                            if currentError == nil {
-                                showErrorAlert(error)
-                            }
-                        }
-                    }
+                    performBackgroundSync(deletedMeasures, isUpdate: true)
                 }
             }
 

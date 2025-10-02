@@ -207,17 +207,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             try RealmManager.shared.saveItem(entity)
 
             // 2. Firebase同期はバックグラウンドで実行
-            Task {
-                let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                if case .failure(let error) = result {
-                    // Firebase同期エラーは既存エラーがない場合のみ設定
-                    await MainActor.run {
-                        if currentError == nil {
-                            showErrorAlert(error)
-                        }
-                    }
-                }
-            }
+            performBackgroundSync(entity, isUpdate: isUpdate)
 
             // 3. UI更新
             tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
@@ -248,14 +238,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             Task {
                 let taskResult = await fetchById(id: id)
                 if case .success(let deletedTask) = taskResult, let deletedTask = deletedTask {
-                    let result = await syncEntityToFirebase(deletedTask, isUpdate: true)
-                    if case .failure(let error) = result {
-                        await MainActor.run {
-                            if currentError == nil {
-                                showErrorAlert(error)
-                            }
-                        }
-                    }
+                    performBackgroundSync(deletedTask, isUpdate: true)
                 }
             }
 
