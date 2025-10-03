@@ -2,7 +2,8 @@
 import FirebaseFirestoreCombineSwift
 import Foundation
 
-final class FirebaseManager: @unchecked Sendable {
+@MainActor
+final class FirebaseManager {
 
     static let shared = FirebaseManager()
     private let db = Firestore.firestore()

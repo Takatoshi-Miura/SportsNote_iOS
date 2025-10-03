@@ -7,7 +7,8 @@ struct RealmConstants {
 }
 
 /// Realmデータベースを管理するクラス
-class RealmManager: @unchecked Sendable {
+@MainActor
+final class RealmManager {
 
     // シングルトンインスタンス
     static let shared = RealmManager()

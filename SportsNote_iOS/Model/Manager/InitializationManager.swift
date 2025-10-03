@@ -3,7 +3,8 @@ import FirebaseCrashlytics
 import Foundation
 import SwiftUI
 
-class InitializationManager: @unchecked Sendable {
+@MainActor
+final class InitializationManager {
 
     static let shared = InitializationManager()
 
@@ -61,7 +62,7 @@ class InitializationManager: @unchecked Sendable {
         do {
             let groups = try RealmManager.shared.getDataList(clazz: Group.self)
             if groups.isEmpty {
-                let groupViewModel = await GroupViewModel()
+                let groupViewModel = GroupViewModel()
                 let _ = await groupViewModel.saveGroup(
                     title: LocalizedStrings.uncategorized,
                     color: GroupColor.gray
