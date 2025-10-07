@@ -40,7 +40,8 @@ struct TargetView: View {
                                     noteViewModel.notes = noteViewModel.filterNotesByDate(date)
                                 }
                             },
-                            targetViewModel: viewModel
+                            targetViewModel: viewModel,
+                            noteViewModel: noteViewModel
                         )
                         .padding(.top, 16)
 
@@ -84,17 +85,18 @@ struct TargetView: View {
             // 初期時の年月をViewModelにセット
             viewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
 
-            // 初回だけ全ノートを読み込み
-            if noteViewModel.notes.isEmpty {
+            // selectedDateがあれば常にフィルタリング優先（タブ切り替え時も選択状態を保持）
+            if let date = selectedDate {
+                noteViewModel.notes = noteViewModel.filterNotesByDate(date)
+            } else if noteViewModel.notes.isEmpty {
+                // 日付未選択 & ノートが空の場合のみ全ノート取得
                 Task {
-                    let result = await noteViewModel.fetchData()
+                    let result = await noteViewModel.fetchNotesExcludingFree()
                     if case .failure(let error) = result {
                         noteViewModel.currentError = error
                         noteViewModel.showingErrorAlert = true
                     }
                 }
-            } else if let date = selectedDate {
-                noteViewModel.notes = noteViewModel.filterNotesByDate(date)
             }
         }
         .onChange(of: selectedYear) { newYear in
@@ -150,10 +152,12 @@ struct CalendarSection: View {
     @State private var currentMonth: Date
     @State private var currentDisplayedYearMonth: (year: Int, month: Int)
     @ObservedObject var targetViewModel: TargetViewModel
+    @ObservedObject var noteViewModel: NoteViewModel
 
     init(
         selectedYear: Int, selectedMonth: Int, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void,
-        targetViewModel: TargetViewModel
+        targetViewModel: TargetViewModel,
+        noteViewModel: NoteViewModel
     ) {
         self.selectedYear = selectedYear
         self.selectedMonth = selectedMonth
@@ -166,6 +170,7 @@ struct CalendarSection: View {
             }())
         self._currentDisplayedYearMonth = State(initialValue: (selectedYear, selectedMonth))
         self.targetViewModel = targetViewModel
+        self.noteViewModel = noteViewModel
     }
 
     var body: some View {
@@ -193,7 +198,8 @@ struct CalendarSection: View {
                         // 目標データを更新
                         targetViewModel.updateCurrentPeriod(year: year, month: month)
                     }
-                }
+                },
+                noteViewModel: noteViewModel
             )
             .padding(.horizontal)
         }
@@ -280,7 +286,7 @@ struct CalendarView: View {
     @GestureState private var dragOffset: CGFloat = 0
     @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
     @State private var isAnimating: Bool = false  // アニメーション中かどうか
-    @StateObject private var noteViewModel = NoteViewModel()  // 日付にノートがあるかの判定用
+    @ObservedObject var noteViewModel: NoteViewModel  // 親から渡されるNoteViewModel
     @State private var datesWithNotes: Set<Date> = []  // ノートがある日付のセット
 
     // 曜日の配列（日曜始まり）
@@ -288,12 +294,14 @@ struct CalendarView: View {
 
     init(
         selectedDate: Binding<Date?>, initialDate: Date = Date(), onDateSelected: @escaping (Date) -> Void,
-        onMonthChanged: @escaping (Date) -> Void
+        onMonthChanged: @escaping (Date) -> Void,
+        noteViewModel: NoteViewModel
     ) {
         self._selectedDate = selectedDate
         self.onDateSelected = onDateSelected
         self.onMonthChanged = onMonthChanged
         self._currentMonth = State(initialValue: initialDate)
+        self.noteViewModel = noteViewModel
     }
 
     var body: some View {

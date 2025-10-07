@@ -42,6 +42,18 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return .success(())
     }
 
+    /// ターゲット画面用: フリーノートを除外してノートを取得
+    /// - Returns: Result
+    func fetchNotesExcludingFree() async -> Result<Void, SportsNoteError> {
+        isLoading = true
+        defer { isLoading = false }
+
+        // フリーノートを除外したノートのみ取得（getNotes()は既にフリーノート除外済み）
+        let allNotes = realmManager.getNotes()
+        notes = allNotes
+        return .success(())
+    }
+
     /// ノートを取得
     /// - Parameter id: noteID
     func loadNote(id: String) {
