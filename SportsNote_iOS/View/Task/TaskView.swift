@@ -9,8 +9,8 @@ struct TaskView: View {
     @State private var selectedGroupForEdit: Group? = nil
     @State private var navigateToGroupEdit = false
     @State private var showCompletedTasks = false
-    @ObservedObject var viewModel = GroupViewModel()
-    @ObservedObject var taskViewModel = TaskViewModel()
+    @StateObject private var viewModel = GroupViewModel()
+    @StateObject private var taskViewModel = TaskViewModel()
     @State private var refreshTrigger: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
 
