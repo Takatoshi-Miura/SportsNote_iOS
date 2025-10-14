@@ -10,17 +10,10 @@ struct MeasuresMemoRow: View {
                 .font(.body)
                 .lineLimit(nil)
 
-            Text(formatDate(measuresMemo.date))
+            Text(DateFormatterUtil.formatDateAndTime(measuresMemo.date))
                 .font(.caption)
                 .foregroundColor(.gray)
         }
         .padding(.vertical, 4)
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
     }
 }

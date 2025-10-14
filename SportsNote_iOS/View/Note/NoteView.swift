@@ -219,7 +219,7 @@ struct NoteRow: View {
 
                     Spacer()
 
-                    Text(formatDate(note.date))
+                    Text(DateFormatterUtil.formatDateOnly(note.date))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -247,11 +247,6 @@ struct NoteRow: View {
         }
     }
 
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
-        return formatter.string(from: date)
-    }
 }
 
 extension View {

@@ -117,6 +117,7 @@ SportsNote_iOS/
 - ViewModelとUI関連クラスには`@MainActor`を使用
 - すべてのデータベース操作は`RealmManager.shared`を通す
 - ユーザー向けテキストには`LocalizedStrings`を使用
+- 日付フォーマットには`DateFormatterUtil`を使用（パフォーマンス最適化とコード統一）
 - 既存の命名規則に従う（プロパティはcamelCase、型はPascalCase）
 
 ### 多言語化
