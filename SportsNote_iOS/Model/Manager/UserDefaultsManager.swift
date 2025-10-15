@@ -58,7 +58,7 @@ class UserDefaultsManager {
                 cachedUserID = savedID
                 return savedID as! T
             }
-            let newID = UUID().uuidString
+            let newID = UUIDGenerator.generateID()
             set(key: key, value: newID)
             return newID as! T
         }
@@ -89,7 +89,7 @@ class UserDefaultsManager {
     }
 
     /// ユーザIDを再生成
-    static func resetUserInfo(userID: String = UUID().uuidString) {
+    static func resetUserInfo(userID: String = UUIDGenerator.generateID()) {
         set(key: Keys.userID, value: userID)
     }
 }

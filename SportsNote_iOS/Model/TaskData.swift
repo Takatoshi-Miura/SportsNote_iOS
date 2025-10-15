@@ -16,7 +16,7 @@ open class TaskData: Object {
 
     override init() {
         super.init()
-        taskID = UUID().uuidString
+        taskID = UUIDGenerator.generateID()
         groupID = ""
         title = ""
         cause = ""
@@ -35,7 +35,7 @@ open class TaskData: Object {
     }
 
     convenience init(
-        taskID: String = UUID().uuidString,
+        taskID: String = UUIDGenerator.generateID(),
         title: String,
         cause: String,
         groupID: String,

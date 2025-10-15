@@ -14,7 +14,7 @@ class Measures: Object {
 
     override init() {
         super.init()
-        measuresID = UUID().uuidString
+        measuresID = UUIDGenerator.generateID()
         taskID = ""
         title = ""
         order = 0

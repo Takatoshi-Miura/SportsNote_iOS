@@ -18,7 +18,7 @@ final class InitializationManager {
             UserDefaultsManager.clearAll()
             UserDefaultsManager.resetUserInfo()
             // userID作成
-            let userID = UUID().uuidString
+            let userID = UUIDGenerator.generateID()
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: userID)
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
         }

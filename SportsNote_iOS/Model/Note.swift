@@ -33,7 +33,7 @@ class Note: Object {
     /// デフォルトイニシャライザ
     override init() {
         super.init()
-        self.noteID = UUID().uuidString
+        self.noteID = UUIDGenerator.generateID()
         self.noteType = NoteType.free.rawValue
         self.isDeleted = false
         self.created_at = Date()

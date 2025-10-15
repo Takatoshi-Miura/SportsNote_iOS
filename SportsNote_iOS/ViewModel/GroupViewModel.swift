@@ -52,7 +52,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         order: Int? = nil,
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
-        let newGroupID = groupID ?? UUID().uuidString
+        let newGroupID = groupID ?? UUIDGenerator.generateID()
         let newOrder = order ?? getDefaultOrder()
         let newCreatedAt = created_at ?? Date()
 

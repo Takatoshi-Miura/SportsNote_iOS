@@ -321,7 +321,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             if reflectionText.isEmpty { continue }
 
             let memo = Memo()
-            memo.memoID = task.memoID ?? UUID().uuidString
+            memo.memoID = task.memoID ?? UUIDGenerator.generateID()
             memo.measuresID = task.measuresID
             memo.noteID = noteID
             memo.detail = reflectionText

@@ -15,7 +15,7 @@ open class Target: Object {
 
     override init() {
         super.init()
-        targetID = UUID().uuidString
+        targetID = UUIDGenerator.generateID()
         title = ""
         year = 2020
         month = 1

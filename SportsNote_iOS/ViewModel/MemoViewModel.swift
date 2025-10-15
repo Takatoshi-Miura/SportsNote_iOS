@@ -212,7 +212,7 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         isLoading = true
         defer { isLoading = false }
 
-        let newMemoID = memoID ?? UUID().uuidString
+        let newMemoID = memoID ?? UUIDGenerator.generateID()
         let newCreatedAt = created_at ?? Date()
         let isUpdate = memoID != nil
 

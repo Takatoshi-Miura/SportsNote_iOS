@@ -14,7 +14,7 @@ class Group: Object {
 
     override init() {
         super.init()
-        groupID = UUID().uuidString
+        groupID = UUIDGenerator.generateID()
         title = ""
         color = GroupColor.red.rawValue
         order = 0

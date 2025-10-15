@@ -284,7 +284,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             )
         } else {
             // 新規作成の場合: 新しいTaskDataを作成
-            let newTaskID = UUID().uuidString
+            let newTaskID = UUIDGenerator.generateID()
             let newOrder = (try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0
 
             return TaskData(

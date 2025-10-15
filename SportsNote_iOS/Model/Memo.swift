@@ -16,7 +16,7 @@ class Memo: Object {
     /// デフォルトイニシャライザ
     override init() {
         super.init()
-        self.memoID = UUID().uuidString
+        self.memoID = UUIDGenerator.generateID()
         self.measuresID = ""
         self.noteID = ""
         self.detail = ""

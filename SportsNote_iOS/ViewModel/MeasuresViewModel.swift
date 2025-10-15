@@ -88,7 +88,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
         order: Int? = nil,
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
-        let newMeasuresID = measuresID ?? UUID().uuidString
+        let newMeasuresID = measuresID ?? UUIDGenerator.generateID()
         let newOrder = order ?? getDefaultOrderForTask(taskID: taskID)
         let newCreatedAt = created_at ?? Date()
 
