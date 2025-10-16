@@ -12,8 +12,8 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
     @Published var showingErrorAlert: Bool = false
 
     // 現在の年月を追跡するプロパティ
-    @Published var currentYear: Int = Calendar.current.component(.year, from: Date())
-    @Published var currentMonth: Int = Calendar.current.component(.month, from: Date())
+    @Published var currentYear: Int = Date().get(.year)
+    @Published var currentMonth: Int = Date().get(.month)
 
     // Combine自動更新用
     private var cancellables = Set<AnyCancellable>()
