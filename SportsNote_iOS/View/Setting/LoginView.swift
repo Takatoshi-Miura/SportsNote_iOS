@@ -54,12 +54,26 @@ struct LoginView: View {
                         Button(action: {
                             if viewModel.isLoggedIn {
                                 // ログアウト処理
-                                // TODO: 成功、失敗時の処理を実装
-                                viewModel.logout(onSuccess: {}, onFailure: {})
+                                viewModel.logout(
+                                    onSuccess: {
+                                        hideKeyboard()
+                                    },
+                                    onFailure: {
+                                        hideKeyboard()
+                                    }
+                                )
                             } else {
                                 // ログイン処理
-                                // TODO: 成功、失敗時の処理を実装
-                                viewModel.login(onSuccess: {}, onFailure: {})
+                                viewModel.login(
+                                    onSuccess: {
+                                        hideKeyboard()
+                                        onDismiss()
+                                        dismiss()
+                                    },
+                                    onFailure: {
+                                        hideKeyboard()
+                                    }
+                                )
                             }
                         }) {
                             Text(viewModel.isLoggedIn ? LocalizedStrings.logout : LocalizedStrings.login)
@@ -74,8 +88,15 @@ struct LoginView: View {
 
                         // パスワードリセットボタン
                         Button(action: {
-                            // TODO: 成功、失敗時の処理を実装
-                            viewModel.resetPassword(onSuccess: {}, onFailure: {})
+                            viewModel.resetPassword(
+                                onSuccess: {
+                                    hideKeyboard()
+                                    viewModel.email = ""
+                                },
+                                onFailure: {
+                                    hideKeyboard()
+                                }
+                            )
                         }) {
                             Text(LocalizedStrings.resetPassword)
                                 .foregroundColor(.blue)
@@ -84,8 +105,16 @@ struct LoginView: View {
 
                         // アカウント作成ボタン
                         Button(action: {
-                            // TODO: 成功、失敗時の処理を実装
-                            viewModel.createAccount(onSuccess: {}, onFailure: {})
+                            viewModel.createAccount(
+                                onSuccess: {
+                                    hideKeyboard()
+                                    onDismiss()
+                                    dismiss()
+                                },
+                                onFailure: {
+                                    hideKeyboard()
+                                }
+                            )
                         }) {
                             Text(LocalizedStrings.createAccount)
                                 .foregroundColor(.blue)
@@ -95,8 +124,16 @@ struct LoginView: View {
                         // アカウント削除ボタン（ログイン中のみ表示）
                         if viewModel.isLoggedIn {
                             Button(action: {
-                                // TODO: 成功、失敗時の処理を実装
-                                viewModel.deleteAccount(onSuccess: {}, onFailure: {})
+                                viewModel.deleteAccount(
+                                    onSuccess: {
+                                        hideKeyboard()
+                                        onDismiss()
+                                        dismiss()
+                                    },
+                                    onFailure: {
+                                        hideKeyboard()
+                                    }
+                                )
                             }) {
                                 Text(LocalizedStrings.deleteAccount)
                                     .foregroundColor(.red)
