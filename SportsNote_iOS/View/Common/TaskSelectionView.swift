@@ -9,7 +9,7 @@ struct TaskSelectionView: View {
     var onTaskSelected: (TaskListData) -> Void
     var addedTaskIds: Set<String>
     private var incompleteTasks: [TaskListData] {
-        return taskViewModel.taskListData.filter { !$0.isComplete && $0.measuresID != "" }
+        return taskViewModel.getUnaddedTasks(excludingTaskIds: [])
     }
 
     var body: some View {

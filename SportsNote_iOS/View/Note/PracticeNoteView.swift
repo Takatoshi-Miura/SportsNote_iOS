@@ -146,9 +146,7 @@ struct PracticeNoteView: View {
     /// 未追加のタスクを取得
     private func getUnaddedTasks() -> [TaskListData] {
         let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
-        return taskViewModel.taskListData.filter {
-            !$0.isComplete && !addedTaskIds.contains($0.taskID) && $0.measuresID != ""
-        }
+        return taskViewModel.getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     // タスクのリフレクションをロードする

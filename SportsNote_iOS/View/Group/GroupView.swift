@@ -23,20 +23,14 @@ struct GroupView: View {
         GroupForm(title: $title, selectedColor: $selectedColor) {
             // グループ情報更新
             Task {
-                let updatedGroup = Group(
+                let result = await viewModel.saveGroup(
                     groupID: group.groupID,
                     title: title,
-                    color: selectedColor.rawValue,
+                    color: selectedColor,
                     order: group.order,
                     created_at: group.created_at
                 )
-                let result = await viewModel.save(updatedGroup, isUpdate: true)
-                switch result {
-                case .success:
-                    // 保存成功時の処理
-                    break
-                case .failure(let error):
-                    // エラーをView側で明示的に処理
+                if case .failure(let error) = result {
                     viewModel.showErrorAlert(error)
                 }
             }

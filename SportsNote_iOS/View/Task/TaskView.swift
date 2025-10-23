@@ -8,7 +8,6 @@ struct TaskView: View {
     @State private var selectedGroupID: String? = nil
     @State private var selectedGroupForEdit: Group? = nil
     @State private var navigateToGroupEdit = false
-    @State private var showCompletedTasks = false
     @StateObject private var viewModel = GroupViewModel()
     @StateObject private var taskViewModel = TaskViewModel()
     @State private var refreshTrigger: Bool = false
@@ -19,7 +18,7 @@ struct TaskView: View {
             title: LocalizedStrings.task,
             isMenuOpen: $isMenuOpen,
             trailingItem: {
-                FilterMenuButton(showCompletedTasks: $showCompletedTasks)
+                FilterMenuButton(showCompletedTasks: $taskViewModel.showCompletedTasks)
             },
             content: {
                 // refreshTriggerの変更で強制的に再構築させる
@@ -49,7 +48,7 @@ struct TaskView: View {
                     )
                     // 課題セクション
                     MainTaskList(
-                        taskListData: filteredTaskListData(),
+                        taskListData: taskViewModel.filteredTaskListData,
                         tasks: taskViewModel.tasks,
                         onDelete: { taskID in
                             Task {
@@ -165,16 +164,6 @@ struct TaskView: View {
                 }
             }
             .store(in: &cancellables)
-    }
-
-    private func filteredTaskListData() -> [TaskListData] {
-        return taskViewModel.taskListData.filter { task in
-            showCompletedTasks || !isTaskComplete(taskID: task.taskID)
-        }
-    }
-
-    private func isTaskComplete(taskID: String) -> Bool {
-        return taskViewModel.tasks.first(where: { $0.taskID == taskID })?.isComplete ?? false
     }
 }
 

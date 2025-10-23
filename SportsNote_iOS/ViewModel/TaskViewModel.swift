@@ -8,7 +8,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     typealias EntityType = TaskData
     @Published var tasks: [TaskData] = []
     @Published var taskListData: [TaskListData] = []
+    @Published var filteredTaskListData: [TaskListData] = []
     @Published var taskDetail: TaskDetailData?
+    @Published var showCompletedTasks: Bool = false {
+        didSet {
+            updateFilteredTaskListData()
+        }
+    }
     @Published var isLoading: Bool = false
     @Published var currentError: SportsNoteError?
     @Published var showingErrorAlert: Bool = false
@@ -351,6 +357,34 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
 
         taskListData = taskList
+        updateFilteredTaskListData()
+    }
+
+    /// フィルタリングされたタスクリストを更新
+    private func updateFilteredTaskListData() {
+        if showCompletedTasks {
+            // 完了タスクを表示する場合はすべて表示
+            filteredTaskListData = taskListData
+        } else {
+            // 完了タスクを非表示にする場合はフィルタリング
+            filteredTaskListData = taskListData.filter { taskListItem in
+                // tasksから完了状態を取得
+                let isComplete = tasks.first(where: { $0.taskID == taskListItem.taskID })?.isComplete ?? false
+                return !isComplete
+            }
+        }
+    }
+
+    /// 未追加のタスクを取得（ノート編集画面用）
+    /// - Parameter excludingTaskIds: 除外するタスクIDのセット
+    /// - Returns: 未追加タスクのリスト
+    func getUnaddedTasks(excludingTaskIds: Set<String>) -> [TaskListData] {
+        return taskListData.filter { taskListItem in
+            // 未完了 && 対策あり && 除外リストに含まれない
+            !taskListItem.isComplete
+                && !taskListItem.measuresID.isEmpty
+                && !excludingTaskIds.contains(taskListItem.taskID)
+        }
     }
 
     // MARK: - Measures委譲メソッド
