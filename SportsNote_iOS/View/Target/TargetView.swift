@@ -36,7 +36,7 @@ struct TargetView: View {
                             selectedDate = date
                             // 選択した日付に対応するノートを取得
                             Task { @MainActor in
-                                noteViewModel.notes = noteViewModel.filterNotesByDate(date)
+                                noteViewModel.updateNotesForDate(date)
                             }
                         },
                         targetViewModel: viewModel,
@@ -85,14 +85,13 @@ struct TargetView: View {
 
             // selectedDateがあれば常にフィルタリング優先（タブ切り替え時も選択状態を保持）
             if let date = selectedDate {
-                noteViewModel.notes = noteViewModel.filterNotesByDate(date)
+                noteViewModel.updateNotesForDate(date)
             } else if noteViewModel.notes.isEmpty {
                 // 日付未選択 & ノートが空の場合のみ全ノート取得
                 Task {
                     let result = await noteViewModel.fetchNotesExcludingFree()
                     if case .failure(let error) = result {
-                        noteViewModel.currentError = error
-                        noteViewModel.showingErrorAlert = true
+                        noteViewModel.showErrorAlert(error)
                     }
                 }
             }

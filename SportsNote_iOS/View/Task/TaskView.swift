@@ -85,7 +85,8 @@ struct TaskView: View {
                                 }
                             }
                         },
-                        taskViewModel: taskViewModel
+                        taskViewModel: taskViewModel,
+                        groupViewModel: viewModel
                     )
                 }
                 .id(refreshTrigger)  // IDを変更することでViewを強制的に再構築

@@ -474,4 +474,17 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return realmManager.getNotesByDate(selectedDate: date)
     }
 
+    /// ノートIDからノートを同期的に取得（View用ヘルパーメソッド）
+    /// - Parameter id: ノートID
+    /// - Returns: Note（オプショナル）
+    func getNoteById(id: String) -> Note? {
+        return try? realmManager.getObjectById(id: id, type: Note.self)
+    }
+
+    /// 日付でフィルタリングした結果をnotesプロパティに設定
+    /// - Parameter date: フィルタリングする日付
+    func updateNotesForDate(_ date: Date) {
+        notes = filterNotesByDate(date)
+    }
+
 }

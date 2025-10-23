@@ -25,11 +25,11 @@ struct TaskDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
+    @ObservedObject var groupViewModel: GroupViewModel
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
     @State private var newMeasureTitle = ""
-    @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
     @State private var alertType: AlertType?
 
@@ -42,12 +42,12 @@ struct TaskDetailView: View {
                 TextField(LocalizedStrings.title, text: $taskTitle)
                     .onChange(of: taskTitle) { _ in
                         Task {
-                            guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                            guard !groupViewModel.groups.isEmpty, groupViewModel.groups.indices.contains(selectedGroupIndex) else { return }
                             let result = await viewModel.updateTask(
                                 taskID: taskData.taskID,
                                 title: taskTitle,
                                 cause: cause,
-                                groupID: groups[selectedGroupIndex].groupID
+                                groupID: groupViewModel.groups[selectedGroupIndex].groupID
                             )
                             if case .failure(let error) = result {
                                 viewModel.showErrorAlert(error)
@@ -64,12 +64,12 @@ struct TaskDetailView: View {
                 )
                 .onChange(of: cause) { _ in
                     Task {
-                        guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                        guard !groupViewModel.groups.isEmpty, groupViewModel.groups.indices.contains(selectedGroupIndex) else { return }
                         let result = await viewModel.updateTask(
                             taskID: taskData.taskID,
                             title: taskTitle,
                             cause: cause,
-                            groupID: groups[selectedGroupIndex].groupID
+                            groupID: groupViewModel.groups[selectedGroupIndex].groupID
                         )
                         if case .failure(let error) = result {
                             viewModel.showErrorAlert(error)
@@ -79,18 +79,18 @@ struct TaskDetailView: View {
             }
             // グループ
             Section(header: Text(LocalizedStrings.group)) {
-                if !groups.isEmpty {
+                if !groupViewModel.groups.isEmpty {
                     GroupSelectorView(
                         selectedGroupIndex: $selectedGroupIndex,
-                        groups: groups,
+                        groups: groupViewModel.groups,
                         onSelectionChanged: {
                             Task {
-                                guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+                                guard !groupViewModel.groups.isEmpty, groupViewModel.groups.indices.contains(selectedGroupIndex) else { return }
                                 let result = await viewModel.updateTask(
                                     taskID: taskData.taskID,
                                     title: taskTitle,
                                     cause: cause,
-                                    groupID: groups[selectedGroupIndex].groupID
+                                    groupID: groupViewModel.groups[selectedGroupIndex].groupID
                                 )
                                 if case .failure(let error) = result {
                                     viewModel.showErrorAlert(error)
@@ -208,9 +208,15 @@ struct TaskDetailView: View {
     }
 
     private func loadData() {
-        // グループデータの読み込み
-        groups = (try? RealmManager.shared.getDataList(clazz: Group.self)) ?? []
-        if groups.isEmpty { return }
+        // グループデータの読み込み（GroupViewModelを通じて取得）
+        Task {
+            let result = await groupViewModel.fetchData()
+            if case .failure(let error) = result {
+                groupViewModel.showErrorAlert(error)
+            }
+        }
+
+        if groupViewModel.groups.isEmpty { return }
 
         // タスクデータの読み込み
         Task {
@@ -222,9 +228,9 @@ struct TaskDetailView: View {
         cause = taskData.cause
 
         // 現在のグループを選択
-        if let index = groups.firstIndex(where: { $0.groupID == taskData.groupID }) {
+        if let index = groupViewModel.groups.firstIndex(where: { $0.groupID == taskData.groupID }) {
             selectedGroupIndex = index
-        } else if !groups.isEmpty {
+        } else if !groupViewModel.groups.isEmpty {
             // グループIDに一致するものがなければ、最初のグループを選択
             selectedGroupIndex = 0
         }

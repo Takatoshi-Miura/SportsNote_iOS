@@ -9,6 +9,7 @@ struct MeasureDetailView: View {
     @State private var memo: String = ""
     @StateObject private var viewModel: MeasuresViewModel
     @StateObject private var memoViewModel = MemoViewModel()
+    @StateObject private var noteViewModel = NoteViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
 
@@ -102,7 +103,8 @@ struct MeasureDetailView: View {
     /// ノートIDに基づいて適切な遷移先を返す
     @ViewBuilder
     private func destinationView(for noteID: String) -> some View {
-        if let note = try? RealmManager.shared.getObjectById(id: noteID, type: Note.self),
+        // NoteViewModelを通じてノートを取得（同期的に）
+        if let note = noteViewModel.getNoteById(id: noteID),
             let noteType = NoteType(rawValue: note.noteType)
         {
             noteType.destinationView(noteID: noteID)
