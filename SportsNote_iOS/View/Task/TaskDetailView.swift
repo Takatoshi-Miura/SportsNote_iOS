@@ -25,6 +25,7 @@ struct TaskDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
+    @StateObject private var groupViewModel = GroupViewModel()
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
@@ -208,25 +209,32 @@ struct TaskDetailView: View {
     }
 
     private func loadData() {
-        // グループデータの読み込み
-        groups = (try? RealmManager.shared.getDataList(clazz: Group.self)) ?? []
-        if groups.isEmpty { return }
-
-        // タスクデータの読み込み
-        Task {
-            _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
-        }
-
-        // 初期値をセット
+        // 初期値を即座にセット（UI即反映）
         taskTitle = taskData.title
         cause = taskData.cause
 
-        // 現在のグループを選択
-        if let index = groups.firstIndex(where: { $0.groupID == taskData.groupID }) {
-            selectedGroupIndex = index
-        } else if !groups.isEmpty {
-            // グループIDに一致するものがなければ、最初のグループを選択
-            selectedGroupIndex = 0
+        // グループとタスクデータを非同期で取得
+        Task {
+            // グループデータの読み込み
+            let result = await groupViewModel.fetchData()
+            if case .failure(let error) = result {
+                viewModel.showErrorAlert(error)
+                return
+            }
+
+            groups = groupViewModel.groups
+            if groups.isEmpty { return }
+
+            // 現在のグループを選択
+            if let index = groups.firstIndex(where: { $0.groupID == taskData.groupID }) {
+                selectedGroupIndex = index
+            } else if !groups.isEmpty {
+                // グループIDに一致するものがなければ、最初のグループを選択
+                selectedGroupIndex = 0
+            }
+
+            // タスクデータの読み込み
+            _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
         }
     }
 

@@ -89,6 +89,16 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
     }
 
+    /// ノートタイプを取得（同期的）
+    /// - Parameter noteID: ノートID
+    /// - Returns: NoteType（取得失敗時はnil）
+    func getNoteType(noteID: String) -> NoteType? {
+        guard let note = try? realmManager.getObjectById(id: noteID, type: Note.self) else {
+            return nil
+        }
+        return NoteType(rawValue: note.noteType)
+    }
+
     // MARK: - CREATE, UPDATE処理
 
     /// エンティティを保存
