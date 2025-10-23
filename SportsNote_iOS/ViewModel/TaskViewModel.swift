@@ -16,6 +16,9 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     // タスク更新通知パブリッシャー
     let taskUpdatedPublisher = PassthroughSubject<Void, Never>()
 
+    // 対策管理用ViewModel
+    private let measuresViewModel = MeasuresViewModel()
+
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
     }
@@ -77,7 +80,6 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         switch taskResult {
         case .success(let task):
             if let task = task {
-                let measuresViewModel = MeasuresViewModel()
                 let measuresResult = await measuresViewModel.getMeasuresByTaskID(taskID: taskID)
                 switch measuresResult {
                 case .success(let measures):
@@ -112,7 +114,6 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         case .success:
             // 対策タイトルが指定されている場合は対策も保存
             if let measuresTitle = measuresTitle, !measuresTitle.isEmpty {
-                let measuresViewModel = MeasuresViewModel()
                 let result = await measuresViewModel.saveMeasures(
                     taskID: newTask.taskID,
                     title: measuresTitle,
@@ -126,6 +127,30 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         case .failure(let error):
             return .failure(error)
         }
+    }
+
+    /// 既存課題に対策を追加
+    /// - Parameters:
+    ///   - taskID: 課題ID
+    ///   - title: 対策タイトル
+    /// - Returns: Result
+    func addMeasureToTask(taskID: String, title: String) async -> Result<Void, SportsNoteError> {
+        guard !title.isEmpty else {
+            let error = SportsNoteError.systemError("対策タイトルは必須項目です")
+            return .failure(error)
+        }
+
+        let result = await measuresViewModel.saveMeasures(
+            taskID: taskID,
+            title: title
+        )
+
+        // 成功時はタスク詳細を再取得
+        if case .success = result {
+            _ = await fetchTaskDetail(taskID: taskID)
+        }
+
+        return result
     }
 
     /// 既存課題の詳細を更新
@@ -349,7 +374,6 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
 
         // MeasuresViewModelに委譲
-        let measuresViewModel = MeasuresViewModel()
         let result = await measuresViewModel.updateMeasuresOrder(measures: measures)
         if case .failure(let error) = result {
             return .failure(error)

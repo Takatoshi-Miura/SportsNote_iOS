@@ -248,25 +248,18 @@ struct TaskDetailView: View {
         // 次の行を空欄で表示するためにクリアする
         newMeasureTitle = ""
 
-        let measuresViewModel = MeasuresViewModel()
         Task {
-            let result = await measuresViewModel.saveMeasures(
+            let result = await viewModel.addMeasureToTask(
                 taskID: taskData.taskID,
                 title: titleToSave
             )
 
-            await MainActor.run {
-                if case .failure(let error) = result {
-                    // エラー時は入力値を復元
-                    newMeasureTitle = titleToSave
-                    measuresViewModel.showErrorAlert(error)
-                } else {
-                    // 成功時のみViewを更新
-                    Task {
-                        _ = await viewModel.fetchTaskDetail(taskID: taskData.taskID)
-                    }
-                }
+            if case .failure(let error) = result {
+                // エラー時は入力値を復元
+                newMeasureTitle = titleToSave
+                viewModel.showErrorAlert(error)
             }
+            // 成功時はaddMeasureToTask内でfetchTaskDetailが呼ばれるため不要
         }
     }
 }

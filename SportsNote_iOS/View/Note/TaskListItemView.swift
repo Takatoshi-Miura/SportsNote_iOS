@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TaskListSection: View {
+    @StateObject private var memoViewModel = MemoViewModel()
     @State private var showingTaskSelection = false
     @State private var showingDeleteConfirmation = false
     @State private var selectedTaskForDeletion: TaskListData?
@@ -55,13 +56,9 @@ struct TaskListSection: View {
                 if let task = selectedTaskForDeletion {
                     if let deleteMemoID = task.memoID {
                         Task {
-                            let memoViewModel = MemoViewModel()
                             let result = await memoViewModel.deleteMemo(memoID: deleteMemoID)
-                            switch result {
-                            case .success:
-                                print("Memo deleted successfully")
-                            case .failure(let error):
-                                print("Failed to delete memo: \(error)")
+                            if case .failure(let error) = result {
+                                memoViewModel.showErrorAlert(error)
                             }
                         }
                     }
@@ -70,6 +67,10 @@ struct TaskListSection: View {
             }
         } message: {
         }
+        .errorAlert(
+            currentError: $memoViewModel.currentError,
+            showingAlert: $memoViewModel.showingErrorAlert
+        )
     }
 
     private var emptyStateView: some View {
