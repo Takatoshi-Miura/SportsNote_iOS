@@ -1,4 +1,3 @@
-import RealmSwift
 import SwiftUI
 
 struct PracticeNoteView: View {

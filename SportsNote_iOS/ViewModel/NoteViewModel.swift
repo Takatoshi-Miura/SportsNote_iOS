@@ -1,5 +1,6 @@
+import Combine
+import Foundation
 import RealmSwift
-import SwiftUI
 
 @MainActor
 class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {

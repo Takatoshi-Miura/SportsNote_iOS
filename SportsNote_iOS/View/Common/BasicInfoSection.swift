@@ -1,4 +1,3 @@
-import RealmSwift
 import SwiftUI
 
 // 基本情報セクション

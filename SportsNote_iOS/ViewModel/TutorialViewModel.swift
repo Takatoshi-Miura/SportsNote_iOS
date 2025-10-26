@@ -1,5 +1,5 @@
+import Combine
 import Foundation
-import SwiftUI
 
 /// チュートリアルページの構造体
 struct TutorialPage {

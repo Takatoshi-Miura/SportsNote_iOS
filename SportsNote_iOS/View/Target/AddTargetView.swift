@@ -1,4 +1,3 @@
-import RealmSwift
 import SwiftUI
 
 /// 目標追加画面

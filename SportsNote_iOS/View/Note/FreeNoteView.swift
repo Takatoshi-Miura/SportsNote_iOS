@@ -1,5 +1,4 @@
 import Combine
-import RealmSwift
 import SwiftUI
 
 struct FreeNoteView: View {

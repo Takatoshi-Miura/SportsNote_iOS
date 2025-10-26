@@ -1,6 +1,6 @@
+import Combine
 import Foundation
 import RealmSwift
-import SwiftUI
 
 @MainActor
 class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {

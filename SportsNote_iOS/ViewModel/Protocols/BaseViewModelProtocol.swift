@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import SwiftUI
 
 /// すべてのViewModelが実装すべき基本プロトコル
 @MainActor

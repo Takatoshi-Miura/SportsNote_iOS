@@ -1,7 +1,6 @@
 import Combine
 import Foundation
 import RealmSwift
-import SwiftUI
 
 @MainActor
 class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {

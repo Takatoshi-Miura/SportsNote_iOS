@@ -1,4 +1,3 @@
-import RealmSwift
 import SwiftUI
 
 /// 大会ノート詳細画面

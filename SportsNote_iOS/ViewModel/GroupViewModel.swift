@@ -1,5 +1,6 @@
+import Combine
+import Foundation
 import RealmSwift
-import SwiftUI
 
 @MainActor
 class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
