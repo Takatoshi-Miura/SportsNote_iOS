@@ -104,8 +104,7 @@ struct PracticeNoteView: View {
                         Task {
                             let result = await viewModel.delete(id: note.noteID)
                             if case .failure(let error) = result {
-                                viewModel.currentError = error
-                                viewModel.showingErrorAlert = true
+                                viewModel.showErrorAlert(error)
                             } else {
                                 dismiss()
                             }

@@ -26,8 +26,7 @@ struct NoteView: View {
                             Task {
                                 let result = await viewModel.fetchData()
                                 if case .failure(let error) = result {
-                                    viewModel.currentError = error
-                                    viewModel.showingErrorAlert = true
+                                    viewModel.showErrorAlert(error)
                                 }
                             }
                         }
@@ -40,8 +39,7 @@ struct NoteView: View {
                                     Task {
                                         let result = await viewModel.fetchData()
                                         if case .failure(let error) = result {
-                                            viewModel.currentError = error
-                                            viewModel.showingErrorAlert = true
+                                            viewModel.showErrorAlert(error)
                                         }
                                     }
                                 }
@@ -54,8 +52,7 @@ struct NoteView: View {
                             Task {
                                 let result = await viewModel.fetchData()
                                 if case .failure(let error) = result {
-                                    viewModel.currentError = error
-                                    viewModel.showingErrorAlert = true
+                                    viewModel.showErrorAlert(error)
                                 }
                             }
                         }
@@ -72,8 +69,7 @@ struct NoteView: View {
                 Task {
                     let result = await viewModel.fetchData()
                     if case .failure(let error) = result {
-                        viewModel.currentError = error
-                        viewModel.showingErrorAlert = true
+                        viewModel.showErrorAlert(error)
                     }
                 }
             })
@@ -83,8 +79,7 @@ struct NoteView: View {
                 Task {
                     let result = await viewModel.fetchData()
                     if case .failure(let error) = result {
-                        viewModel.currentError = error
-                        viewModel.showingErrorAlert = true
+                        viewModel.showErrorAlert(error)
                     }
                 }
             })
@@ -92,8 +87,7 @@ struct NoteView: View {
         .task {
             let result = await viewModel.fetchData()
             if case .failure(let error) = result {
-                viewModel.currentError = error
-                viewModel.showingErrorAlert = true
+                viewModel.showErrorAlert(error)
             }
         }
         .errorAlert(
@@ -185,8 +179,7 @@ struct NoteListView: View {
                                 Task {
                                     let result = await viewModel.delete(id: note.noteID)
                                     if case .failure(let error) = result {
-                                        viewModel.currentError = error
-                                        viewModel.showingErrorAlert = true
+                                        viewModel.showErrorAlert(error)
                                     }
                                 }
                             } label: {
