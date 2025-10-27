@@ -9,6 +9,7 @@ struct TutorialPage {
 }
 
 /// アプリの使い方ページ用ViewModel
+@MainActor
 class TutorialViewModel: ObservableObject {
     /// 使い方ページデータ
     @Published var pages: [TutorialPage] = []

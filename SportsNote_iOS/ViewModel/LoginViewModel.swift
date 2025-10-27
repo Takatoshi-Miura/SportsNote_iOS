@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseCore
 import Foundation
 
+@MainActor
 class LoginViewModel: ObservableObject {
 
     @Published var email: String = ""
