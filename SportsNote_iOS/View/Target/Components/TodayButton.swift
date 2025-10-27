@@ -25,7 +25,7 @@ struct TodayButton: View {
             )
 
             Task { @MainActor in
-                noteViewModel.notes = noteViewModel.filterNotesByDate(today)
+                noteViewModel.updateNotesByDate(today)
             }
         } label: {
             Text(LocalizedStrings.today)

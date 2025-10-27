@@ -308,4 +308,9 @@ class LoginViewModel: ObservableObject {
 
         showingAlert = true
     }
+
+    /// メールアドレスをクリア
+    func clearEmail() {
+        email = ""
+    }
 }

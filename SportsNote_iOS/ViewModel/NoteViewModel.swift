@@ -485,4 +485,10 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return realmManager.getNotesByDate(selectedDate: date)
     }
 
+    /// 指定した日付でノート一覧を更新
+    /// - Parameter date: フィルタリングする日付
+    func updateNotesByDate(_ date: Date) {
+        notes = filterNotesByDate(date)
+    }
+
 }

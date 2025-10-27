@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// グループ詳細画面
 struct GroupView: View {
@@ -34,7 +33,7 @@ struct GroupView: View {
                 }
             }
         }
-        .background(Color(UIColor.systemBackground))
+        .background(Color(.systemBackground))
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.group))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

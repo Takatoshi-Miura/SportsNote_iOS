@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// グループ追加画面
 struct AddGroupView: View {
@@ -21,7 +20,7 @@ struct AddGroupView: View {
     var body: some View {
         NavigationView {
             GroupForm(title: $title, selectedColor: $selectedColor)
-                .background(Color(UIColor.systemBackground))
+                .background(Color(.systemBackground))
                 .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.group))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
