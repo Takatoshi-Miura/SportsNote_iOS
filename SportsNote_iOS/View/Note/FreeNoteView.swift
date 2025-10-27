@@ -47,7 +47,7 @@ struct FreeNoteView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        hideKeyboard()
+                        KeyboardUtil.hideKeyboard()
                     }
                 }
             }
@@ -85,10 +85,5 @@ struct FreeNoteView: View {
             detail: detail,
             created_at: note.created_at
         )
-    }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

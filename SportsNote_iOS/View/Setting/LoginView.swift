@@ -56,22 +56,22 @@ struct LoginView: View {
                                 // ログアウト処理
                                 viewModel.logout(
                                     onSuccess: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                     },
                                     onFailure: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                     }
                                 )
                             } else {
                                 // ログイン処理
                                 viewModel.login(
                                     onSuccess: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                         onDismiss()
                                         dismiss()
                                     },
                                     onFailure: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                     }
                                 )
                             }
@@ -90,11 +90,11 @@ struct LoginView: View {
                         Button(action: {
                             viewModel.resetPassword(
                                 onSuccess: {
-                                    hideKeyboard()
-                                    viewModel.email = ""
+                                    KeyboardUtil.hideKeyboard()
+                                    viewModel.clearEmail()
                                 },
                                 onFailure: {
-                                    hideKeyboard()
+                                    KeyboardUtil.hideKeyboard()
                                 }
                             )
                         }) {
@@ -107,12 +107,12 @@ struct LoginView: View {
                         Button(action: {
                             viewModel.createAccount(
                                 onSuccess: {
-                                    hideKeyboard()
+                                    KeyboardUtil.hideKeyboard()
                                     onDismiss()
                                     dismiss()
                                 },
                                 onFailure: {
-                                    hideKeyboard()
+                                    KeyboardUtil.hideKeyboard()
                                 }
                             )
                         }) {
@@ -126,12 +126,12 @@ struct LoginView: View {
                             Button(action: {
                                 viewModel.deleteAccount(
                                     onSuccess: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                         onDismiss()
                                         dismiss()
                                     },
                                     onFailure: {
-                                        hideKeyboard()
+                                        KeyboardUtil.hideKeyboard()
                                     }
                                 )
                             }) {
@@ -160,7 +160,7 @@ struct LoginView: View {
                 .padding()
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    hideKeyboard()
+                    KeyboardUtil.hideKeyboard()
                 }
             }
             .navigationBarHidden(true)
@@ -173,10 +173,5 @@ struct LoginView: View {
             }
         }
         .interactiveDismissDisabled()  // スワイプで閉じる動作を無効化
-    }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

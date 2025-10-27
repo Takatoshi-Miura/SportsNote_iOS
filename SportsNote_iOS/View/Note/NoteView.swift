@@ -18,7 +18,7 @@ struct NoteView: View {
                         .edgesIgnoringSafeArea(.all)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            hideKeyboard()
+                            KeyboardUtil.hideKeyboard()
                         }
 
                     VStack(spacing: 0) {
@@ -95,11 +95,6 @@ struct NoteView: View {
             showingAlert: $viewModel.showingErrorAlert
         )
     }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
 }
 
 /// 検索バー
@@ -134,11 +129,6 @@ struct SearchBarView: View {
                 .stroke(Color(.systemGray4), lineWidth: 1)
         )
         .padding()
-    }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

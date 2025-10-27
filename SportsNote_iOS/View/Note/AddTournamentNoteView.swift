@@ -84,7 +84,7 @@ struct AddTournamentNoteView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                hideKeyboard()
+                KeyboardUtil.hideKeyboard()
             }
         }
     }
@@ -104,10 +104,5 @@ struct AddTournamentNoteView: View {
 
         onSave()
         dismiss()
-    }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

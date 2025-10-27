@@ -40,7 +40,7 @@ struct MeasureDetailView: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    hideKeyboard()
+                    KeyboardUtil.hideKeyboard()
                 }
 
                 Section(header: Text(LocalizedStrings.note)) {
@@ -107,10 +107,5 @@ struct MeasureDetailView: View {
         } else {
             Text(LocalizedStrings.noteNotFound)
         }
-    }
-
-    /// キーボードを閉じる
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
