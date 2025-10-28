@@ -1,4 +1,5 @@
-import SwiftUI
+import Foundation
+import UIKit
 
 @MainActor
 class TermsManager: ObservableObject {
@@ -35,26 +36,5 @@ class TermsManager: ObservableObject {
     static func navigateToPrivacyPolicy() {
         guard let url = URL(string: TermsURL.privacyPolicy) else { return }
         UIApplication.shared.open(url)
-    }
-}
-
-struct TermsDialogView: View {
-    @ObservedObject private var termsManager = TermsManager.shared
-
-    var body: some View {
-        EmptyView()
-            .alert(isPresented: $termsManager.termsDialogShown) {
-                Alert(
-                    title: Text(LocalizedStrings.termsOfServiceTitle),
-                    message: Text(LocalizedStrings.termsOfServiceMessage),
-                    primaryButton: .default(Text(LocalizedStrings.checkTermsOfService)) {
-                        termsManager.navigateToTermsOfServiceAndPrivacyPolicy()
-                    },
-                    secondaryButton: .default(Text(LocalizedStrings.agree)) {
-                        UserDefaultsManager.set(key: UserDefaultsManager.Keys.agree, value: true)
-                        termsManager.termsDialogShown = false
-                    }
-                )
-            }
     }
 }
