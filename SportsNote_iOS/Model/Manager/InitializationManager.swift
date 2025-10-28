@@ -1,7 +1,6 @@
 import Firebase
 import FirebaseCrashlytics
 import Foundation
-import SwiftUI
 
 @MainActor
 final class InitializationManager {
