@@ -2,22 +2,22 @@ import SwiftUI
 
 struct GroupSelectorView: View {
     @Binding var selectedGroupIndex: Int
-    let groups: [Group]
+    @ObservedObject var viewModel: GroupViewModel
     let onSelectionChanged: (() -> Void)?
 
-    init(selectedGroupIndex: Binding<Int>, groups: [Group], onSelectionChanged: (() -> Void)? = nil) {
+    init(selectedGroupIndex: Binding<Int>, viewModel: GroupViewModel, onSelectionChanged: (() -> Void)? = nil) {
         self._selectedGroupIndex = selectedGroupIndex
-        self.groups = groups
+        self.viewModel = viewModel
         self.onSelectionChanged = onSelectionChanged
     }
 
     var body: some View {
         HStack {
             GroupColorCircle(color: getGroupColor(for: selectedGroupIndex))
-            Text(groups.indices.contains(selectedGroupIndex) ? groups[selectedGroupIndex].title : "")
+            Text(viewModel.getTitleForGroupAtIndex(selectedGroupIndex))
             Spacer()
             Menu {
-                ForEach(0..<groups.count, id: \.self) { index in
+                ForEach(0..<viewModel.groups.count, id: \.self) { index in
                     Button(action: {
                         selectedGroupIndex = index
                         if let onSelectionChanged = onSelectionChanged {
@@ -26,7 +26,7 @@ struct GroupSelectorView: View {
                     }) {
                         HStack {
                             GroupColorCircle(color: getGroupColor(for: index))
-                            Text(groups[index].title)
+                            Text(viewModel.getTitleForGroupAtIndex(index))
                             if selectedGroupIndex == index {
                                 Spacer()
                                 Image(systemName: "checkmark")
@@ -41,17 +41,11 @@ struct GroupSelectorView: View {
         }
     }
 
-    /// グループの色を取得
+    /// グループの色を取得（ViewModelを使用）
     /// - Parameter index: Index
     /// - Returns: グループの色
     private func getGroupColor(for index: Int) -> Color {
-        guard groups.indices.contains(index) else { return Color.gray }
-        let colorIndex = Int(groups[index].color)
-
-        if GroupColor.allCases.indices.contains(colorIndex) {
-            return Color(GroupColor.allCases[colorIndex].color)
-        } else {
-            return Color.gray
-        }
+        let groupColor = viewModel.getColorForGroupAtIndex(index)
+        return Color(groupColor.color)
     }
 }

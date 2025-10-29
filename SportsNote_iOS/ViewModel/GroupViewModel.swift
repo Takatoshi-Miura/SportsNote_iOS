@@ -195,4 +195,22 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         return GroupColor.gray
     }
 
+    // MARK: - Presentation Logic
+
+    /// グループ配列のインデックスから色を取得（プレゼンテーション用）
+    /// - Parameter index: グループ配列のインデックス
+    /// - Returns: GroupColor（インデックスが範囲外の場合はgray）
+    func getColorForGroupAtIndex(_ index: Int) -> GroupColor {
+        guard groups.indices.contains(index) else { return .gray }
+        let colorIndex = Int(groups[index].color)
+        return GroupColor.allCases.indices.contains(colorIndex) ? GroupColor.allCases[colorIndex] : .gray
+    }
+
+    /// グループ配列のインデックスからタイトルを取得（プレゼンテーション用）
+    /// - Parameter index: グループ配列のインデックス
+    /// - Returns: グループタイトル（インデックスが範囲外の場合は空文字）
+    func getTitleForGroupAtIndex(_ index: Int) -> String {
+        return groups.indices.contains(index) ? groups[index].title : ""
+    }
+
 }
