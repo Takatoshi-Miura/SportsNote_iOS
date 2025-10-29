@@ -82,7 +82,7 @@ struct TaskDetailView: View {
                 if !groups.isEmpty {
                     GroupSelectorView(
                         selectedGroupIndex: $selectedGroupIndex,
-                        groups: groups,
+                        viewModel: groupViewModel,
                         onSelectionChanged: {
                             Task {
                                 guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }

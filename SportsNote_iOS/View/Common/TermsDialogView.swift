@@ -13,8 +13,7 @@ struct TermsDialogView: View {
                         termsManager.navigateToTermsOfServiceAndPrivacyPolicy()
                     },
                     secondaryButton: .default(Text(LocalizedStrings.agree)) {
-                        UserDefaultsManager.set(key: UserDefaultsManager.Keys.agree, value: true)
-                        termsManager.termsDialogShown = false
+                        termsManager.agreeToTerms()
                     }
                 )
             }

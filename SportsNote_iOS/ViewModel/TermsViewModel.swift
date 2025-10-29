@@ -37,4 +37,10 @@ class TermsManager: ObservableObject {
         guard let url = URL(string: TermsURL.privacyPolicy) else { return }
         UIApplication.shared.open(url)
     }
+
+    /// 利用規約に同意
+    func agreeToTerms() {
+        UserDefaultsManager.set(key: UserDefaultsManager.Keys.agree, value: true)
+        termsDialogShown = false
+    }
 }

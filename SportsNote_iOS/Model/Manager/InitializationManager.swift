@@ -46,13 +46,18 @@ final class InitializationManager {
             return
         }
 
-        Task { @MainActor in
-            let noteViewModel = NoteViewModel()
-            noteViewModel.saveFreeNote(
-                title: LocalizedStrings.freeNote,
-                detail: LocalizedStrings.defaltFreeNoteDetail
-            )
-        }
+        // アプリケーションサービス層としてModel層を直接操作（ViewModel層を経由しない）
+        let note = Note()
+        note.noteID = UUIDGenerator.generateID()
+        note.noteType = NoteType.free.rawValue
+        note.title = LocalizedStrings.freeNote
+        note.detail = LocalizedStrings.defaltFreeNoteDetail
+        note.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        note.date = Date()
+        note.created_at = Date()
+        note.updated_at = Date()
+
+        try? RealmManager.shared.saveItem(note)
     }
 
     /// 未分類グループを作成
@@ -61,14 +66,19 @@ final class InitializationManager {
         do {
             let groups = try RealmManager.shared.getDataList(clazz: Group.self)
             if groups.isEmpty {
-                let groupViewModel = GroupViewModel()
-                let _ = await groupViewModel.saveGroup(
-                    title: LocalizedStrings.uncategorized,
-                    color: GroupColor.gray
-                )
+                // アプリケーションサービス層としてModel層を直接操作（ViewModel層を経由しない）
+                let group = Group()
+                group.groupID = UUIDGenerator.generateID()
+                group.title = LocalizedStrings.uncategorized
+                group.color = GroupColor.gray.rawValue
+                group.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+                group.created_at = Date()
+                group.updated_at = Date()
+
+                try RealmManager.shared.saveItem(group)
             }
         } catch {
-            print("未分類グループ作成チェックに失敗しました: \(error.localizedDescription)")
+            print("未分類グループ作成に失敗しました: \(error.localizedDescription)")
         }
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct AddTaskView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
+    @ObservedObject var groupViewModel: GroupViewModel
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
@@ -29,7 +30,7 @@ struct AddTaskView: View {
                     if !groups.isEmpty {
                         GroupSelectorView(
                             selectedGroupIndex: $selectedGroupIndex,
-                            groups: groups
+                            viewModel: groupViewModel
                         )
                     }
                 }
