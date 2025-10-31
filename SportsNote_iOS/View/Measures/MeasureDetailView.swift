@@ -103,7 +103,14 @@ struct MeasureDetailView: View {
     @ViewBuilder
     private func destinationView(for noteID: String) -> some View {
         if let noteType = noteViewModel.getNoteType(noteID: noteID) {
-            noteType.destinationView(noteID: noteID)
+            switch noteType {
+            case .free:
+                FreeNoteView(noteID: noteID)
+            case .practice:
+                PracticeNoteView(noteID: noteID)
+            case .tournament:
+                TournamentNoteView(noteID: noteID)
+            }
         } else {
             Text(LocalizedStrings.noteNotFound)
         }

@@ -159,19 +159,6 @@ enum NoteType: Int, CaseIterable {
             return note.result.isEmpty ? note.target : note.result
         }
     }
-
-    @MainActor
-    @ViewBuilder
-    func destinationView(noteID: String) -> some View {
-        switch self {
-        case .free:
-            FreeNoteView(noteID: noteID)
-        case .practice:
-            PracticeNoteView(noteID: noteID)
-        case .tournament:
-            TournamentNoteView(noteID: noteID)
-        }
-    }
 }
 
 /// 天気

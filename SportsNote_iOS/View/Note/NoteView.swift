@@ -152,7 +152,7 @@ struct NoteListView: View {
                         tag: note.noteID,
                         selection: $selectedNoteID,
                         destination: {
-                            noteType.destinationView(noteID: note.noteID)
+                            destinationView(noteType: noteType, noteID: note.noteID)
                                 .onDisappear {
                                     // 詳細画面から戻ったときに選択状態を解除
                                     DispatchQueue.main.async {
@@ -181,6 +181,19 @@ struct NoteListView: View {
             }
         }
         .listStyle(.plain)
+    }
+
+    /// ノート種別に応じた遷移先Viewを返す
+    @ViewBuilder
+    private func destinationView(noteType: NoteType, noteID: String) -> some View {
+        switch noteType {
+        case .free:
+            FreeNoteView(noteID: noteID)
+        case .practice:
+            PracticeNoteView(noteID: noteID)
+        case .tournament:
+            TournamentNoteView(noteID: noteID)
+        }
     }
 }
 
