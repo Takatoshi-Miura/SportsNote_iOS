@@ -1,5 +1,4 @@
 import RealmSwift
-import SwiftUI
 import UIKit
 
 /// ノート
@@ -123,14 +122,6 @@ enum NoteType: Int, CaseIterable {
         case .free: return "pin.fill"
         case .practice: return "figure.run"
         case .tournament: return "trophy"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .free: return .blue
-        case .practice: return .green
-        case .tournament: return .orange
         }
     }
 

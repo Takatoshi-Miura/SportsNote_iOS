@@ -238,11 +238,19 @@ struct NoteRow: View {
                 .font(.system(size: 20))
                 .foregroundColor(.white)
                 .frame(width: 32, height: 32)
-                .background(noteType.color)
+                .background(colorForNoteType(noteType))
                 .cornerRadius(8)
         }
     }
 
+    /// ノート種別に対応する色を返す
+    private func colorForNoteType(_ noteType: NoteType) -> Color {
+        switch noteType {
+        case .free: return .blue
+        case .practice: return .green
+        case .tournament: return .orange
+        }
+    }
 }
 
 extension View {
