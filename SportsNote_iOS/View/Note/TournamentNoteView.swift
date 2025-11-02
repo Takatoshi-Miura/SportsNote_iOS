@@ -79,10 +79,7 @@ struct TournamentNoteView: View {
                             onUpdate: updateNote
                         )
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        KeyboardUtil.hideKeyboard()
-                    }
+                    .dismissKeyboardOnTap()
                     .navigationTitle(LocalizedStrings.tournamentNote)
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {

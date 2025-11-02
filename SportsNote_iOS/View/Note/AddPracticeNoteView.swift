@@ -94,10 +94,7 @@ struct AddPracticeNoteView: View {
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                KeyboardUtil.hideKeyboard()
-            }
+            .dismissKeyboardOnTap()
             .allowsHitTesting(true)
         }
     }

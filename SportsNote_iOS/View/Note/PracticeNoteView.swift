@@ -76,10 +76,7 @@ struct PracticeNoteView: View {
                         onUpdate: updateNote
                     )
                 }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    KeyboardUtil.hideKeyboard()
-                }
+                .dismissKeyboardOnTap()
             }
         }
         .navigationTitle(LocalizedStrings.practiceNote)

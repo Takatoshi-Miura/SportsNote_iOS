@@ -35,5 +35,6 @@ struct GroupForm: View {
                 }
             }
         }
+        .dismissKeyboardOnTap()
     }
 }

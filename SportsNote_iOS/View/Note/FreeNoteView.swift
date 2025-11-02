@@ -45,10 +45,7 @@ struct FreeNoteView: View {
                         let formPadding: CGFloat = 30
                         self.detailMinHeight = max(150, geometry.size.height - titleSectionHeight - formPadding)
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        KeyboardUtil.hideKeyboard()
-                    }
+                    .dismissKeyboardOnTap()
                 }
             }
         }

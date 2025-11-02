@@ -158,10 +158,7 @@ struct LoginView: View {
                     }
                 }
                 .padding()
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    KeyboardUtil.hideKeyboard()
-                }
+                .dismissKeyboardOnTap()
             }
             .navigationBarHidden(true)
             .alert(isPresented: $viewModel.showingAlert) {

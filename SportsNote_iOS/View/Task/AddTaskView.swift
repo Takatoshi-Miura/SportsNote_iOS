@@ -39,10 +39,7 @@ struct AddTaskView: View {
                     TextField(LocalizedStrings.measures, text: $measuresTitle)
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                KeyboardUtil.hideKeyboard()
-            }
+            .dismissKeyboardOnTap()
             .navigationTitle(String(format: LocalizedStrings.addTitle, LocalizedStrings.task))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

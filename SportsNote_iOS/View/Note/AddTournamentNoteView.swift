@@ -82,10 +82,7 @@ struct AddTournamentNoteView: View {
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                KeyboardUtil.hideKeyboard()
-            }
+            .dismissKeyboardOnTap()
         }
     }
 

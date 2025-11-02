@@ -48,10 +48,7 @@ struct AddTargetView: View {
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                KeyboardUtil.hideKeyboard()
-            }
+            .dismissKeyboardOnTap()
             .navigationTitle(getNavigationTitle())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -38,10 +38,7 @@ struct MeasureDetailView: View {
                             }
                         }
                 }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    KeyboardUtil.hideKeyboard()
-                }
+                .dismissKeyboardOnTap()
 
                 Section(header: Text(LocalizedStrings.note)) {
                     switch memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID) {

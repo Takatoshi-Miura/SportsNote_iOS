@@ -16,10 +16,7 @@ struct NoteView: View {
                 ZStack {
                     Color(.secondarySystemBackground)
                         .edgesIgnoringSafeArea(.all)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            KeyboardUtil.hideKeyboard()
-                        }
+                        .dismissKeyboardOnTap()
 
                     VStack(spacing: 0) {
                         SearchBarView(searchText: $searchQuery) {
