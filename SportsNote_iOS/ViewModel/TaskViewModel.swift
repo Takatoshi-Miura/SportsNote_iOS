@@ -127,6 +127,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 if case .failure(let error) = result {
                     return .failure(error)
                 }
+                // 対策保存後にTaskListDataを再生成
+                do {
+                    tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+                    convertToTaskListData()
+                } catch {
+                    // エラーが発生してもタスク自体は保存されているので継続
+                    print("TaskListData再生成エラー: \(error)")
+                }
             }
             return .success(newTask)
         case .failure(let error):
