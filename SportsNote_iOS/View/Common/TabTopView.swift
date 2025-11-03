@@ -58,16 +58,16 @@ struct TabTopView<Trailing: View, Content: View>: View {
                             .foregroundColor(.blue)
                     }
                     .padding()
+                    .confirmationDialog(LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible) {
+                        ForEach(actionItems.indices, id: \.self) { index in
+                            Button(actionItems[index].title) {
+                                actionItems[index].action()
+                            }
+                        }
+                        Button(LocalizedStrings.cancel, role: .cancel) {}
+                    }
                 }
             }
-        }
-        .confirmationDialog(LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible) {
-            ForEach(actionItems.indices, id: \.self) { index in
-                Button(actionItems[index].title) {
-                    actionItems[index].action()
-                }
-            }
-            Button(LocalizedStrings.cancel, role: .cancel) {}
         }
     }
 }
