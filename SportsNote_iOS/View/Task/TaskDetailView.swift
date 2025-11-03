@@ -108,7 +108,6 @@ struct TaskDetailView: View {
                 }
             }
         }
-        .dismissKeyboardOnTap()
         .navigationTitle(String(format: LocalizedStrings.detailTitle, LocalizedStrings.task))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
