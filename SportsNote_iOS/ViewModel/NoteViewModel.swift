@@ -332,7 +332,25 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             if reflectionText.isEmpty { continue }
 
             let memo = Memo()
-            memo.memoID = task.memoID ?? UUIDGenerator.generateID()
+
+            // memoIDの決定ロジック:
+            // 1. task.memoIDがあればそれを使用(既存メモ編集)
+            // 2. なければnoteID+measuresIDで既存メモを検索
+            // 3. 既存メモが見つかればそのIDを使用(更新)
+            // 4. なければ新規ID生成(新規作成)
+            if let existingMemoID = task.memoID {
+                memo.memoID = existingMemoID
+            } else {
+                let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
+                if let existingMemo = existingMemos.first(where: {
+                    $0.measuresID == task.measuresID
+                }) {
+                    memo.memoID = existingMemo.memoID  // 既存IDを使用
+                } else {
+                    memo.memoID = UUIDGenerator.generateID()  // 新規生成
+                }
+            }
+
             memo.measuresID = task.measuresID
             memo.noteID = noteID
             memo.detail = reflectionText
