@@ -6,16 +6,23 @@ struct MeasureDetailView: View {
     let measure: Measures
     @State private var title: String
     @State private var memo: String = ""
-    @StateObject private var viewModel: MeasuresViewModel
-    @StateObject private var memoViewModel = MemoViewModel()
-    @StateObject private var noteViewModel = NoteViewModel()
+    @ObservedObject var measuresViewModel: MeasuresViewModel
+    @ObservedObject var memoViewModel: MemoViewModel
+    @ObservedObject var noteViewModel: NoteViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
 
-    init(measure: Measures) {
+    init(
+        measure: Measures,
+        measuresViewModel: MeasuresViewModel,
+        memoViewModel: MemoViewModel,
+        noteViewModel: NoteViewModel
+    ) {
         self.measure = measure
         _title = State(initialValue: measure.title)
-        _viewModel = StateObject(wrappedValue: MeasuresViewModel())
+        self.measuresViewModel = measuresViewModel
+        self.memoViewModel = memoViewModel
+        self.noteViewModel = noteViewModel
     }
 
     var body: some View {
@@ -25,7 +32,7 @@ struct MeasureDetailView: View {
                     TextField(LocalizedStrings.title, text: $title)
                         .onChange(of: title) { newValue in
                             Task {
-                                let result = await viewModel.saveMeasures(
+                                let result = await measuresViewModel.saveMeasures(
                                     measuresID: measure.measuresID,
                                     taskID: measure.taskID,
                                     title: newValue,
@@ -33,7 +40,7 @@ struct MeasureDetailView: View {
                                     created_at: measure.created_at
                                 )
                                 if case .failure(let error) = result {
-                                    viewModel.showErrorAlert(error)
+                                    measuresViewModel.showErrorAlert(error)
                                 }
                             }
                         }
@@ -41,23 +48,16 @@ struct MeasureDetailView: View {
                 .dismissKeyboardOnTap()
 
                 Section(header: Text(LocalizedStrings.note)) {
-                    switch memoViewModel.getMemosByMeasuresID(measuresID: measure.measuresID) {
-                    case .success(let measuresMemos):
-                        if measuresMemos.isEmpty {
-                            Text(LocalizedStrings.noNotesYet)
-                                .foregroundColor(.gray)
-                                .italic()
-                        } else {
-                            ForEach(measuresMemos, id: \.memoID) { measuresMemo in
-                                NavigationLink(destination: destinationView(for: measuresMemo.noteID)) {
-                                    MeasuresMemoRow(measuresMemo: measuresMemo)
-                                }
-                            }
-                        }
-                    case .failure:
+                    if memoViewModel.measuresMemoList.isEmpty {
                         Text(LocalizedStrings.noNotesYet)
                             .foregroundColor(.gray)
                             .italic()
+                    } else {
+                        ForEach(memoViewModel.measuresMemoList, id: \.memoID) { measuresMemo in
+                            NavigationLink(destination: destinationView(for: measuresMemo.noteID)) {
+                                MeasuresMemoRow(measuresMemo: measuresMemo)
+                            }
+                        }
                     }
                 }
             }
@@ -79,9 +79,9 @@ struct MeasureDetailView: View {
                 message: Text(String(format: LocalizedStrings.deleteMeasures)),
                 primaryButton: .destructive(Text(LocalizedStrings.delete)) {
                     Task {
-                        let result = await viewModel.delete(id: measure.measuresID)
+                        let result = await measuresViewModel.delete(id: measure.measuresID)
                         if case .failure(let error) = result {
-                            viewModel.showErrorAlert(error)
+                            measuresViewModel.showErrorAlert(error)
                         } else {
                             dismiss()
                         }
@@ -91,9 +91,14 @@ struct MeasureDetailView: View {
             )
         }
         .errorAlert(
-            currentError: $viewModel.currentError,
-            showingAlert: $viewModel.showingErrorAlert
+            currentError: $measuresViewModel.currentError,
+            showingAlert: $measuresViewModel.showingErrorAlert
         )
+        .onAppear {
+            Task {
+                _ = await memoViewModel.fetchMemosByMeasuresID(measuresID: measure.measuresID)
+            }
+        }
     }
 
     /// ノートIDに基づいて適切な遷移先を返す

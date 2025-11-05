@@ -24,7 +24,10 @@ struct TaskDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TaskViewModel
-    @StateObject private var groupViewModel = GroupViewModel()
+    @ObservedObject var groupViewModel: GroupViewModel
+    @ObservedObject var measuresViewModel: MeasuresViewModel
+    @ObservedObject var memoViewModel: MemoViewModel
+    @ObservedObject var noteViewModel: NoteViewModel
     @State private var taskTitle: String = ""
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
@@ -102,7 +105,13 @@ struct TaskDetailView: View {
             }
             // 対策
             Section(header: MeasuresSectionHeaderView(isReorderingMeasures: $isReorderingMeasures)) {
-                MeasuresListView(viewModel: viewModel, isReorderingMeasures: isReorderingMeasures)
+                MeasuresListView(
+                    viewModel: viewModel,
+                    measuresViewModel: measuresViewModel,
+                    memoViewModel: memoViewModel,
+                    noteViewModel: noteViewModel,
+                    isReorderingMeasures: isReorderingMeasures
+                )
                 if viewModel.taskDetail != nil {
                     AddMeasureView(newMeasureTitle: $newMeasureTitle, onAddAction: addMeasure)
                 }

@@ -7,8 +7,12 @@ struct MainTaskList: View {
     let onDelete: (String) -> Void
     let onToggleCompletion: (String) -> Void
     let refreshAction: () async -> Void
-    // TaskViewModelを受け取るように追加
-    let taskViewModel: TaskViewModel
+    // ViewModelを受け取るように追加
+    @ObservedObject var taskViewModel: TaskViewModel
+    @ObservedObject var groupViewModel: GroupViewModel
+    @ObservedObject var measuresViewModel: MeasuresViewModel
+    @ObservedObject var memoViewModel: MemoViewModel
+    @ObservedObject var noteViewModel: NoteViewModel
     @State private var showDeleteConfirmation = false
     @State private var taskToDelete: String? = nil
 
@@ -70,8 +74,16 @@ struct MainTaskList: View {
 
     private func getTaskDetailView(for taskList: TaskListData) -> AnyView {
         if let task = tasks.first(where: { $0.taskID == taskList.taskID }) {
-            // シンプルに共有ViewModelを渡すのみで良い
-            return TaskDetailView(viewModel: taskViewModel, taskData: task).eraseToAnyView()
+            // すべてのViewModelを共有して渡す
+            return TaskDetailView(
+                viewModel: taskViewModel,
+                groupViewModel: groupViewModel,
+                measuresViewModel: measuresViewModel,
+                memoViewModel: memoViewModel,
+                noteViewModel: noteViewModel,
+                taskData: task
+            )
+            .eraseToAnyView()
         } else {
             return Text("Task not found").eraseToAnyView()
         }

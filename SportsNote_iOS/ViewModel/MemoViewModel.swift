@@ -162,7 +162,7 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
     }
 
-    /// 対策IDに紐づくメモを取得
+    /// 対策IDに紐づくメモを取得（非Reactive版 - 下位互換性のため残す）
     /// - Parameter measuresID: 対策ID
     /// - Returns: Result<[MeasuresMemo], SportsNoteError>
     func getMemosByMeasuresID(measuresID: String) -> Result<[MeasuresMemo], SportsNoteError> {
@@ -192,6 +192,20 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         // 日付の降順でソート
         let sortedList = measuresMemoList.sorted { $0.date > $1.date }
         return .success(sortedList)
+    }
+
+    /// 対策IDに紐づくメモを取得してmeasuresMemoListを更新（Reactive版）
+    /// - Parameter measuresID: 対策ID
+    /// - Returns: Result<Void, SportsNoteError>
+    func fetchMemosByMeasuresID(measuresID: String) async -> Result<Void, SportsNoteError> {
+        let result = getMemosByMeasuresID(measuresID: measuresID)
+        switch result {
+        case .success(let memos):
+            measuresMemoList = memos
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
     }
 
     /// メモを保存する（既存インターフェースとの互換性のため）

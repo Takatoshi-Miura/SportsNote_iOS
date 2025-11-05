@@ -3,6 +3,9 @@ import SwiftUI
 /// 対策リスト表示コンポーネント
 struct MeasuresListView: View {
     @ObservedObject var viewModel: TaskViewModel
+    @ObservedObject var measuresViewModel: MeasuresViewModel
+    @ObservedObject var memoViewModel: MemoViewModel
+    @ObservedObject var noteViewModel: NoteViewModel
     let isReorderingMeasures: Bool
 
     var body: some View {
@@ -13,7 +16,14 @@ struct MeasuresListView: View {
                     .italic()
             } else {
                 ForEach(detail.measuresList.indices, id: \.self) { index in
-                    NavigationLink(destination: MeasureDetailView(measure: detail.measuresList[index])) {
+                    NavigationLink(
+                        destination: MeasureDetailView(
+                            measure: detail.measuresList[index],
+                            measuresViewModel: measuresViewModel,
+                            memoViewModel: memoViewModel,
+                            noteViewModel: noteViewModel
+                        )
+                    ) {
                         HStack {
                             Text(detail.measuresList[index].title)
                                 .font(.body)

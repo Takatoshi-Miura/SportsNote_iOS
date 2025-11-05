@@ -10,6 +10,9 @@ struct TaskView: View {
     @State private var navigateToGroupEdit = false
     @StateObject private var viewModel = GroupViewModel()
     @StateObject private var taskViewModel = TaskViewModel()
+    @StateObject private var measuresViewModel = MeasuresViewModel()
+    @StateObject private var memoViewModel = MemoViewModel()
+    @StateObject private var noteViewModel = NoteViewModel()
     @State private var refreshTrigger: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
 
@@ -84,7 +87,11 @@ struct TaskView: View {
                                 }
                             }
                         },
-                        taskViewModel: taskViewModel
+                        taskViewModel: taskViewModel,
+                        groupViewModel: viewModel,
+                        measuresViewModel: measuresViewModel,
+                        memoViewModel: memoViewModel,
+                        noteViewModel: noteViewModel
                     )
                 }
                 .id(refreshTrigger)  // IDを変更することでViewを強制的に再構築
