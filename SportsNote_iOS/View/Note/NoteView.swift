@@ -212,9 +212,12 @@ struct NoteRow: View {
 
                     Spacer()
 
-                    Text(DateFormatterUtil.formatDateOnly(note.date))
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                    // フリーノート以外は日付を表示
+                    if noteType != .free {
+                        Text(DateFormatterUtil.formatDateOnly(note.date))
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
                 }
 
                 let noteType = NoteType(rawValue: note.noteType) ?? .free
