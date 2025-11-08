@@ -93,6 +93,11 @@ struct TaskView: View {
                         memoViewModel: memoViewModel,
                         noteViewModel: noteViewModel
                     )
+
+                    // AdMobバナー広告
+                    AdMobBannerView()
+                        .frame(height: 50)
+                        .background(Color(.systemBackground))
                 }
                 .id(refreshTrigger)  // IDを変更することでViewを強制的に再構築
             },

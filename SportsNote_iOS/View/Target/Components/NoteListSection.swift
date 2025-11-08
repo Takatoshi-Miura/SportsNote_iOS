@@ -20,16 +20,24 @@ struct NoteListSection: View {
                     .padding()
                     .frame(maxWidth: .infinity)
             } else {
-                List {
+                VStack(spacing: 0) {
                     ForEach(notes, id: \.noteID) { note in
                         NavigationLink(destination: noteDestination(for: note)) {
                             NoteRow(note: note)
                         }
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 16)
+                        .background(Color(.systemBackground))
+
+                        if note.noteID != notes.last?.noteID {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
                 }
-                .listStyle(.plain)
-                .frame(minHeight: 200)
+                .background(Color(.systemBackground))
+                .cornerRadius(8)
+                .frame(minHeight: 100)
                 .padding(.horizontal, 8)
             }
         }

@@ -58,7 +58,9 @@ struct TabTopView<Trailing: View, Content: View>: View {
                             .foregroundColor(.blue)
                     }
                     .padding()
-                    .confirmationDialog(LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible) {
+                    .confirmationDialog(
+                        LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible
+                    ) {
                         ForEach(actionItems.indices, id: \.self) { index in
                             Button(actionItems[index].title) {
                                 actionItems[index].action()
@@ -67,6 +69,7 @@ struct TabTopView<Trailing: View, Content: View>: View {
                         Button(LocalizedStrings.cancel, role: .cancel) {}
                     }
                 }
+                .padding(.bottom, 50)  // 広告の高さ分だけ上に移動
             }
         }
     }

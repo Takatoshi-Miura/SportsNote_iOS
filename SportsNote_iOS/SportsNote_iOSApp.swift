@@ -1,4 +1,5 @@
 import Firebase
+import GoogleMobileAds
 import SwiftUI
 
 @main
@@ -9,6 +10,9 @@ struct SportsNote_iOSApp: App {
     init() {
         // 同期的な初期化のみここで実行
         FirebaseApp.configure()
+
+        // Google AdMobの初期化
+        MobileAds.shared.start()
 
         do {
             try RealmManager.shared.initRealm()

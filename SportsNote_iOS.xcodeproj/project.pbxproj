@@ -15,6 +15,7 @@
 		8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */; };
 		8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */; };
 		8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */; };
+		8DC46FE12EBE350E00D87F07 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 8DC46FE02EBE350E00D87F07 /* GoogleMobileAds */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +82,7 @@
 				8D8F87372D8CECDA00899E68 /* FirebaseAuth in Frameworks */,
 				8D8F873B2D8CECDA00899E68 /* FirebaseCrashlytics in Frameworks */,
 				8D8F87392D8CECDA00899E68 /* FirebaseCore in Frameworks */,
+				8DC46FE12EBE350E00D87F07 /* GoogleMobileAds in Frameworks */,
 				8D4EF5F82D85171600AC19C1 /* RealmSwift in Frameworks */,
 				8D8F873D2D8CECDA00899E68 /* FirebaseFirestore in Frameworks */,
 				8D8F87432D8D306800899E68 /* FirebaseFirestoreCombine-Community in Frameworks */,
@@ -152,6 +154,7 @@
 				8D8F873A2D8CECDA00899E68 /* FirebaseCrashlytics */,
 				8D8F873C2D8CECDA00899E68 /* FirebaseFirestore */,
 				8D8F87422D8D306800899E68 /* FirebaseFirestoreCombine-Community */,
+				8DC46FE02EBE350E00D87F07 /* GoogleMobileAds */,
 			);
 			productName = SportsNote_iOS;
 			productReference = 8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */;
@@ -239,6 +242,7 @@
 			packageReferences = (
 				8D4EF5F42D85171600AC19C1 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				8DC46FDF2EBE350E00D87F07 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8D79F2D92D80660200D5D685 /* Products */;
@@ -448,6 +452,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SportsNote-iOS-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -491,6 +496,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SportsNote-iOS-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -672,6 +678,14 @@
 				minimumVersion = 11.10.0;
 			};
 		};
+		8DC46FDF2EBE350E00D87F07 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.13.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -709,6 +723,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8D8F87332D8CECDA00899E68 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		8DC46FE02EBE350E00D87F07 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8DC46FDF2EBE350E00D87F07 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

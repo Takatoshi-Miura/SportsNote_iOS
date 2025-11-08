@@ -27,7 +27,7 @@ struct TargetView: View {
             },
             content: {
                 VStack(spacing: 0) {
-                    // カレンダーセクション
+                    // カレンダーセクション（固定）
                     CalendarSection(
                         selectedYear: selectedYear,
                         selectedMonth: selectedMonth,
@@ -44,14 +44,23 @@ struct TargetView: View {
                     )
                     .padding(.top, 16)
 
-                    // ノートリストセクション
+                    // ノートリストセクション（スクロール可能）
                     if let date = selectedDate {
-                        NoteListSection(
-                            notes: noteViewModel.notes,
-                            date: date
-                        )
-                        .padding(.vertical, 16)
+                        ScrollView {
+                            NoteListSection(
+                                notes: noteViewModel.notes,
+                                date: date
+                            )
+                            .padding(.vertical, 16)
+                        }
+                    } else {
+                        Spacer()
                     }
+
+                    // AdMobバナー広告
+                    AdMobBannerView()
+                        .frame(height: 50)
+                        .background(Color(.systemBackground))
                 }
             },
             actionItems: [

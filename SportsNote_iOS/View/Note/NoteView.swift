@@ -41,6 +41,11 @@ struct NoteView: View {
                                     }
                                 }
                             }
+
+                        // AdMobバナー広告
+                        AdMobBannerView()
+                            .frame(height: 50)
+                            .background(Color(.systemBackground))
                     }
                     .onChange(of: searchQuery) { newValue in
                         if !newValue.isEmpty {
