@@ -137,7 +137,6 @@ struct SearchBarView: View {
 /// ノート一覧
 struct NoteListView: View {
     @ObservedObject var viewModel: NoteViewModel
-    @State private var selectedNoteID: String? = nil
 
     var body: some View {
         List {
@@ -150,19 +149,7 @@ struct NoteListView: View {
             } else {
                 ForEach(viewModel.notes, id: \.noteID) { note in
                     let noteType = NoteType(rawValue: note.noteType) ?? .free
-                    NavigationLink(
-                        tag: note.noteID,
-                        selection: $selectedNoteID,
-                        destination: {
-                            destinationView(noteType: noteType, noteID: note.noteID)
-                                .onDisappear {
-                                    // 詳細画面から戻ったときに選択状態を解除
-                                    DispatchQueue.main.async {
-                                        selectedNoteID = nil
-                                    }
-                                }
-                        }
-                    ) {
+                    NavigationLink(value: note.noteID) {
                         NoteRow(note: note)
                     }
                     .if(noteType != .free) { view in
@@ -183,6 +170,13 @@ struct NoteListView: View {
             }
         }
         .listStyle(.plain)
+        .navigationDestination(for: String.self) { noteID in
+            // noteIDから該当するNoteを検索して適切な画面を表示
+            if let note = viewModel.notes.first(where: { $0.noteID == noteID }) {
+                let noteType = NoteType(rawValue: note.noteType) ?? .free
+                destinationView(noteType: noteType, noteID: noteID)
+            }
+        }
     }
 
     /// ノート種別に応じた遷移先Viewを返す
