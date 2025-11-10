@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import SwiftUI
 
+/// 対策詳細画面
 struct MeasureDetailView: View {
     let measure: Measures
     @State private var title: String

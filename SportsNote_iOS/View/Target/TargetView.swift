@@ -1,6 +1,7 @@
 import Combine
 import SwiftUI
 
+/// 目標画面
 struct TargetView: View {
     @Binding var isMenuOpen: Bool
     @StateObject private var noteViewModel = NoteViewModel()
