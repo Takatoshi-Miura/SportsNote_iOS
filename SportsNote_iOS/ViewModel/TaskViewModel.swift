@@ -24,8 +24,31 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     // 対策管理用ViewModel
     private let measuresViewModel = MeasuresViewModel()
 
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
+        setupNotifications()
+    }
+
+
+    /// 通知の設定
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Realmオブジェクトの参照をクリア
+    private func clearRealmReferences() {
+        tasks = []
+        taskListData = []
+        filteredTaskListData = []
+        taskDetail = nil
     }
 
     // MARK: - CRUD処理

@@ -57,6 +57,8 @@ struct LoginView: View {
                                 viewModel.logout(
                                     onSuccess: {
                                         KeyboardUtil.hideKeyboard()
+                                        onDismiss()
+                                        dismiss()
                                     },
                                     onFailure: {
                                         KeyboardUtil.hideKeyboard()
@@ -167,6 +169,27 @@ struct LoginView: View {
                     message: Text(viewModel.alertMessage),
                     dismissButton: .default(Text(LocalizedStrings.ok))
                 )
+            }
+            .overlay {
+                if viewModel.isLoading {
+                    ZStack {
+                        Color.black.opacity(0.3)
+                            .edgesIgnoringSafeArea(.all)
+
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+
+                            Text(LocalizedStrings.syncing)
+                                .foregroundColor(.white)
+                                .font(.headline)
+                        }
+                        .padding(30)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(15)
+                    }
+                }
             }
         }
         .interactiveDismissDisabled()  // スワイプで閉じる動作を無効化

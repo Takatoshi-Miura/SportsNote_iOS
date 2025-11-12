@@ -6,6 +6,7 @@ import SwiftUI
 struct SportsNote_iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isInitialized = false
+    @State private var reinitializationTrigger = UUID()
 
     init() {
         // 同期的な初期化のみここで実行
@@ -20,7 +21,7 @@ struct SportsNote_iOSApp: App {
             print("🚨 Realm初期化に失敗しました: \(error.localizedDescription)")
             // アプリの起動を継続するが、データベース機能は使用不可
         }
-        
+
         // テストデータ作成
 //        Task {
 //            try await TestDataManager.shared.createTestData()
@@ -31,6 +32,7 @@ struct SportsNote_iOSApp: App {
         WindowGroup {
             if isInitialized {
                 MainTabView()
+                    .id(reinitializationTrigger)
                     .onAppear {
                         setupNavigationBarAppearance()
                         checkAndShowTermsDialog()
@@ -41,6 +43,21 @@ struct SportsNote_iOSApp: App {
                     .onChange(of: scenePhase) { phase in
                         if phase == .active {
                             checkAndShowTermsDialog()
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .shouldReinitializeApp)) { _ in
+                        // アプリを再初期化
+                        isInitialized = false
+                        Task {
+                            // LoginViewModelの処理完了を待ってからRealmを再初期化
+                            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+                            do {
+                                try RealmManager.shared.initRealm()
+                            } catch {
+                                print("🚨 Realm再初期化に失敗しました: \(error.localizedDescription)")
+                            }
+                            reinitializationTrigger = UUID()
+                            isInitialized = true
                         }
                     }
             } else {

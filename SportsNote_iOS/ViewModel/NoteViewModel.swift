@@ -16,9 +16,33 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     @Published var showingErrorAlert: Bool = false
 
     private let realmManager = RealmManager.shared
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
+        setupNotifications()
+    }
+
+
+    /// 通知の設定
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Realmオブジェクトの参照をクリア
+    private func clearRealmReferences() {
+        notes = []
+        selectedNote = nil
+        practiceNotes = []
+        tournamentNotes = []
+        freeNotes = []
+        memos = []
     }
 
     // MARK: - READ処理

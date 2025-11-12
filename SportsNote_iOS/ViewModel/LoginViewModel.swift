@@ -47,38 +47,47 @@ class LoginViewModel: ObservableObject {
         auth.signIn(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
 
-            self.isLoading = false
-
             if let error = error {
+                self.isLoading = false
                 self.handleAuthError(error)
                 onFailure()
                 return
             }
 
             if authResult?.user != nil {
-                // データ全削除
-                Task.detached {
+                // データの削除と初期化を同期的に実行
+                Task {
+                    // データ全削除
                     await InitializationManager.shared.deleteAllData()
-                }
 
-                // ユーザー情報の保存
-                UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
-                UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: authResult?.user.uid ?? "")
-                UserDefaultsManager.set(key: UserDefaultsManager.Keys.address, value: self.email)
-                UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
-                UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
+                    // ViewModelのクリーンアップを通知
+                    NotificationCenter.default.post(name: .didClearAllData, object: nil)
 
-                // データ初期化と同期処理
-                Task.detached {
+                    // ユーザー情報の保存
+                    UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
+                    UserDefaultsManager.set(key: UserDefaultsManager.Keys.userID, value: authResult?.user.uid ?? "")
+                    UserDefaultsManager.set(key: UserDefaultsManager.Keys.address, value: self.email)
+                    UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
+                    UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
+
+                    // データ初期化と同期処理
                     await InitializationManager.shared.initializeApp(isLogin: true)
                     await InitializationManager.shared.syncAllData()
-                }
 
-                self.isLoggedIn = true
-                self.alertMessage = LocalizedStrings.loginSuccessful
-                self.showingAlert = true
-                onSuccess()
+                    self.isLoggedIn = true
+                    self.isLoading = false
+
+                    // アプリ全体を再初期化
+                    NotificationCenter.default.post(name: .shouldReinitializeApp, object: nil)
+
+                    // MainTabViewの再初期化完了を待ってから成功コールバック
+                    try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+                    self.alertMessage = LocalizedStrings.loginSuccessful
+                    self.showingAlert = true
+                    onSuccess()
+                }
             } else {
+                self.isLoading = false
                 self.alertMessage = LocalizedStrings.loginFailed
                 self.showingAlert = true
                 onFailure()
@@ -99,25 +108,39 @@ class LoginViewModel: ObservableObject {
             return
         }
 
-        do {
-            try auth.signOut()
+        isLoading = true
 
-            // データの削除と初期化
-            Task.detached {
+        Task {
+            do {
+                try auth.signOut()
+
+                // データの削除と初期化を同期的に実行
                 await InitializationManager.shared.deleteAllData()
-                await InitializationManager.shared.initializeApp(isLogin: false)
-            }
 
-            isLoggedIn = false
-            email = ""
-            password = ""
-            alertMessage = LocalizedStrings.logoutSuccessful
-            showingAlert = true
-            onSuccess()
-        } catch {
-            alertMessage = LocalizedStrings.logoutFailed
-            showingAlert = true
-            onFailure()
+                // ViewModelのクリーンアップを通知
+                NotificationCenter.default.post(name: .didClearAllData, object: nil)
+
+                await InitializationManager.shared.initializeApp(isLogin: false)
+
+                isLoggedIn = false
+                email = ""
+                password = ""
+                isLoading = false
+
+                // アプリ全体を再初期化
+                NotificationCenter.default.post(name: .shouldReinitializeApp, object: nil)
+
+                // MainTabViewの再初期化完了を待ってから成功コールバック
+                try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+                alertMessage = LocalizedStrings.logoutSuccessful
+                showingAlert = true
+                onSuccess()
+            } catch {
+                alertMessage = LocalizedStrings.logoutFailed
+                showingAlert = true
+                isLoading = false
+                onFailure()
+            }
         }
     }
 
@@ -250,26 +273,36 @@ class LoginViewModel: ObservableObject {
         user.delete { [weak self] error in
             guard let self = self else { return }
 
-            self.isLoading = false
-
             if let error = error {
+                self.isLoading = false
                 self.handleAuthError(error)
                 onFailure()
                 return
             }
 
-            // データの削除と初期化
-            Task.detached {
+            // データの削除と初期化を同期的に実行
+            Task {
                 await InitializationManager.shared.deleteAllData()
-                await InitializationManager.shared.initializeApp(isLogin: false)
-            }
 
-            self.isLoggedIn = false
-            self.email = ""
-            self.password = ""
-            self.alertMessage = LocalizedStrings.accountDeleted
-            self.showingAlert = true
-            onSuccess()
+                // ViewModelのクリーンアップを通知
+                NotificationCenter.default.post(name: .didClearAllData, object: nil)
+
+                await InitializationManager.shared.initializeApp(isLogin: false)
+
+                self.isLoggedIn = false
+                self.email = ""
+                self.password = ""
+                self.isLoading = false
+
+                // アプリ全体を再初期化
+                NotificationCenter.default.post(name: .shouldReinitializeApp, object: nil)
+
+                // MainTabViewの再初期化完了を待ってから成功コールバック
+                try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+                self.alertMessage = LocalizedStrings.accountDeleted
+                self.showingAlert = true
+                onSuccess()
+            }
         }
     }
 

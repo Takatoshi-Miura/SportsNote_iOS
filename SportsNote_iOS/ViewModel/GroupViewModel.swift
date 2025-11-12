@@ -10,6 +10,8 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     @Published var currentError: SportsNoteError?
     @Published var showingErrorAlert: Bool = false
 
+    private var cancellables = Set<AnyCancellable>()
+
     /// グループが削除可能かどうかを判定
     var canDelete: Bool {
         return groups.count > 1
@@ -17,6 +19,24 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
 
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
+        setupNotifications()
+    }
+
+
+    /// 通知の設定
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Realmオブジェクトの参照をクリア
+    private func clearRealmReferences() {
+        groups = []
     }
 
     // MARK: - CURD処理

@@ -69,11 +69,14 @@ struct MainTaskList: View {
     }
 
     private func isTaskComplete(taskID: String) -> Bool {
-        return tasks.first(where: { $0.taskID == taskID })?.isComplete ?? false
+        guard let task = tasks.first(where: { $0.taskID == taskID }), !task.isInvalidated else {
+            return false
+        }
+        return task.isComplete
     }
 
     private func getTaskDetailView(for taskList: TaskListData) -> AnyView {
-        if let task = tasks.first(where: { $0.taskID == taskList.taskID }) {
+        if let task = tasks.first(where: { $0.taskID == taskList.taskID }), !task.isInvalidated {
             // すべてのViewModelを共有して渡す
             return TaskDetailView(
                 viewModel: taskViewModel,

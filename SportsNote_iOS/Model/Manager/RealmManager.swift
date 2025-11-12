@@ -69,12 +69,35 @@ final class RealmManager {
         do {
             let realm = try Realm()
             try realm.write {
-                let allObjects = realm.objects(Object.self)
-                for object in allObjects {
-                    // 各オブジェクトが userID を持っているか確認し、更新する
-                    if object.objectSchema.properties.contains(where: { $0.name == "userID" }) {
-                        object.setValue(userId, forKey: "userID")
-                    }
+                // 各モデルタイプごとに更新処理を実行
+                let groups = realm.objects(Group.self)
+                for group in groups {
+                    group.userID = userId
+                }
+
+                let tasks = realm.objects(TaskData.self)
+                for task in tasks {
+                    task.userID = userId
+                }
+
+                let notes = realm.objects(Note.self)
+                for note in notes {
+                    note.userID = userId
+                }
+
+                let targets = realm.objects(Target.self)
+                for target in targets {
+                    target.userID = userId
+                }
+
+                let measures = realm.objects(Measures.self)
+                for measure in measures {
+                    measure.userID = userId
+                }
+
+                let memos = realm.objects(Memo.self)
+                for memo in memos {
+                    memo.userID = userId
                 }
             }
         } catch let error {

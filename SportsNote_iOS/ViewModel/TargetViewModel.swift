@@ -32,6 +32,25 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
                 }
             }
             .store(in: &cancellables)
+
+        setupNotifications()
+    }
+
+    /// 通知の設定
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Realmオブジェクトの参照をクリア
+    private func clearRealmReferences() {
+        yearlyTargets = []
+        monthlyTargets = []
     }
 
     // MARK: - BaseViewModelProtocol準拠

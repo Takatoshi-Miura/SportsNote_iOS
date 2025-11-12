@@ -11,8 +11,29 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     @Published var currentError: SportsNoteError?
     @Published var showingErrorAlert: Bool = false
 
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         // 自動データ取得は削除、View側で明示的に実行
+        setupNotifications()
+    }
+
+
+    /// 通知の設定
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Realmオブジェクトの参照をクリア
+    private func clearRealmReferences() {
+        memoList = []
+        measuresMemoList = []
     }
 
     // MARK: - BaseViewModelProtocol準拠
