@@ -47,6 +47,17 @@ private struct GroupChip: View {
                 Text(group.title)
                     .font(.subheadline)
                     .lineLimit(1)
+
+                // 情報アイコンボタン
+                Button(action: {
+                    onEditTap()
+                }) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 14))
+                        .foregroundColor(infoIconColor())
+                        .padding(.leading, 2)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -59,11 +70,7 @@ private struct GroupChip: View {
                     .stroke(chipStrokeColor(), lineWidth: 1)
             )
         }
-        .contextMenu {
-            Button(action: onEditTap) {
-                Label(LocalizedStrings.edit, systemImage: "pencil")
-            }
-        }
+        .buttonStyle(PlainButtonStyle())
     }
 
     private func chipBackgroundColor() -> Color {
@@ -79,6 +86,14 @@ private struct GroupChip: View {
             return Color(GroupColor.allCases[Int(group.color)].color)
         } else {
             return Color(.systemGray4)
+        }
+    }
+
+    private func infoIconColor() -> Color {
+        if isSelected {
+            return Color(GroupColor.allCases[Int(group.color)].color)
+        } else {
+            return Color(.systemGray)
         }
     }
 }
