@@ -15,6 +15,9 @@ struct SportsNote_iOSApp: App {
         // Google AdMobの初期化
         MobileAds.shared.start()
 
+        // ネットワーク監視の初期化
+        _ = Network.shared
+
         do {
             try RealmManager.shared.initRealm()
         } catch {
