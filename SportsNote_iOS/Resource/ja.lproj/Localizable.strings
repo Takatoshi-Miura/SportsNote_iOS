@@ -100,6 +100,7 @@
 "noTasksWorkedOn" = "取り組んだ課題はありません。";
 "addTask" = "課題を追加";
 "deleteTask" = "課題を削除しますか？\n課題を削除すると復元できません。";
+"testData" = "テストデータ";
 
 // MARK: Measures
 "measures" = "対策";

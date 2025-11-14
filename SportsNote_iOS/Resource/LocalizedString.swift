@@ -109,6 +109,7 @@ struct LocalizedStrings {
     static let noTasksWorkedOn = "noTasksWorkedOn".localized
     static let addTask = "addTask".localized
     static let deleteTask = "deleteTask".localized
+    static let testData = "testData".localized
 
     // MARK: Measures
     static let measures = "measures".localized

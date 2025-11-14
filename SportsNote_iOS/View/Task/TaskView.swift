@@ -15,6 +15,49 @@ struct TaskView: View {
     @StateObject private var noteViewModel = NoteViewModel()
     @State private var refreshTrigger: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
+    @State private var showTestDataAlert = false
+    @State private var testDataAlertMessage = ""
+    @State private var isCreatingTestData = false
+
+    // アクションメニュー項目（Debug時のみテストデータを追加）
+    private var actionItems: [(String, () -> Void)] {
+        var items: [(String, () -> Void)] = [
+            (LocalizedStrings.group, { isAddGroupPresented = true }),
+            (LocalizedStrings.task, { isAddTaskPresented = true }),
+        ]
+        #if DEBUG
+        items.append((LocalizedStrings.testData, {
+            isCreatingTestData = true
+            Task {
+                do {
+                    try await TestDataManager.shared.createTestData()
+                    testDataAlertMessage = "テストデータの作成に成功しました"
+
+                    // データを再読み込み
+                    let result = await viewModel.fetchData()
+                    if case .failure(let error) = result {
+                        viewModel.showErrorAlert(error)
+                    }
+
+                    let taskResult: Result<Void, SportsNoteError>
+                    if let id = selectedGroupID {
+                        taskResult = await taskViewModel.fetchTasksByGroupID(groupID: id)
+                    } else {
+                        taskResult = await taskViewModel.fetchData()
+                    }
+                    if case .failure(let error) = taskResult {
+                        taskViewModel.showErrorAlert(error)
+                    }
+                } catch {
+                    testDataAlertMessage = "テストデータの作成に失敗しました: \(error.localizedDescription)"
+                }
+                isCreatingTestData = false
+                showTestDataAlert = true
+            }
+        }))
+        #endif
+        return items
+    }
 
     var body: some View {
         TabTopView(
@@ -101,10 +144,7 @@ struct TaskView: View {
                 }
                 .id(refreshTrigger)  // IDを変更することでViewを強制的に再構築
             },
-            actionItems: [
-                (LocalizedStrings.group, { isAddGroupPresented = true }),
-                (LocalizedStrings.task, { isAddTaskPresented = true }),
-            ]
+            actionItems: actionItems
         )
         .navigationDestination(isPresented: $navigateToGroupEdit) {
             if let group = selectedGroupForEdit {
@@ -152,6 +192,32 @@ struct TaskView: View {
             currentError: $taskViewModel.currentError,
             showingAlert: $taskViewModel.showingErrorAlert
         )
+        .alert(LocalizedStrings.notice, isPresented: $showTestDataAlert) {
+            Button(LocalizedStrings.ok) {
+                showTestDataAlert = false
+            }
+        } message: {
+            Text(testDataAlertMessage)
+        }
+        .overlay {
+            if isCreatingTestData {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        Text("テストデータを作成中...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                    .padding(32)
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(16)
+                }
+            }
+        }
     }
 
     // パブリッシャーの購読処理を行う関数に切り出し
