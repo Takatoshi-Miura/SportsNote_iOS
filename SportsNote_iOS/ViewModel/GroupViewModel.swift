@@ -160,13 +160,16 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         defer { isLoading = false }
 
         do {
+            // 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
+            let groupToDelete = try RealmManager.shared.getObjectById(id: id, type: Group.self)
+
             // Realm操作はMainActorで実行
             try RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
-            // Firebase同期を非同期で実行（MainActorを維持）
-            if let deletedGroup = try RealmManager.shared.getObjectById(id: id, type: Group.self) {
+            // Firebase同期を非同期で実行（削除前に取得したオブジェクトを使用）
+            if let groupToDelete = groupToDelete {
                 Task {
-                    let syncResult = await syncEntityToFirebase(deletedGroup, isUpdate: true)
+                    let syncResult = await syncEntityToFirebase(groupToDelete, isUpdate: true)
                     if case .failure(let error) = syncResult {
                         showErrorAlert(error)
                     }

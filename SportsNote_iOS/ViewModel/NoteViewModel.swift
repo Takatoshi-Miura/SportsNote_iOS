@@ -448,19 +448,16 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 return .failure(.systemError("フリーノートは削除できません"))
             }
 
+            // 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
+            let noteToDelete = try realmManager.getObjectById(id: id, type: Note.self)
+
             // Realm操作はMainActorで実行
             try realmManager.logicalDelete(id: id, type: Note.self)
 
-            // Firebase同期はバックグラウンドで実行
-            if isOnlineAndLoggedIn {
+            // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
+            if isOnlineAndLoggedIn, let noteToDelete = noteToDelete {
                 Task {
-                    do {
-                        if let deletedNote = try realmManager.getObjectById(id: id, type: Note.self) {
-                            performBackgroundSync(deletedNote, isUpdate: true)
-                        }
-                    } catch {
-                        // ログのみ
-                    }
+                    performBackgroundSync(noteToDelete, isUpdate: true)
                 }
             }
 

@@ -292,18 +292,20 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         defer { isLoading = false }
 
         do {
-            // 1. Realm操作はMainActorで実行
+            // 1. 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
+            let taskToDelete = try RealmManager.shared.getObjectById(id: id, type: TaskData.self)
+
+            // 2. Realm操作はMainActorで実行
             try RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
 
-            // 2. Firebase同期はバックグラウンドで実行
-            Task {
-                let taskResult = await fetchById(id: id)
-                if case .success(let deletedTask) = taskResult, let deletedTask = deletedTask {
-                    performBackgroundSync(deletedTask, isUpdate: true)
+            // 3. Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
+            if let taskToDelete = taskToDelete {
+                Task {
+                    performBackgroundSync(taskToDelete, isUpdate: true)
                 }
             }
 
-            // 3. UI更新
+            // 4. UI更新
             tasks.removeAll(where: { $0.taskID == id })
             taskListData.removeAll(where: { $0.taskID == id })
 
