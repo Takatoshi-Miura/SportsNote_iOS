@@ -71,10 +71,10 @@ class JapaneseHolidayChecker {
             return false
         }
 
-        // 何週目の月曜日かを計算
-        let weekOfMonth = jpCalendar.component(.weekOfMonth, from: date)
+        // その月の何番目の月曜日かを計算
+        let mondayCount = calculateNthMondayOfMonth(year: year, month: month, day: day)
 
-        switch (month, weekOfMonth) {
+        switch (month, mondayCount) {
         case (1, 2):  // 成人の日（1月の第2月曜日）
             return true
         case (7, 3):  // 海の日（7月の第3月曜日）
@@ -88,15 +88,28 @@ class JapaneseHolidayChecker {
         }
     }
 
+    // その月の何番目の月曜日かを計算
+    private static func calculateNthMondayOfMonth(year: Int, month: Int, day: Int) -> Int {
+        var count = 0
+        for d in 1...day {
+            let date = dateFrom(year: year, month: month, day: d)
+            let weekday = jpCalendar.component(.weekday, from: date)
+            if weekday == 2 {  // 月曜日
+                count += 1
+            }
+        }
+        return count
+    }
+
     // 春分の日・秋分の日
     private static func isEquinoxDay(year: Int, month: Int, day: Int) -> Bool {
         if month == 3 {
-            // 春分の日の計算式（おおよその計算）
-            let springDay = Int(20.69115 + 0.2421904 * Double(year - 1900) - Double(Int((Double(year - 1900)) / 4.0)))
+            // 春分の日の計算式（1980年以降の式）
+            let springDay = Int(20.8431 + 0.242194 * Double(year - 1980) - Double((year - 1980) / 4))
             return day == springDay
         } else if month == 9 {
-            // 秋分の日の計算式（おおよその計算）
-            let autumnDay = Int(23.09 + 0.2421904 * Double(year - 1900) - Double(Int((Double(year - 1900)) / 4.0)))
+            // 秋分の日の計算式（1980年以降の式）
+            let autumnDay = Int(23.2488 + 0.242194 * Double(year - 1980) - Double((year - 1980) / 4))
             return day == autumnDay
         }
         return false
