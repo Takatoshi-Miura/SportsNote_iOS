@@ -11,9 +11,14 @@ import RealmSwift
 
 @testable import SportsNote_iOS
 
-@Suite("MeasuresViewModel Tests")
+@Suite("MeasuresViewModel Tests", .serialized)
 @MainActor
 struct MeasuresViewModelTests {
+    
+    init() async throws {
+        // インメモリRealmの設定
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -271,6 +276,143 @@ struct MeasuresViewModelTests {
         
         #expect(viewModel.measuresList[0].created_at.timeIntervalSince1970 > 
                 viewModel.measuresList[1].created_at.timeIntervalSince1970)
+    }
+    
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchData - データを取得できる")
+    func fetchData_retrievesData() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 0, created_at: Date())
+        let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 1, created_at: Date())
+        try? manager.saveItem(measures1)
+        try? manager.saveItem(measures2)
+        
+        _ = await viewModel.fetchData()
+        
+        #expect(viewModel.measuresList.count == 2)
+        #expect(viewModel.measuresList.contains(where: { $0.measuresID == "ms1" }))
+        #expect(viewModel.measuresList.contains(where: { $0.measuresID == "ms2" }))
+        
+        manager.clearAll()
+    }
+    
+    @Test("save - 新規対策を保存できる")
+    func save_savesNewMeasures() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let measures = Measures(measuresID: "new-ms", taskID: "t1", title: "New Measures", order: 0, created_at: Date())
+        
+        let result = await viewModel.save(measures)
+        
+        if case .failure = result {
+            Issue.record("Save failed")
+        }
+        
+        #expect(viewModel.measuresList.count == 1)
+        #expect(viewModel.measuresList.first?.measuresID == "new-ms")
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - 対策を削除できる")
+    func delete_deletesMeasures() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let measures = Measures(measuresID: "ms1", taskID: "t1", title: "Measures", order: 0, created_at: Date())
+        try? manager.saveItem(measures)
+        
+        _ = await viewModel.fetchData()
+        #expect(viewModel.measuresList.count == 1)
+        
+        let result = await viewModel.delete(id: "ms1")
+        
+        if case .failure = result {
+            Issue.record("Delete failed")
+        }
+        
+        #expect(viewModel.measuresList.isEmpty)
+        
+        manager.clearAll()
+    }
+    
+    @Test("getMeasuresByTaskID - 課題IDに紐づく対策を取得できる")
+    func getMeasuresByTaskID_retrievesMeasures() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 0, created_at: Date())
+        let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 1, created_at: Date())
+        let measures3 = Measures(measuresID: "ms3", taskID: "t2", title: "Measures 3", order: 0, created_at: Date())
+        try? manager.saveItem(measures1)
+        try? manager.saveItem(measures2)
+        try? manager.saveItem(measures3)
+        
+        let result = await viewModel.getMeasuresByTaskID(taskID: "t1")
+        
+        if case .success(let measures) = result {
+            #expect(measures.count == 2)
+            #expect(measures.contains(where: { $0.measuresID == "ms1" }))
+            #expect(measures.contains(where: { $0.measuresID == "ms2" }))
+        } else {
+            Issue.record("GetMeasuresByTaskID failed")
+        }
+        
+        manager.clearAll()
+    }
+    
+    @Test("getMostPriorityMeasures - 最優先対策を取得できる")
+    func getMostPriorityMeasures_retrievesMostPriorityMeasures() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 2, created_at: Date())
+        let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 0, created_at: Date())
+        let measures3 = Measures(measuresID: "ms3", taskID: "t1", title: "Measures 3", order: 1, created_at: Date())
+        try? manager.saveItem(measures1)
+        try? manager.saveItem(measures2)
+        try? manager.saveItem(measures3)
+        
+        let result = await viewModel.getMostPriorityMeasures(taskID: "t1")
+        
+        if case .success(let measures) = result {
+            #expect(measures?.measuresID == "ms2")
+            #expect(measures?.order == 0)
+        } else {
+            Issue.record("GetMostPriorityMeasures failed")
+        }
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveMeasures - 既存インターフェースで対策を保存できる")
+    func saveMeasures_savesWithLegacyInterface() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let result = await viewModel.saveMeasures(
+            taskID: "t1",
+            title: "Legacy Measures"
+        )
+        
+        if case .failure = result {
+            Issue.record("SaveMeasures failed")
+        }
+        
+        #expect(viewModel.measuresList.count == 1)
+        #expect(viewModel.measuresList.first?.title == "Legacy Measures")
+        
+        manager.clearAll()
     }
 }
 

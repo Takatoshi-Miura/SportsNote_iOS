@@ -11,9 +11,13 @@ import RealmSwift
 
 @testable import SportsNote_iOS
 
-@Suite("TargetViewModel Tests")
+@Suite("TargetViewModel Tests", .serialized)
 @MainActor
 struct TargetViewModelTests {
+    
+    init() async throws {
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -341,6 +345,69 @@ struct TargetViewModelTests {
         
         #expect(viewModel.monthlyTargets.count == 12)
         #expect(viewModel.monthlyTargets.allSatisfy { $0.isYearlyTarget == false })
+    }
+    
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchTargetsByYearMonth - 目標を取得できる")
+    func fetchTargetsByYearMonth_retrievesTargets() async {
+        let viewModel = TargetViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let target1 = Target(title: "Target 1", year: 2024, month: 11, isYearlyTarget: false)
+        let target2 = Target(title: "Target 2", year: 2024, month: 11, isYearlyTarget: false)
+        try? manager.saveItem(target1)
+        try? manager.saveItem(target2)
+        
+        _ = await viewModel.fetchTargetsByYearMonth(year: 2024, month: 11)
+        
+        #expect(viewModel.monthlyTargets.count == 2)
+        
+        manager.clearAll()
+    }
+    
+    @Test("save - 新規目標を保存できる")
+    func save_savesNewTarget() async {
+        let viewModel = TargetViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let target = Target(title: "New Target", year: 2024, month: 11, isYearlyTarget: false)
+        
+        let result = await viewModel.save(target)
+        
+        if case .failure = result {
+            Issue.record("Save failed")
+        }
+        
+        _ = await viewModel.fetchTargetsByYearMonth(year: 2024, month: 11)
+        #expect(viewModel.monthlyTargets.count == 1)
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - 目標を削除できる")
+    func delete_deletesTarget() async {
+        let viewModel = TargetViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let target = Target(title: "Target", year: 2024, month: 11, isYearlyTarget: false)
+        try? manager.saveItem(target)
+        
+        _ = await viewModel.fetchTargetsByYearMonth(year: 2024, month: 11)
+        #expect(viewModel.monthlyTargets.count == 1)
+        
+        let result = await viewModel.delete(id: target.targetID)
+        
+        if case .failure = result {
+            Issue.record("Delete failed")
+        }
+        
+        #expect(viewModel.monthlyTargets.isEmpty)
+        
+        manager.clearAll()
     }
 }
 

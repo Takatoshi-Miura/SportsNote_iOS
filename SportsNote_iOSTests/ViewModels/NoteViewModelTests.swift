@@ -11,9 +11,14 @@ import RealmSwift
 
 @testable import SportsNote_iOS
 
-@Suite("NoteViewModel Tests")
+@Suite("NoteViewModel Tests", .serialized)
 @MainActor
 struct NoteViewModelTests {
+    
+    init() async throws {
+        // インメモリRealmの設定
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -319,9 +324,295 @@ struct NoteViewModelTests {
         
         #expect(content == "Target")
     }
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchData - データを取得できる")
+    func fetchData_retrievesData() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        // テストデータ作成（フリーノート以外を使用）
+        let note1 = Note(purpose: "Purpose 1", detail: "Detail 1")
+        note1.noteType = NoteType.practice.rawValue
+        let note2 = Note(target: "Target 2", consciousness: "Consciousness 2", result: "Result 2")
+        note2.noteType = NoteType.tournament.rawValue
+        try? manager.saveItem(note1)
+        try? manager.saveItem(note2)
+        
+        // データ取得
+        _ = await viewModel.fetchData()
+        
+        #expect(viewModel.notes.count == 2)
+        #expect(viewModel.notes.contains(where: { $0.noteID == note1.noteID }))
+        #expect(viewModel.notes.contains(where: { $0.noteID == note2.noteID }))
+        
+        manager.clearAll()
+    }
+    
+    
+    @Test("delete - ノートを削除できる")
+    func delete_deletesNote() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        // テストデータ（フリーノート以外でないと削除できない仕様があるため練習ノートにする）
+        let note = Note(purpose: "Purpose", detail: "Detail")
+        note.noteType = NoteType.practice.rawValue
+        try? manager.saveItem(note)
+        
+        // ViewModelにロード
+        _ = await viewModel.fetchData()
+        #expect(viewModel.notes.count == 1)
+        
+        // 削除
+        let result = await viewModel.delete(id: note.noteID)
+        
+        // 成功確認
+        if case .failure(let error) = result {
+            Issue.record("Delete failed: \(error)")
+        }
+        
+        #expect(viewModel.notes.isEmpty)
+        
+        // Realmでの論理削除確認
+        let deletedNote = manager.getRawObjectById(id: note.noteID, type: Note.self)
+        #expect(deletedNote?.isDeleted == true)
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - フリーノートは削除できない")
+    func delete_cannotDeleteFreeNote() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        // フリーノート作成
+        let note = Note(title: "Free Note")
+        note.noteType = NoteType.free.rawValue
+        try? manager.saveItem(note)
+        
+        // ViewModelにロード
+        _ = await viewModel.fetchData()
+        
+        // 削除試行
+        let result = await viewModel.delete(id: note.noteID)
+        
+        // 失敗確認
+        if case .success = result {
+            Issue.record("Should fail to delete free note")
+        }
+        
+        // データが残っていること
+        #expect(viewModel.notes.count == 1)
+        let existingNote = try? manager.getObjectById(id: note.noteID, type: Note.self)
+        #expect(existingNote != nil)
+        
+        manager.clearAll()
+    }
+    
+    // MARK: - 検索・フィルタリングテスト
+    
+    @Test("searchNotes - クエリで検索できる")
+    func searchNotes_filtersByQuery() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        // データ作成
+        let note1 = Note(title: "Swift")
+        note1.noteType = NoteType.free.rawValue // フリーノートは常にヒットする仕様
+        
+        let note2 = Note(purpose: "Coding", detail: "Swift Testing")
+        note2.noteType = NoteType.practice.rawValue
+        
+        let note3 = Note(target: "Win", consciousness: "Focus", result: "Good")
+        note3.noteType = NoteType.tournament.rawValue
+        
+        try? manager.saveItem(note1)
+        try? manager.saveItem(note2)
+        try? manager.saveItem(note3)
+        
+        // "Testing"で検索 -> note1(Free)とnote2(Practice)がヒット
+        viewModel.searchNotes(query: "Testing")
+        
+        #expect(viewModel.notes.count == 2)
+        #expect(viewModel.notes.contains(where: { $0.noteID == note1.noteID }))
+        #expect(viewModel.notes.contains(where: { $0.noteID == note2.noteID }))
+        
+        manager.clearAll()
+    }
+    
+    @Test("filterNotesByDate - 日付でフィルタリングできる")
+    func filterNotesByDate_filtersByDate() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let today = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        
+        let noteToday = Note(purpose: "Today", detail: "")
+        noteToday.date = today
+        noteToday.noteType = NoteType.practice.rawValue
+        
+        let noteYesterday = Note(purpose: "Yesterday", detail: "")
+        noteYesterday.date = yesterday
+        noteYesterday.noteType = NoteType.practice.rawValue
+        
+        try? manager.saveItem(noteToday)
+        try? manager.saveItem(noteYesterday)
+        
+        // 今日のノートを取得
+        let filtered = viewModel.filterNotesByDate(today)
+        
+        #expect(filtered.count == 1)
+        #expect(filtered.first?.noteID == noteToday.noteID)
+        
+        manager.clearAll()
+    }
+    
+    // MARK: - 各種ノート作成メソッドテスト
+    
+    @Test("savePracticeNote - 練習ノートを保存できる")
+    func savePracticeNote_savesCorrectly() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        viewModel.savePracticeNoteWithReflections(
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            weather: .rainy,
+            temperature: 25
+        )
+        
+        // 保存完了を待機（ポーリング）
+        var notes: [Note] = []
+        for _ in 0..<50 { // 最大5秒待機
+            await Task.yield()
+            if let fetched = try? manager.getDataList(clazz: Note.self), !fetched.isEmpty {
+                notes = fetched
+                break
+            }
+            if let error = viewModel.currentError {
+                print("ViewModel Error: \(error)")
+                break
+            }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        
+        let note = notes.first
+        
+        #expect(note != nil)
+        #expect(note?.noteType == NoteType.practice.rawValue)
+        #expect(note?.purpose == "Practice Purpose")
+        #expect(note?.detail == "Practice Detail")
+        #expect(note?.weather == Weather.rainy.rawValue)
+        #expect(note?.temperature == 25)
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveTournamentNote - 大会ノートを保存できる")
+    func saveTournamentNote_savesCorrectly() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        viewModel.saveTournamentNote(
+            target: "Tournament Target",
+            consciousness: "Consciousness",
+            result: "Result"
+        )
+        
+        // 保存完了を待機（ポーリング）
+        var notes: [Note] = []
+        for _ in 0..<50 { // 最大5秒待機
+            await Task.yield()
+            if let fetched = try? manager.getDataList(clazz: Note.self), !fetched.isEmpty {
+                notes = fetched
+                break
+            }
+            if let error = viewModel.currentError {
+                print("ViewModel Error: \(error)")
+                break
+            }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        
+        let note = notes.first
+        
+        #expect(note != nil)
+        #expect(note?.noteType == NoteType.tournament.rawValue)
+        #expect(note?.target == "Tournament Target")
+        #expect(note?.consciousness == "Consciousness")
+        #expect(note?.result == "Result")
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveFreeNote - フリーノートを保存できる")
+    func saveFreeNote_savesCorrectly() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        viewModel.saveFreeNote(
+            title: "Free Title",
+            detail: "Free Detail"
+        )
+        
+        // 保存完了を待機（ポーリング）
+        var notes: [Note] = []
+        for _ in 0..<50 { // 最大5秒待機
+            await Task.yield()
+            if let fetched = try? manager.getDataList(clazz: Note.self), !fetched.isEmpty {
+                notes = fetched
+                break
+            }
+            if let error = viewModel.currentError {
+                print("ViewModel Error: \(error)")
+                break
+            }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        
+        let note = notes.first
+        
+        #expect(note != nil)
+        #expect(note?.noteType == NoteType.free.rawValue)
+        #expect(note?.title == "Free Title")
+        #expect(note?.detail == "Free Detail")
+        
+        manager.clearAll()
+    }
+    
+    @Test("fetchNotesExcludingFree - フリーノートを除外して取得できる")
+    func fetchNotesExcludingFree_excludesFreeNotes() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let freeNote = Note(title: "Free")
+        freeNote.noteType = NoteType.free.rawValue
+        
+        let practiceNote = Note(purpose: "Practice", detail: "")
+        practiceNote.noteType = NoteType.practice.rawValue
+        
+        try? manager.saveItem(freeNote)
+        try? manager.saveItem(practiceNote)
+        
+        _ = await viewModel.fetchNotesExcludingFree()
+        
+        #expect(viewModel.notes.count == 1)
+        #expect(viewModel.notes.first?.noteType == NoteType.practice.rawValue)
+        
+        manager.clearAll()
+    }
 }
-
-// MARK: - テストヘルパー拡張
 
 extension NoteViewModelTests {
     

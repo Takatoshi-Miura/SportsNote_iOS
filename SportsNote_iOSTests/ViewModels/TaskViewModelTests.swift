@@ -11,9 +11,13 @@ import RealmSwift
 
 @testable import SportsNote_iOS
 
-@Suite("TaskViewModel Tests")
+@Suite("TaskViewModel Tests", .serialized)
 @MainActor
 struct TaskViewModelTests {
+    
+    init() async throws {
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -491,6 +495,179 @@ struct TaskViewModelTests {
         
         #expect(completedCount == 5)
         #expect(incompleteCount == 5)
+    }
+    
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchData - データを取得できる")
+    func fetchData_retrievesData() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task1 = TaskData(taskID: "t1", title: "Task 1", cause: "Cause 1", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        let task2 = TaskData(taskID: "t2", title: "Task 2", cause: "Cause 2", groupID: "g1", order: 1, isComplete: false, created_at: Date())
+        try? manager.saveItem(task1)
+        try? manager.saveItem(task2)
+        
+        _ = await viewModel.fetchData()
+        
+        #expect(viewModel.tasks.count == 2)
+        
+        manager.clearAll()
+    }
+    
+    @Test("save - 新規課題を保存できる")
+    func save_savesNewTask() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task = TaskData(taskID: "new-task", title: "New Task", cause: "Cause", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        
+        let result = await viewModel.save(task)
+        
+        if case .failure = result {
+            Issue.record("Save failed")
+        }
+        
+        #expect(viewModel.tasks.count == 1)
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - 課題を削除できる")
+    func delete_deletesTask() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task = TaskData(taskID: "t1", title: "Task", cause: "Cause", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        try? manager.saveItem(task)
+        
+        _ = await viewModel.fetchData()
+        #expect(viewModel.tasks.count == 1)
+        
+        let result = await viewModel.delete(id: "t1")
+        
+        if case .failure = result {
+            Issue.record("Delete failed")
+        }
+        
+        #expect(viewModel.tasks.isEmpty)
+        
+        manager.clearAll()
+    }
+    
+    // MARK: - TaskViewModel特有機能テスト
+    
+    @Test("toggleTaskCompletion - 課題の完了状態を切り替えられる")
+    func toggleTaskCompletion_togglesCompletion() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task = TaskData(taskID: "t1", title: "Task", cause: "Cause", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        try? manager.saveItem(task)
+        
+        _ = await viewModel.fetchData()
+        #expect(viewModel.tasks.first?.isComplete == false)
+        
+        _ = await viewModel.toggleTaskCompletion(taskID: "t1")
+        
+        #expect(viewModel.tasks.first?.isComplete == true)
+        
+        manager.clearAll()
+    }
+    
+    @Test("fetchTasksByGroupID - グループIDでフィルタリングできる")
+    func fetchTasksByGroupID_filtersTasksByGroupID() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task1 = TaskData(taskID: "t1", title: "Task 1", cause: "Cause 1", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        let task2 = TaskData(taskID: "t2", title: "Task 2", cause: "Cause 2", groupID: "g1", order: 1, isComplete: false, created_at: Date())
+        let task3 = TaskData(taskID: "t3", title: "Task 3", cause: "Cause 3", groupID: "g2", order: 0, isComplete: false, created_at: Date())
+        try? manager.saveItem(task1)
+        try? manager.saveItem(task2)
+        try? manager.saveItem(task3)
+        
+        _ = await viewModel.fetchTasksByGroupID(groupID: "g1")
+        
+        #expect(viewModel.tasks.count == 2)
+        #expect(viewModel.tasks.allSatisfy { $0.groupID == "g1" })
+        
+        manager.clearAll()
+    }
+    
+    @Test("updateTask - 既存課題を更新できる")
+    func updateTask_updatesExistingTask() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task = TaskData(taskID: "t1", title: "Original", cause: "Original Cause", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        try? manager.saveItem(task)
+        
+        _ = await viewModel.updateTask(taskID: "t1", title: "Updated", cause: "Updated Cause", groupID: "g1")
+        
+        let updatedTask = try? manager.getObjectById(id: "t1", type: TaskData.self)
+        #expect(updatedTask?.title == "Updated")
+        #expect(updatedTask?.cause == "Updated Cause")
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveNewTaskWithMeasures - 課題と対策を同時に保存できる")
+    func saveNewTaskWithMeasures_savesTaskAndMeasures() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let result = await viewModel.saveNewTaskWithMeasures(
+            title: "New Task",
+            cause: "Cause",
+            groupID: "g1",
+            measuresTitle: "Measure 1"
+        )
+        
+        if case .success(let task) = result {
+            #expect(task.title == "New Task")
+            
+            // 対策が保存されているか確認
+            let measures = manager.getMeasuresByTaskID(taskID: task.taskID)
+            #expect(measures.count == 1)
+            #expect(measures.first?.title == "Measure 1")
+        } else {
+            Issue.record("SaveNewTaskWithMeasures failed")
+        }
+        
+        manager.clearAll()
+    }
+    
+    @Test("showCompletedTasks - 完了タスクの表示切り替えができる")
+    func showCompletedTasks_togglesFilteredTasks() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let task1 = TaskData(taskID: "t1", title: "Task 1", cause: "Cause 1", groupID: "g1", order: 0, isComplete: false, created_at: Date())
+        let task2 = TaskData(taskID: "t2", title: "Task 2", cause: "Cause 2", groupID: "g1", order: 1, isComplete: true, created_at: Date())
+        try? manager.saveItem(task1)
+        try? manager.saveItem(task2)
+        
+        _ = await viewModel.fetchData()
+        
+        // デフォルトは完了タスクを非表示
+        #expect(viewModel.showCompletedTasks == false)
+        #expect(viewModel.filteredTaskListData.count == 1)
+        
+        // 完了タスクを表示
+        viewModel.showCompletedTasks = true
+        #expect(viewModel.filteredTaskListData.count == 2)
+        
+        manager.clearAll()
     }
 }
 

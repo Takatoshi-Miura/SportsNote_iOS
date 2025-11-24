@@ -12,9 +12,13 @@ import UIKit
 
 @testable import SportsNote_iOS
 
-@Suite("GroupViewModel Tests")
+@Suite("GroupViewModel Tests", .serialized)
 @MainActor
 struct GroupViewModelTests {
+    
+    init() async throws {
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -320,6 +324,132 @@ struct GroupViewModelTests {
     func getGroupColor_returnsGrayForInvalidUUID(invalidID: String) {
         let color = GroupViewModel.getGroupColor(groupID: invalidID)
         #expect(color == .gray)
+    }
+    
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchData - データを取得できる")
+    func fetchData_retrievesData() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let group1 = Group(groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        let group2 = Group(groupID: "g2", title: "Group 2", color: GroupColor.blue.rawValue, order: 1, created_at: Date())
+        try? manager.saveItem(group1)
+        try? manager.saveItem(group2)
+        
+        _ = await viewModel.fetchData()
+        
+        #expect(viewModel.groups.count == 2)
+        #expect(viewModel.groups.contains(where: { $0.groupID == "g1" }))
+        #expect(viewModel.groups.contains(where: { $0.groupID == "g2" }))
+        
+        manager.clearAll()
+    }
+    
+    @Test("save - 新規グループを保存できる")
+    func save_savesNewGroup() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let group = Group(groupID: "new-g", title: "New Group", color: GroupColor.green.rawValue, order: 0, created_at: Date())
+        
+        let result = await viewModel.save(group)
+        
+        if case .failure = result {
+            Issue.record("Save failed")
+        }
+        
+        #expect(viewModel.groups.count == 1)
+        #expect(viewModel.groups.first?.groupID == "new-g")
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - グループを削除できる")
+    func delete_deletesGroup() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        // 2つのグループを作成（canDeleteがtrueになるように）
+        let group1 = Group(groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        let group2 = Group(groupID: "g2", title: "Group 2", color: GroupColor.blue.rawValue, order: 1, created_at: Date())
+        try? manager.saveItem(group1)
+        try? manager.saveItem(group2)
+        
+        _ = await viewModel.fetchData()
+        #expect(viewModel.groups.count == 2)
+        #expect(viewModel.canDelete == true)
+        
+        let result = await viewModel.delete(id: "g1")
+        
+        if case .failure = result {
+            Issue.record("Delete failed")
+        }
+        
+        #expect(viewModel.groups.count == 1)
+        #expect(viewModel.groups.first?.groupID == "g2")
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveGroup - 既存インターフェースでグループを保存できる")
+    func saveGroup_savesWithLegacyInterface() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let result = await viewModel.saveGroup(
+            title: "Legacy Group",
+            color: .purple
+        )
+        
+        if case .failure = result {
+            Issue.record("SaveGroup failed")
+        }
+        
+        #expect(viewModel.groups.count == 1)
+        #expect(viewModel.groups.first?.title == "Legacy Group")
+        #expect(viewModel.groups.first?.color == GroupColor.purple.rawValue)
+        
+        manager.clearAll()
+    }
+    
+    @Test("getColorForGroupAtIndex - グループカラーを取得できる")
+    func getColorForGroupAtIndex_retrievesColor() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let group = Group(groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        try? manager.saveItem(group)
+        
+        _ = await viewModel.fetchData()
+        
+        let color = viewModel.getColorForGroupAtIndex(0)
+        #expect(color == .red)
+        
+        manager.clearAll()
+    }
+    
+    @Test("getTitleForGroupAtIndex - グループタイトルを取得できる")
+    func getTitleForGroupAtIndex_retrievesTitle() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let group = Group(groupID: "g1", title: "Test Group", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        try? manager.saveItem(group)
+        
+        _ = await viewModel.fetchData()
+        
+        let title = viewModel.getTitleForGroupAtIndex(0)
+        #expect(title == "Test Group")
+        
+        manager.clearAll()
     }
 }
 

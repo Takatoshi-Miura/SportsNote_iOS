@@ -11,9 +11,14 @@ import RealmSwift
 
 @testable import SportsNote_iOS
 
-@Suite("MemoViewModel Tests")
+@Suite("MemoViewModel Tests", .serialized)
 @MainActor
 struct MemoViewModelTests {
+    
+    init() async throws {
+        // インメモリRealmの設定
+        RealmManager.shared.setupInMemoryRealm()
+    }
     
     // MARK: - 初期化テスト
     
@@ -323,6 +328,126 @@ struct MemoViewModelTests {
         #expect(sorted[0].memoID == "1")
         #expect(sorted[1].memoID == "2")
         #expect(sorted[2].memoID == "3")
+    }
+    
+    // MARK: - CRUD操作テスト
+    
+    @Test("fetchData - データを取得できる")
+    func fetchData_retrievesData() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let memo1 = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail 1", created_at: Date())
+        let memo2 = Memo(memoID: "m2", measuresID: "ms2", noteID: "n2", detail: "Detail 2", created_at: Date())
+        try? manager.saveItem(memo1)
+        try? manager.saveItem(memo2)
+        
+        _ = await viewModel.fetchData()
+        
+        #expect(viewModel.memoList.count == 2)
+        #expect(viewModel.memoList.contains(where: { $0.memoID == "m1" }))
+        #expect(viewModel.memoList.contains(where: { $0.memoID == "m2" }))
+        
+        manager.clearAll()
+    }
+    
+    @Test("save - 新規メモを保存できる")
+    func save_savesNewMemo() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let memo = Memo(memoID: "new-memo", measuresID: "ms1", noteID: "n1", detail: "New Detail", created_at: Date())
+        
+        let result = await viewModel.save(memo)
+        
+        if case .failure = result {
+            Issue.record("Save failed")
+        }
+        
+        #expect(viewModel.memoList.count == 1)
+        #expect(viewModel.memoList.first?.memoID == "new-memo")
+        
+        manager.clearAll()
+    }
+    
+    @Test("delete - メモを削除できる")
+    func delete_deletesMemo() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let memo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail", created_at: Date())
+        try? manager.saveItem(memo)
+        
+        _ = await viewModel.fetchData()
+        #expect(viewModel.memoList.count == 1)
+        
+        let result = await viewModel.delete(id: "m1")
+        
+        if case .failure = result {
+            Issue.record("Delete failed")
+        }
+        
+        #expect(viewModel.memoList.isEmpty)
+        
+        manager.clearAll()
+    }
+    
+    @Test("getMemosByMeasuresID - 対策IDに紐づくメモを取得できる")
+    func getMemosByMeasuresID_retrievesMemos() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let note = Note(purpose: "Purpose", detail: "Detail")
+        note.noteID = "n1"
+        note.noteType = NoteType.practice.rawValue
+        note.date = Date()
+        try? manager.saveItem(note)
+        
+        let memo1 = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail 1", created_at: Date())
+        let memo2 = Memo(memoID: "m2", measuresID: "ms1", noteID: "n1", detail: "Detail 2", created_at: Date())
+        let memo3 = Memo(memoID: "m3", measuresID: "ms2", noteID: "n1", detail: "Detail 3", created_at: Date())
+        try? manager.saveItem(memo1)
+        try? manager.saveItem(memo2)
+        try? manager.saveItem(memo3)
+        
+        let result = viewModel.getMemosByMeasuresID(measuresID: "ms1")
+        
+        if case .success(let memos) = result {
+            #expect(memos.count == 2)
+            #expect(memos.contains(where: { $0.memoID == "m1" }))
+            #expect(memos.contains(where: { $0.memoID == "m2" }))
+        } else {
+            Issue.record("GetMemosByMeasuresID failed")
+        }
+        
+        manager.clearAll()
+    }
+    
+    @Test("saveMemo - 既存インターフェースでメモを保存できる")
+    func saveMemo_savesWithLegacyInterface() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+        
+        let result = await viewModel.saveMemo(
+            measuresID: "ms1",
+            noteID: "n1",
+            detail: "Legacy Detail"
+        )
+        
+        if case .success(let memo) = result {
+            #expect(memo.detail == "Legacy Detail")
+            #expect(memo.measuresID == "ms1")
+            #expect(memo.noteID == "n1")
+        } else {
+            Issue.record("SaveMemo failed")
+        }
+        
+        manager.clearAll()
     }
 }
 
