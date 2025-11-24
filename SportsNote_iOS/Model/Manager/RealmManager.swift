@@ -13,7 +13,7 @@ final class RealmManager {
     // シングルトンインスタンス
     static let shared = RealmManager()
 
-    private init() {}
+    init() {}
 
     /// Realmを初期化(起動準備)
     /// - Throws: SportsNoteError初期化に失敗した場合
@@ -31,7 +31,7 @@ final class RealmManager {
             Realm.Configuration.defaultConfiguration = config
 
             // 初期化テスト - Realmインスタンスを作成してみる
-            _ = try Realm()
+            _ = try getRealm()
         } catch let error {
             throw ErrorMapper.mapRealmError(error, context: "initRealm")
         }
@@ -44,6 +44,42 @@ final class RealmManager {
         }
     }
 
+    // MARK: - Test Helper
+    
+    #if DEBUG
+    /// テスト用のRealm設定
+    var testConfiguration: Realm.Configuration?
+    
+    /// テスト用のインメモリRealmを設定
+    func setupInMemoryRealm() {
+        var config = Realm.Configuration()
+        config.inMemoryIdentifier = "RealmManagerTests_\(UUID().uuidString)"
+        self.testConfiguration = config
+    }
+    
+    /// テスト用：削除済みデータも含めてIDで取得
+    func getRawObjectById<T: Object>(id: String, type: T.Type) -> T? {
+        do {
+            let realm = try getRealm()
+            return realm.object(ofType: type, forPrimaryKey: id)
+        } catch {
+            return nil
+        }
+    }
+    #endif
+
+    /// Realmインスタンスを取得するヘルパーメソッド
+    private func getRealm() throws -> Realm {
+        #if DEBUG
+        if let config = testConfiguration {
+            fputs("DEBUG: Using test configuration: \(config.inMemoryIdentifier ?? "nil")\n", stderr)
+            return try Realm(configuration: config)
+        }
+        #endif
+        fputs("DEBUG: Using default configuration\n", stderr)
+        return try Realm()
+    }
+
     // MARK: - Insert
 
     /// 汎用的なデータ保存メソッド
@@ -51,7 +87,7 @@ final class RealmManager {
     /// - Throws: SportsNoteError保存に失敗した場合
     func saveItem<T: Object>(_ item: T) throws {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             try realm.write {
                 realm.add(item, update: .modified)  // `insertOrUpdate`相当
             }
@@ -67,7 +103,7 @@ final class RealmManager {
     /// - Throws: SportsNoteError更新に失敗した場合
     func updateAllUserIds(userId: String) throws {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             try realm.write {
                 // 各モデルタイプごとに更新処理を実行
                 let groups = realm.objects(Group.self)
@@ -139,7 +175,7 @@ final class RealmManager {
         }
 
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             // PrimaryKeyで安全に検索
             _ = getPrimaryKeyName(type)
 
@@ -173,7 +209,7 @@ final class RealmManager {
     /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
     func getDataList<T: Object>(clazz: T.Type) throws -> [T] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             var results = realm.objects(clazz)
                 .filter("isDeleted == false")
             // "order" プロパティが存在する場合のみソート
@@ -194,7 +230,7 @@ final class RealmManager {
     /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
     func getCount<T: Object>(clazz: T.Type) throws -> Int {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return realm.objects(T.self)
                 .filter("isDeleted == false")
                 .count
@@ -208,7 +244,7 @@ final class RealmManager {
     /// - Returns: 完了した課題のリスト
     func getCompletedTasksByGroupId(groupID: String) -> [TaskData] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return realm.objects(TaskData.self)
                 .filter("groupID == %@ AND isComplete == true AND isDeleted == false", groupID)
                 .sorted(byKeyPath: "order", ascending: true)
@@ -224,7 +260,7 @@ final class RealmManager {
     /// - Returns: 対策のリスト
     func getMeasuresByTaskID(taskID: String) -> [Measures] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return realm.objects(Measures.self)
                 .filter("taskID == %@ AND isDeleted == false", taskID)
                 .sorted(byKeyPath: "order", ascending: true)
@@ -239,7 +275,7 @@ final class RealmManager {
     /// - Returns: フリーノート（存在しない場合は`nil`）
     func getFreeNote() -> Note? {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return realm.objects(Note.self)
                 .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue)
                 .first
@@ -254,7 +290,7 @@ final class RealmManager {
     /// - Returns: 検索結果のノートリスト
     func searchNotesByQuery(query: String) -> [Note] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
 
             // フリーノートを取得
             let freeNotes = Array(
@@ -291,7 +327,7 @@ final class RealmManager {
     /// - Returns: 指定した日付に合致するノートのリスト
     func getNotesByDate(selectedDate: Date) -> [Note] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             let startOfDay = Calendar.current.startOfDay(for: selectedDate)
             let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
             return Array(
@@ -309,7 +345,7 @@ final class RealmManager {
     /// - Returns: ノートのリスト
     func getNotes() -> [Note] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return Array(
                 realm.objects(Note.self)
                     .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
@@ -325,7 +361,7 @@ final class RealmManager {
     /// - Returns: 対策IDに関連するメモのリスト
     func getMemosByMeasuresID(measuresID: String) -> [Memo] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return Array(
                 realm.objects(Memo.self)
                     .filter("measuresID == %@ AND isDeleted == false", measuresID)
@@ -341,7 +377,7 @@ final class RealmManager {
     /// - Returns: ノートIDに関連するメモのリスト
     func getMemosByNoteID(noteID: String) -> [Memo] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             return Array(
                 realm.objects(Memo.self)
                     .filter("noteID == %@ AND isDeleted == false", noteID)
@@ -357,7 +393,7 @@ final class RealmManager {
     /// - Returns: ノートの背景色
     func getNoteBackgroundColor(noteID: String) -> UIColor {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             if let memo = realm.objects(Memo.self)
                 .filter("noteID == %@ AND isDeleted == false", noteID)
                 .first
@@ -392,7 +428,7 @@ final class RealmManager {
     /// - Returns: 条件に一致する目標のリスト
     func fetchYearlyTargets(year: Int) -> [Target] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             let targets = realm.objects(Target.self)
                 .filter("((isYearlyTarget == true AND year == %@)) AND isDeleted == false", year)
             return Array(targets)
@@ -409,7 +445,7 @@ final class RealmManager {
     /// - Returns: 条件に一致する目標のリスト
     func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             let targets = realm.objects(Target.self)
                 .filter(
                     "((isYearlyTarget == false AND year == %@ AND month == %@)) AND isDeleted == false", year, month)
@@ -429,7 +465,7 @@ final class RealmManager {
     /// - Throws: SportsNoteError削除に失敗した場合
     internal func logicalDelete<T: Object>(id: String, type: T.Type) throws {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
 
             try realm.write {
                 // T 型のオブジェクトを指定された ID に一致するものを取得
@@ -530,7 +566,7 @@ final class RealmManager {
     /// Realmの全データを削除
     func clearAll() {
         do {
-            let realm = try Realm()
+            let realm = try getRealm()
             try realm.write {
                 realm.deleteAll()
             }

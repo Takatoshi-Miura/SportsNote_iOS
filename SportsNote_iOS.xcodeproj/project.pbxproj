@@ -66,11 +66,6 @@
 			path = SportsNote_iOSTests;
 			sourceTree = "<group>";
 		};
-		8D79F2F62D80660300D5D685 /* SportsNote_iOSUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SportsNote_iOSUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,7 +106,6 @@
 			children = (
 				8D79F2DA2D80660200D5D685 /* SportsNote_iOS */,
 				8D79F2EC2D80660300D5D685 /* SportsNote_iOSTests */,
-				8D79F2F62D80660300D5D685 /* SportsNote_iOSUITests */,
 				8D79F2D92D80660200D5D685 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -195,9 +189,6 @@
 			);
 			dependencies = (
 				8D79F2F52D80660300D5D685 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				8D79F2F62D80660300D5D685 /* SportsNote_iOSUITests */,
 			);
 			name = SportsNote_iOSUITests;
 			packageProductDependencies = (
@@ -535,7 +526,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSTests";
@@ -559,7 +550,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSTests";
@@ -582,7 +573,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSUITests";
@@ -605,7 +596,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSUITests";
