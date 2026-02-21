@@ -530,4 +530,11 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         notes = filterNotesByDate(date)
     }
 
+    /// noteIDに紐づくメモ一覧を取得
+    /// - Parameter noteID: ノートID
+    /// - Returns: [Memo]
+    func getMemosByNoteID(noteID: String) -> [Memo] {
+        return realmManager.getMemosByNoteID(noteID: noteID)
+    }
+
 }

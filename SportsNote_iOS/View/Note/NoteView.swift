@@ -7,11 +7,21 @@ struct NoteView: View {
     @State private var isTournamentNotePresented = false
     @State private var searchQuery = ""
 
+    /// フリーノート以外のノートが存在するか
+    private var hasPagingNotes: Bool {
+        viewModel.notes.contains { $0.noteType != NoteType.free.rawValue }
+    }
+
     var body: some View {
         TabTopView(
             title: LocalizedStrings.note,
             isMenuOpen: $isMenuOpen,
-            trailingItem: { EmptyView() },
+            trailingItem: {
+                NavigationLink(destination: NotePageView()) {
+                    Image(systemName: "doc.plaintext")
+                }
+                .disabled(!hasPagingNotes)
+            },
             content: {
                 ZStack {
                     Color(.secondarySystemBackground)
