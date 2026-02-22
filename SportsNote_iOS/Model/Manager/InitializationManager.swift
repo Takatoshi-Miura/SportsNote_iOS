@@ -35,6 +35,7 @@ final class InitializationManager {
 
         // ログイン済みの場合、アプリ起動時にデータ同期を実行
         if !isFirstLaunch && isUserLoggedIn() && Network.isOnline() {
+            await migrateOldData()
             await syncAllData()
         }
     }
@@ -86,6 +87,17 @@ final class InitializationManager {
     func deleteAllData() async {
         RealmManager.shared.clearAll()
         UserDefaultsManager.clearAll()
+    }
+
+    /// 旧アプリのデータをマイグレーション
+    /// 未完了の場合のみ実行し、失敗時は次回起動時に再試行
+    private func migrateOldData() async {
+        guard MigrationManager.shared.needsMigration() else { return }
+        do {
+            try await MigrationManager.shared.migrateAll()
+        } catch {
+            print("旧データのマイグレーションに失敗しました: \(error.localizedDescription)")
+        }
     }
 
     /// 全データの同期処理

@@ -1,3 +1,4 @@
+@preconcurrency import FirebaseFirestore
 import Foundation
 import RealmSwift
 
@@ -7,6 +8,7 @@ import RealmSwift
 final class TestDataManager {
 
     static let shared = TestDataManager()
+    private let db = Firestore.firestore()
 
     private init() {}
 
@@ -647,5 +649,215 @@ final class TestDataManager {
         targets.append(lastMonthTarget)
 
         return targets
+    }
+
+    // MARK: - 旧形式テストデータ投入（マイグレーション検証用）
+
+    /// 旧アプリ形式のテストデータを Firebase の旧コレクションに投入する
+    /// マイグレーション機能の動作確認に使用。タイトルに [旧データ] を付与して識別しやすくする
+    /// - Note: DEBUG ビルドのみ使用を想定
+    func createOldFormatTestData() async throws {
+        print("📝 旧形式テストデータの投入を開始します...")
+
+        let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+        let now = getCurrentTimeString()
+
+        // 1. TaskData コレクション（2件）
+        // measuresData: [対策タイトル: [[有効性コメント: ノートID(Int)]]]
+        // noteID = 1, 2 は NoteData の noteID と対応
+        let task1MeasuresData: [String: [[String: Int]]] = [
+            "[旧データ] 毎日100本トスの練習": [
+                ["トスが安定してきた": 1],
+                ["継続できている": 2],
+            ],
+            "[旧データ] 鏡でフォームを確認する": [
+                ["肘の位置を修正できた": 0],
+            ],
+        ]
+        let task2MeasuresData: [String: [[String: Int]]] = [
+            "[旧データ] 反応ドリルを毎日5分": [
+                ["反応速度が上がってきた": 1],
+            ],
+        ]
+
+        let oldTask1: [String: Any] = [
+            "taskID": 101,
+            "userID": userID,
+            "taskTitle": "[旧データ] サーブの確率を上げる",
+            "taskCause": "トスが安定しないため、コントロールが悪い",
+            "taskAchievement": false,
+            "order": 0,
+            "isDeleted": false,
+            "measuresData": task1MeasuresData,
+            "measuresPriority": "[旧データ] 毎日100本トスの練習",
+            "created_at": now,
+            "updated_at": now,
+        ]
+        let oldTask2: [String: Any] = [
+            "taskID": 102,
+            "userID": userID,
+            "taskTitle": "[旧データ] レシーブの反応速度改善",
+            "taskCause": "相手の動きを予測できず、反応が遅れる",
+            "taskAchievement": false,
+            "order": 1,
+            "isDeleted": false,
+            "measuresData": task2MeasuresData,
+            "measuresPriority": "[旧データ] 反応ドリルを毎日5分",
+            "created_at": now,
+            "updated_at": now,
+        ]
+
+        try await saveOldDocument(collection: "TaskData", documentID: "\(userID)_101", data: oldTask1)
+        try await saveOldDocument(collection: "TaskData", documentID: "\(userID)_102", data: oldTask2)
+        print("✅ 旧TaskData 投入完了: 2件")
+
+        // 2. TargetData コレクション（3件: 月次2件 + 年間1件）
+        // month = 13 は年間目標を示す旧仕様
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let currentMonth = calendar.component(.month, from: Date())
+
+        let oldTarget1: [String: Any] = [
+            "userID": userID,
+            "year": currentYear,
+            "month": currentMonth,
+            "detail": "[旧データ] 全国大会出場",
+            "isDeleted": false,
+            "created_at": now,
+            "updated_at": now,
+        ]
+        let oldTarget2: [String: Any] = [
+            "userID": userID,
+            "year": currentYear,
+            "month": currentMonth,
+            "detail": "[旧データ] サーブ確率90%以上",
+            "isDeleted": false,
+            "created_at": now,
+            "updated_at": now,
+        ]
+        let oldTarget3: [String: Any] = [
+            "userID": userID,
+            "year": currentYear,
+            "month": 13,  // 年間目標
+            "detail": "[旧データ] レギュラー獲得",
+            "isDeleted": false,
+            "created_at": now,
+            "updated_at": now,
+        ]
+
+        try await saveOldDocument(
+            collection: "TargetData",
+            documentID: "\(userID)_\(currentYear)_\(currentMonth)_1",
+            data: oldTarget1
+        )
+        try await saveOldDocument(
+            collection: "TargetData",
+            documentID: "\(userID)_\(currentYear)_\(currentMonth)_2",
+            data: oldTarget2
+        )
+        try await saveOldDocument(
+            collection: "TargetData",
+            documentID: "\(userID)_\(currentYear)_13",
+            data: oldTarget3
+        )
+        print("✅ 旧TargetData 投入完了: 3件")
+
+        // 3. FreeNoteData コレクション（1件、ドキュメントID = userID）
+        let oldFreeNote: [String: Any] = [
+            "userID": userID,
+            "title": "[旧データ] フリーノート",
+            "detail": "旧アプリから引き継いだフリーノートです。マイグレーション検証用データ。",
+            "created_at": now,
+            "updated_at": now,
+        ]
+        try await saveOldDocument(collection: "FreeNoteData", documentID: userID, data: oldFreeNote)
+        print("✅ 旧FreeNoteData 投入完了: 1件")
+
+        // 4. NoteData コレクション（2件: 練習記録1件 + 大会記録1件）
+        // noteID = 1, 2 は TaskData の measuresData の noteID と対応（Memo-Note の紐付け）
+        let oldNote1: [String: Any] = [
+            "noteID": 1,
+            "userID": userID,
+            "noteType": "練習記録",
+            "year": currentYear,
+            "month": currentMonth,
+            "date": 15,
+            "day": "月",
+            "weather": "晴れ",
+            "temperature": 28,
+            "physicalCondition": "[旧データ] 体調良好、モチベーション高い",
+            "purpose": "サーブ練習",
+            "detail": "サーブ100本練習。トスが安定してきた。",
+            "target": "",
+            "consciousness": "",
+            "result": "",
+            "reflection": "継続が大事。",
+            "taskTitle": ["[旧データ] サーブの確率を上げる"],
+            "measuresTitle": ["[旧データ] 毎日100本トスの練習"],
+            "measuresEffectiveness": ["トスが安定してきた"],
+            "isDeleted": false,
+            "created_at": now,
+            "updated_at": now,
+        ]
+        let oldNote2: [String: Any] = [
+            "noteID": 2,
+            "userID": userID,
+            "noteType": "大会記録",
+            "year": currentYear,
+            "month": currentMonth,
+            "date": 20,
+            "day": "土",
+            "weather": "くもり",
+            "temperature": 24,
+            "physicalCondition": "[旧データ] 少し緊張気味",
+            "purpose": "",
+            "detail": "",
+            "target": "サーブ確率80%以上",
+            "consciousness": "ミスを恐れず攻める",
+            "result": "2セット先取で勝利。サーブ確率85%達成。",
+            "reflection": "練習の成果が出た。",
+            "taskTitle": [],
+            "measuresTitle": [],
+            "measuresEffectiveness": [],
+            "isDeleted": false,
+            "created_at": now,
+            "updated_at": now,
+        ]
+
+        try await saveOldDocument(
+            collection: "NoteData",
+            documentID: "\(userID)_1",
+            data: oldNote1
+        )
+        try await saveOldDocument(
+            collection: "NoteData",
+            documentID: "\(userID)_2",
+            data: oldNote2
+        )
+        print("✅ 旧NoteData 投入完了: 2件")
+
+        print("🎉 旧形式テストデータの投入が完了しました！")
+        print("ℹ️ アプリを再起動すると MigrationManager が自動的にデータを変換します")
+    }
+
+    /// 旧コレクションにドキュメントを保存するヘルパー
+    private func saveOldDocument(collection: String, documentID: String, data: [String: Any]) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            db.collection(collection).document(documentID)
+                .setData(data) { error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: ())
+                    }
+                }
+        }
+    }
+
+    /// 現在時刻を文字列で返す（旧アプリの形式に合わせる）
+    private func getCurrentTimeString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter.string(from: Date())
     }
 }

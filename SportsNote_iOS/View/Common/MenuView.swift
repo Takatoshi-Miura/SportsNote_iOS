@@ -31,7 +31,16 @@ struct ItemData: Identifiable {
     let title: String
     let subTitle: String
     let iconRes: String
+    let isEnabled: Bool
     let onClick: () -> Void
+
+    init(title: String, subTitle: String, iconRes: String, isEnabled: Bool = true, onClick: @escaping () -> Void) {
+        self.title = title
+        self.subTitle = subTitle
+        self.iconRes = iconRes
+        self.isEnabled = isEnabled
+        self.onClick = onClick
+    }
 }
 
 struct MenuView: View {
@@ -64,7 +73,7 @@ struct MenuView: View {
 
     /// セクションデータを作成
     private func createSections() -> [SectionData] {
-        return [
+        var sections: [SectionData] = [
             // データ
             SectionData(
                 title: LocalizedStrings.data,
@@ -120,6 +129,48 @@ struct MenuView: View {
                 ]
             ),
         ]
+
+        #if DEBUG
+        let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
+        sections.append(
+            SectionData(
+                title: "テスト（開発用）",
+                items: [
+                    ItemData(
+                        title: "テストデータを作成",
+                        subTitle: "新形式データをRealmに追加",
+                        iconRes: "plus.circle",
+                        onClick: {
+                            Task {
+                                try? await TestDataManager.shared.createTestData()
+                            }
+                        }
+                    ),
+                    ItemData(
+                        title: "旧データをFirebaseに投入",
+                        subTitle: isLogin ? "マイグレーション検証用" : "ログインが必要です",
+                        iconRes: "arrow.up.doc",
+                        isEnabled: isLogin,
+                        onClick: {
+                            Task {
+                                try? await TestDataManager.shared.createOldFormatTestData()
+                            }
+                        }
+                    ),
+                    ItemData(
+                        title: "マイグレーションフラグをリセット",
+                        subTitle: "再マイグレーションを許可",
+                        iconRes: "arrow.counterclockwise",
+                        onClick: {
+                            UserDefaultsManager.remove(key: UserDefaultsManager.Keys.migrationV1Completed)
+                        }
+                    ),
+                ]
+            )
+        )
+        #endif
+
+        return sections
     }
 
     var body: some View {
@@ -177,8 +228,10 @@ struct MenuItemView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
+            guard item.isEnabled else { return }
             item.onClick()
         }
+        .opacity(item.isEnabled ? 1.0 : 0.4)
     }
 }
 

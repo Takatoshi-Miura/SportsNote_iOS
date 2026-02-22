@@ -25,10 +25,6 @@ struct SportsNote_iOSApp: App {
             // アプリの起動を継続するが、データベース機能は使用不可
         }
 
-        // テストデータ作成
-//        Task {
-//            try await TestDataManager.shared.createTestData()
-//        }
     }
 
     var body: some Scene {

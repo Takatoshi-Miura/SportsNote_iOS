@@ -9,6 +9,7 @@ class UserDefaultsManager {
         static let password = "password"  // アカウントのパスワード
         static let isLogin = "isLogin"  // ログイン状態
         static let agree = "agree"  // 利用規約への同意状況
+        static let migrationV1Completed = "migrationV1Completed"  // 旧データマイグレーション完了フラグ
     }
 
     nonisolated(unsafe) private static let userDefaults = UserDefaults.standard
