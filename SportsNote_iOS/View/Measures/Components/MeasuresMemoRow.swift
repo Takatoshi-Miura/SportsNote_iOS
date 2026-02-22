@@ -10,7 +10,7 @@ struct MeasuresMemoRow: View {
                 .font(.body)
                 .lineLimit(nil)
 
-            Text(DateFormatterUtil.formatDateAndTime(measuresMemo.date))
+            Text(DateFormatterUtil.formatDateWithDayOfWeekAndTime(measuresMemo.date))
                 .font(.caption)
                 .foregroundColor(.gray)
         }

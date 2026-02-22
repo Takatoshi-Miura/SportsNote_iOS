@@ -39,7 +39,7 @@ struct DateFormatterUtilTests {
     @Test("日付のみフォーマット - 通常の日付")
     func formatDateOnly_normalDate() {
         let date = createDate(year: 2025, month: 1, day: 15)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/01/15")
     }
 
@@ -50,33 +50,42 @@ struct DateFormatterUtilTests {
         #expect(result == "2025/03/20")
     }
 
-    @Test("日付と時刻フォーマット - デフォルトスタイル")
-    func formatDateAndTime_defaultStyle() {
+    @Test("日付と時刻フォーマット - 互換性メソッド")
+    func formatDateAndTime_compatibilityMethod() {
         let date = createDate(year: 2025, month: 1, day: 15, hour: 14, minute: 30)
-        let result = DateFormatterUtil.format(date)
-        // 日付部分が含まれていることを確認（ロケール依存のため厳密な比較は避ける）
-        #expect(result.contains("2025") || result.contains("25"))
+        let result = DateFormatterUtil.formatDateAndTime(date)
+        // 日付部分が含まれていることを確認
+        #expect(result.contains("2025"))
+        #expect(result.contains("14:30"))
     }
 
     @Test("カスタムフォーマット - ISO8601形式")
     func formatCustom_iso8601() {
         let date = createDate(year: 2025, month: 6, day: 15, hour: 10, minute: 30, second: 45)
-        let result = DateFormatterUtil.format(date, style: .custom("yyyy-MM-dd'T'HH:mm:ss"))
+        let result = DateFormatterUtil.format(date, formatString: "yyyy-MM-dd'T'HH:mm:ss")
         #expect(result == "2025-06-15T10:30:45")
     }
 
     @Test("カスタムフォーマット - 年月のみ")
     func formatCustom_yearMonth() {
         let date = createDate(year: 2025, month: 12, day: 25)
-        let result = DateFormatterUtil.format(date, style: .custom("yyyy年MM月"))
+        let result = DateFormatterUtil.format(date, formatString: "yyyy年MM月")
         #expect(result == "2025年12月")
     }
 
-    @Test("カスタムフォーマット - 曜日付き")
-    func formatCustom_withWeekday() {
+    @Test("曜日付き日付フォーマット")
+    func formatDateWithDayOfWeek_wednesday() {
         let date = createDate(year: 2025, month: 1, day: 1)  // 2025/1/1は水曜日
-        let result = DateFormatterUtil.format(date, style: .custom("yyyy/MM/dd (E)"))
-        #expect(result.contains("2025/01/01"))
+        let result = DateFormatterUtil.formatDateWithDayOfWeek(date)
+        #expect(result.contains("2025/1/1"))
+    }
+
+    @Test("曜日付き日付+時刻フォーマット")
+    func formatDateWithDayOfWeekAndTime_normalDate() {
+        let date = createDate(year: 2025, month: 3, day: 15, hour: 9, minute: 5)
+        let result = DateFormatterUtil.formatDateWithDayOfWeekAndTime(date)
+        #expect(result.contains("2025/3/15"))
+        #expect(result.contains("09:05"))
     }
 
     // MARK: - 境界値テスト (Boundary Cases)
@@ -84,70 +93,70 @@ struct DateFormatterUtilTests {
     @Test("年の境界値 - 年初")
     func formatDateOnly_startOfYear() {
         let date = createDate(year: 2025, month: 1, day: 1)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/01/01")
     }
 
     @Test("年の境界値 - 年末")
     func formatDateOnly_endOfYear() {
         let date = createDate(year: 2025, month: 12, day: 31)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/12/31")
     }
 
     @Test("うるう年 - 2月29日")
     func formatDateOnly_leapYear() {
         let date = createDate(year: 2024, month: 2, day: 29)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2024/02/29")
     }
 
     @Test("非うるう年 - 2月末日")
     func formatDateOnly_nonLeapYear() {
         let date = createDate(year: 2025, month: 2, day: 28)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/02/28")
     }
 
     @Test("月末日 - 30日の月")
     func formatDateOnly_thirtyDayMonth() {
         let date = createDate(year: 2025, month: 4, day: 30)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/04/30")
     }
 
     @Test("月末日 - 31日の月")
     func formatDateOnly_thirtyOneDayMonth() {
         let date = createDate(year: 2025, month: 7, day: 31)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2025/07/31")
     }
 
     @Test("時刻の境界値 - 深夜0時")
     func formatCustom_midnight() {
         let date = createDate(year: 2025, month: 1, day: 15, hour: 0, minute: 0, second: 0)
-        let result = DateFormatterUtil.format(date, style: .custom("HH:mm:ss"))
+        let result = DateFormatterUtil.format(date, formatString: "HH:mm:ss")
         #expect(result == "00:00:00")
     }
 
     @Test("時刻の境界値 - 23時59分59秒")
     func formatCustom_endOfDay() {
         let date = createDate(year: 2025, month: 1, day: 15, hour: 23, minute: 59, second: 59)
-        let result = DateFormatterUtil.format(date, style: .custom("HH:mm:ss"))
+        let result = DateFormatterUtil.format(date, formatString: "HH:mm:ss")
         #expect(result == "23:59:59")
     }
 
     @Test("過去の年 - 2000年")
     func formatDateOnly_year2000() {
         let date = createDate(year: 2000, month: 1, day: 1)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2000/01/01")
     }
 
     @Test("未来の年 - 2100年")
     func formatDateOnly_year2100() {
         let date = createDate(year: 2100, month: 12, day: 31)
-        let result = DateFormatterUtil.format(date, style: .dateOnly)
+        let result = DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         #expect(result == "2100/12/31")
     }
 
@@ -156,7 +165,7 @@ struct DateFormatterUtilTests {
     @Test("空のカスタムフォーマット")
     func formatCustom_emptyFormat() {
         let date = createDate(year: 2025, month: 1, day: 15)
-        let result = DateFormatterUtil.format(date, style: .custom(""))
+        let result = DateFormatterUtil.format(date, formatString: "")
         #expect(result == "")
     }
 
@@ -164,7 +173,7 @@ struct DateFormatterUtilTests {
     func formatCustom_invalidCharacters() {
         let date = createDate(year: 2025, month: 1, day: 15)
         // 無効なパターンでもDateFormatterはエラーを出さず、そのまま出力するか空文字列を返す
-        let result = DateFormatterUtil.format(date, style: .custom("invalid"))
+        let result = DateFormatterUtil.format(date, formatString: "invalid")
         #expect(result == "invalid" || result.isEmpty)
     }
 
@@ -172,7 +181,7 @@ struct DateFormatterUtilTests {
     func formatCustom_veryLongFormat() {
         let date = createDate(year: 2025, month: 1, day: 15)
         let longFormat = String(repeating: "yyyy/MM/dd ", count: 10)
-        let result = DateFormatterUtil.format(date, style: .custom(longFormat))
+        let result = DateFormatterUtil.format(date, formatString: longFormat)
         let expectedRepeated = String(repeating: "2025/01/15 ", count: 10)
         #expect(result == expectedRepeated)
     }
@@ -196,7 +205,7 @@ struct DateFormatterUtilTests {
         let date = createDate(year: 2025, month: 3, day: 15)
 
         let results = (1...10).map { _ in
-            DateFormatterUtil.format(date, style: .dateOnly)
+            DateFormatterUtil.format(date, formatString: DateFormatterUtil.formatDateOnly)
         }
 
         #expect(results.allSatisfy { $0 == "2025/03/15" })

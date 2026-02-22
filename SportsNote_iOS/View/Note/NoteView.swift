@@ -223,7 +223,7 @@ struct NoteRow: View {
 
                     // フリーノート以外は日付を表示
                     if noteType != .free {
-                        Text(DateFormatterUtil.formatDateOnly(note.date))
+                        Text(DateFormatterUtil.formatDateWithDayOfWeek(note.date))
                             .font(.caption)
                             .foregroundColor(.gray)
                     }
