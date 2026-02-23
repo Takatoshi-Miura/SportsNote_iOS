@@ -36,12 +36,46 @@ struct NotePageView: View {
         }
     }
 
+    /// 現在表示中のノート
+    private var currentNote: Note? {
+        viewModel.notes.first(where: { $0.noteID == currentNoteID })
+    }
+
+    /// 現在表示中のノート種別
+    private var currentNoteType: NoteType {
+        guard let note = currentNote else { return .practice }
+        return NoteType(rawValue: note.noteType) ?? .practice
+    }
+
+    /// Navigationヘッダー用のノート種別表示
+    private var noteTypeNavigationTitle: some View {
+        let indicatorColor = Color(
+            currentNote.map { viewModel.getNoteIndicatorColor(noteID: $0.noteID, noteType: currentNoteType) }
+            ?? UIColor.systemBlue
+        )
+        return HStack(spacing: 6) {
+            Image(systemName: currentNoteType.icon)
+                .foregroundColor(.white)
+                .frame(width: 24, height: 24)
+                .background(indicatorColor)
+                .cornerRadius(5)
+
+            Text(currentNoteType.title)
+                .font(.headline)
+                .foregroundColor(.primary)
+        }
+    }
+
     var body: some View {
         contentView
             .ignoresSafeArea(edges: .bottom)
-        .navigationTitle(LocalizedStrings.note)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                noteTypeNavigationTitle
+            }
+        }
         .task {
             let result = await viewModel.fetchNotesExcludingFree()
             if case .success = result, let first = viewModel.notes.first {
@@ -70,9 +104,6 @@ struct NotePageContentView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // ノート種別ヘッダー
-                noteTypeHeader
-
                 // 基本情報（日付・天気・気温）
                 readOnlyBasicInfoSection
 
@@ -95,24 +126,6 @@ struct NotePageContentView: View {
             .padding()
         }
         .background(Color(.secondarySystemBackground))
-    }
-
-    // MARK: - ノート種別ヘッダー
-
-    private var noteTypeHeader: some View {
-        let indicatorColor = Color(noteViewModel.getNoteIndicatorColor(noteID: note.noteID, noteType: noteType))
-        return HStack(spacing: 8) {
-            Image(systemName: noteType.icon)
-                .foregroundColor(.white)
-                .frame(width: 28, height: 28)
-                .background(indicatorColor)
-                .cornerRadius(6)
-
-            Text(noteType.title)
-                .font(.headline)
-                .foregroundColor(.primary)
-        }
-        .padding(.bottom, 4)
     }
 
     // MARK: - 基本情報セクション（読み取り専用）
