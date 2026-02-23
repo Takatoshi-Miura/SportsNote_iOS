@@ -8,7 +8,7 @@ struct GroupListSection: View {
     let onGroupEdit: (Group) -> Void
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal, showsIndicators: true) {
             HStack(spacing: 10) {
                 ForEach(groups, id: \.groupID) { group in
                     GroupChip(
@@ -26,6 +26,7 @@ struct GroupListSection: View {
                 }
             }
             .padding(.horizontal)
+            .padding(.bottom, 6)
         }
         .padding(.vertical, 10)
         .background(Color(.secondarySystemBackground))
