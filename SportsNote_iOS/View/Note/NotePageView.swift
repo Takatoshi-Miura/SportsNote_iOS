@@ -131,30 +131,28 @@ struct NotePageContentView: View {
     // MARK: - 基本情報セクション（読み取り専用）
 
     private var readOnlyBasicInfoSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let weather = Weather(rawValue: note.weather) ?? .sunny
+        return VStack(alignment: .leading, spacing: 0) {
             sectionHeader(LocalizedStrings.basicInfo)
+                .padding(.top, 8)
 
-            VStack(spacing: 0) {
+            HStack(spacing: 8) {
                 // 日付
-                readOnlyRow(title: LocalizedStrings.date, value: DateFormatterUtil.formatDateOnly(note.date))
-                Divider()
-                // 天気
-                let weather = Weather(rawValue: note.weather) ?? .sunny
-                HStack {
-                    Text(LocalizedStrings.weather)
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Image(systemName: weather.icon)
-                        .foregroundColor(.secondary)
-                    Text(weather.title)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                Divider()
-                // 気温
-                readOnlyRow(title: LocalizedStrings.temperature, value: "\(note.temperature)°C")
+                Text(DateFormatterUtil.formatDateWithDayOfWeek(note.date))
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                // 天気・気温（ワンセット）
+                Image(systemName: weather.icon)
+                    .foregroundColor(weather.color)
+                Text("\(note.temperature)°C")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .background(Color(.systemBackground))
             .cornerRadius(10)
         }

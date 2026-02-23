@@ -1,4 +1,5 @@
 import RealmSwift
+import SwiftUI
 import UIKit
 
 /// ノート
@@ -171,6 +172,14 @@ enum Weather: Int, CaseIterable {
         case .sunny: return "sun.max.fill"
         case .cloudy: return "cloud.fill"
         case .rainy: return "cloud.rain.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .sunny: return .orange
+        case .cloudy: return .gray
+        case .rainy: return .blue
         }
     }
 }
