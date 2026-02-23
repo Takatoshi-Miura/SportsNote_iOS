@@ -160,7 +160,7 @@ struct NoteListView: View {
                 ForEach(viewModel.notes, id: \.noteID) { note in
                     let noteType = NoteType(rawValue: note.noteType) ?? .free
                     NavigationLink(value: note.noteID) {
-                        NoteRow(note: note)
+                        NoteRow(note: note, viewModel: viewModel)
                     }
                     .if(noteType != .free) { view in
                         view.swipeActions(edge: .trailing) {
@@ -206,6 +206,13 @@ struct NoteListView: View {
 /// ノートセル
 struct NoteRow: View {
     let note: Note
+    let viewModel: NoteViewModel
+
+    /// ノートのインジケーター色
+    private var indicatorColor: Color {
+        let noteType = NoteType(rawValue: note.noteType) ?? .free
+        return Color(viewModel.getNoteIndicatorColor(noteID: note.noteID, noteType: noteType))
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -247,17 +254,8 @@ struct NoteRow: View {
                 .font(.system(size: 20))
                 .foregroundColor(.white)
                 .frame(width: 32, height: 32)
-                .background(colorForNoteType(noteType))
+                .background(indicatorColor)
                 .cornerRadius(8)
-        }
-    }
-
-    /// ノート種別に対応する色を返す
-    private func colorForNoteType(_ noteType: NoteType) -> Color {
-        switch noteType {
-        case .free: return .blue
-        case .practice: return .green
-        case .tournament: return .orange
         }
     }
 }

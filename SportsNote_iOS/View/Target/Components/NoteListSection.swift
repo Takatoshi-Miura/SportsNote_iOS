@@ -4,6 +4,7 @@ import SwiftUI
 struct NoteListSection: View {
     let notes: [Note]
     let date: Date
+    let noteViewModel: NoteViewModel
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -23,7 +24,7 @@ struct NoteListSection: View {
                 VStack(spacing: 0) {
                     ForEach(notes, id: \.noteID) { note in
                         NavigationLink(destination: noteDestination(for: note)) {
-                            NoteRow(note: note)
+                            NoteRow(note: note, viewModel: noteViewModel)
                         }
                         .padding(.vertical, 4)
                         .padding(.horizontal, 16)

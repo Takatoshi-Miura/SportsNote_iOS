@@ -24,7 +24,6 @@ struct SportsNote_iOSApp: App {
             print("🚨 Realm初期化に失敗しました: \(error.localizedDescription)")
             // アプリの起動を継続するが、データベース機能は使用不可
         }
-
     }
 
     var body: some Scene {

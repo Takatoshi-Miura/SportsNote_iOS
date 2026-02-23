@@ -76,7 +76,6 @@ final class RealmManager {
             return try Realm(configuration: config)
         }
         #endif
-        fputs("DEBUG: Using default configuration\n", stderr)
         return try Realm()
     }
 
@@ -415,10 +414,10 @@ final class RealmManager {
                     }
                 }
             }
-            return .white
+            return .gray
         } catch {
             print("Error fetching note background color: \(error)")
-            return .white
+            return .gray
         }
     }
 

@@ -24,6 +24,7 @@ struct NotePageView: View {
                 ForEach(viewModel.notes, id: \.noteID) { note in
                     NotePageContentView(
                         note: note,
+                        noteViewModel: viewModel,
                         taskViewModel: taskViewModel,
                         memos: viewModel.getMemosByNoteID(noteID: note.noteID)
                     )
@@ -58,6 +59,7 @@ struct NotePageView: View {
 /// ノートページの読み取り専用コンテンツ
 struct NotePageContentView: View {
     let note: Note
+    let noteViewModel: NoteViewModel
     let taskViewModel: TaskViewModel
     let memos: [Memo]
 
@@ -98,11 +100,12 @@ struct NotePageContentView: View {
     // MARK: - ノート種別ヘッダー
 
     private var noteTypeHeader: some View {
-        HStack(spacing: 8) {
+        let indicatorColor = Color(noteViewModel.getNoteIndicatorColor(noteID: note.noteID, noteType: noteType))
+        return HStack(spacing: 8) {
             Image(systemName: noteType.icon)
                 .foregroundColor(.white)
                 .frame(width: 28, height: 28)
-                .background(noteType == .practice ? Color.green : Color.orange)
+                .background(indicatorColor)
                 .cornerRadius(6)
 
             Text(noteType.title)

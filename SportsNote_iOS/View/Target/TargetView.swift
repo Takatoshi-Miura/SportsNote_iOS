@@ -50,7 +50,8 @@ struct TargetView: View {
                         ScrollView {
                             NoteListSection(
                                 notes: noteViewModel.notes,
-                                date: date
+                                date: date,
+                                noteViewModel: noteViewModel
                             )
                             .padding(.vertical, 16)
                         }

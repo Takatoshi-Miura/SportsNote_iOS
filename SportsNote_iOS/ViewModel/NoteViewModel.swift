@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import RealmSwift
+import UIKit
 
 @MainActor
 class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProtocol, FirebaseSyncable {
@@ -507,6 +508,22 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             return .success(())
         } catch {
             return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
+        }
+    }
+
+    /// ノートのインジケーター色を取得（練習: グループカラー、大会: オレンジ、フリー: ブルー）
+    /// - Parameters:
+    ///   - noteID: ノートID
+    ///   - noteType: ノート種別
+    /// - Returns: インジケーター色（UIColor）
+    func getNoteIndicatorColor(noteID: String, noteType: NoteType) -> UIColor {
+        switch noteType {
+        case .free:
+            return .systemBlue
+        case .practice:
+            return realmManager.getNoteBackgroundColor(noteID: noteID)
+        case .tournament:
+            return .systemOrange
         }
     }
 
