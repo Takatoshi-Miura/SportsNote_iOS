@@ -89,6 +89,31 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         return await save(group, isUpdate: isUpdate)
     }
 
+    /// グループの並び順を変更し Realm に保存
+    /// - Parameters:
+    ///   - source: 移動元インデックス集合（ForEach .onMove の引数）
+    ///   - destination: 移動先インデックス
+    /// - Returns: Result
+    func moveGroup(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        var reorderedGroups = groups
+        reorderedGroups.move(fromOffsets: source, toOffset: destination)
+
+        do {
+            try RealmManager.shared.updateGroupOrder(groups: reorderedGroups)
+            groups = reorderedGroups
+            // Firebase 同期（各グループを order 更新で同期）
+            Task {
+                for group in reorderedGroups {
+                    _ = await syncEntityToFirebase(group, isUpdate: true)
+                }
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-moveGroup")
+            return .failure(sportsNoteError)
+        }
+    }
+
     /// デフォルトの並び順を取得する
     /// - Returns: 並び順
     private func getDefaultOrder() -> Int {

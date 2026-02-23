@@ -140,6 +140,25 @@ final class RealmManager {
         }
     }
 
+    /// グループの並び順を一括更新
+    /// - Parameter groups: 新しい順序のグループ配列
+    /// - Throws: SportsNoteError更新に失敗した場合
+    func updateGroupOrder(groups: [Group]) throws {
+        do {
+            let realm = try getRealm()
+            try realm.write {
+                for (index, group) in groups.enumerated() {
+                    if let obj = realm.object(ofType: Group.self, forPrimaryKey: group.groupID) {
+                        obj.order = index
+                        obj.updated_at = Date()
+                    }
+                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "updateGroupOrder")
+        }
+    }
+
     // MARK: - Select
 
     /// 指定したクラスに対応するプライマリキーのプロパティ名を取得
