@@ -48,7 +48,7 @@ final class TestDataManager {
         print("✅ ノート作成完了: \(notes.count)件")
 
         // 5. メモを作成
-        let memos = try await createTestMemos(measures: measures, notes: notes)
+        let memos = try await createTestMemos(tasks: tasks, measures: measures, notes: notes)
         print("✅ メモ作成完了: \(memos.count)件")
 
         // 6. 目標を作成
@@ -240,7 +240,7 @@ final class TestDataManager {
             task8.taskID = UUIDGenerator.generateID()
             task8.userID = userID
             task8.title = "スタミナ強化"
-            task8.cause = "試合後半で動きが鈍くなる"
+            task8.cause = "スタミナが試合後半で尽きてしまい、動きが鈍くなる"
             task8.groupID = groups[3].groupID
             task8.order = 1
             task8.isComplete = false
@@ -483,64 +483,89 @@ final class TestDataManager {
     }
 
     /// テストメモを作成
+    ///
+    /// 1つの練習ノートに複数の課題を取り込み、各課題の最優先対策(order=0)に対してメモを1件ずつ作成する。
     /// - Parameters:
+    ///   - tasks: 課題の配列
     ///   - measures: 対策の配列
     ///   - notes: ノートの配列
     /// - Returns: 作成したメモの配列
-    private func createTestMemos(measures: [Measures], notes: [Note]) async throws -> [Memo] {
+    private func createTestMemos(tasks: [TaskData], measures: [Measures], notes: [Note]) async throws
+        -> [Memo]
+    {
         var memos: [Memo] = []
         let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
 
         // 練習ノートのみを対象（大会ノートは除外）
         let practiceNotes = notes.filter { $0.noteType == NoteType.practice.rawValue }
 
-        // 各練習ノートに複数のメモを紐づける
-        // ノートと対策のマッピング: [ノートインデックス: [対策インデックス, 対策インデックス, ...]]
-        let noteMeasuresMap: [Int: [Int]] = [
-            0: [0, 1],  // 練習ノート1: サーブ関連の対策2つ
-            1: [2, 3, 4],  // 練習ノート2: レシーブ関連の対策3つ
-            2: [5, 12],  // 練習ノート3: スパイク関連の対策2つ
-            3: [6, 7],  // 練習ノート4: クイック攻撃関連の対策2つ
-            4: [10, 11],  // 練習ノート5: ジャンプ力向上の対策2つ
-            5: [17, 18, 19],  // 練習ノート6: スタミナ強化の対策3つ
+        // 各課題の最優先対策（order=0）を取得
+        func priorityMeasure(for task: TaskData) -> Measures? {
+            measures.filter { $0.taskID == task.taskID }
+                .min { $0.order < $1.order }
+        }
+
+        // ノートごとの課題インデックスマッピング
+        // 各課題の最優先対策1つだけが紐づく（1ノート内で同じ課題は重複しない）
+        // tasks: [0]サーブ確率, [1]ジャンプサーブ, [2]レシーブ反応, [3]低姿勢レシーブ,
+        //        [4]クイック攻撃, [5]コース打ち分け, [6]ジャンプ力, [7]スタミナ
+        let noteTasksMap: [Int: [Int]] = [
+            0: [0, 2],  // 練習ノート1(サーブとレシーブ強化): サーブ確率, レシーブ反応速度
+            1: [2, 3],  // 練習ノート2(レシーブ強化): レシーブ反応速度, 低姿勢レシーブ
+            2: [5, 4],  // 練習ノート3(スパイクコース打ち分け): コース打ち分け, クイック攻撃
+            3: [4, 1],  // 練習ノート4(クイック攻撃連携): クイック攻撃, ジャンプサーブ
+            4: [6, 7],  // 練習ノート5(フィジカル): ジャンプ力, スタミナ
+            5: [7, 6, 0],  // 練習ノート6(スタミナ強化): スタミナ, ジャンプ力, サーブ確率
         ]
 
-        // メモの詳細内容
-        let memoDetails: [Int: String] = [
-            0: "今日は100本達成。トスが安定してきた。",
-            1: "鏡でフォーム確認。肘の位置が重要だと気づいた。",
-            2: "反応ドリル5分実施。最初は難しかったが慣れてきた。",
-            3: "スクワット姿勢でのパス100本。最初は辛かったが慣れてきた。",
-            4: "体幹トレーニングを15分実施。バランスが良くなってきた。",
-            5: "コーンを使った狙い撃ち練習。精度が上がってきた。",
-            6: "セッターとの呼吸合わせ練習。タイミングが掴めてきた。",
-            7: "助走のタイミングを固定する練習。安定してきた。",
-            10: "スクワット100回完了。フォームを意識した。",
-            11: "ジャンプトレーニング30回完了。少しずつ高く跳べるようになってきた。",
-            12: "手首の角度を変える練習。コースの打ち分けができるようになってきた。",
-            17: "5kmランニング完了。タイムが少し縮まった。",
-            18: "インターバルトレーニング実施。心肺機能の向上を感じる。",
-            19: "試合形式の連続練習。最後まで動けるようになってきた。",
+        // メモの詳細内容: [ノートインデックス: [課題インデックス: 詳細]]
+        let memoDetails: [Int: [Int: String]] = [
+            0: [
+                0: "トスを100本練習。最初の30本はバラつきがあったが、後半は安定してきた。特にトスの高さを一定にすることを意識した結果、サーブの精度が目に見えて向上。次回は打点の高さも意識して取り組みたい。",
+                2: "相手のフォームを見て球種を予測する反応ドリルを5分間実施。最初はフェイントに引っかかることが多かったが、肩の向きに注目することで予測精度が上がった。反応速度も体感で0.5秒ほど縮まった。",
+            ],
+            1: [
+                2: "ランダム方向への反応ドリルを10分間実施。左右の反応に偏りがあり、特に左方向への一歩目が遅い。足の向きを意識することで改善の兆しあり。明日も重点的に練習する。",
+                3: "スクワット姿勢でのパス練習を100本実施。膝の角度を90度以下に保つことを意識。50本を超えたあたりから太ももがきつくなったが、低い姿勢を維持できた。腰ではなく膝で落とす感覚が掴めてきた。",
+            ],
+            2: [
+                5: "コーンを4箇所に置いて狙い撃ち練習。クロス方向の命中率は8割だが、ストレート方向が5割程度。手首の返し方を変えることでコースの打ち分けができることが分かった。ストレートは手首を立てる意識が重要。",
+                4: "セッターとAクイックのタイミング合わせを30本実施。入りのタイミングが早すぎる傾向があったので、セッターがトスを上げる瞬間に踏み切るよう修正。後半は10本中8本のタイミングが合った。",
+            ],
+            3: [
+                4: "Bクイックとセミクイックの練習。Bクイックはセッターとの距離感が掴めてきたが、セミクイックは助走の角度調整が必要。次回はセミクイックを重点的に練習する。全体的にネットとの距離感が良くなってきた。",
+                1: "ジャンプサーブの助走を3歩リズムに固定して50本練習。1歩目を大きく、2歩目で調整、3歩目で踏み切りのリズムが安定してきた。ただしインパクト時に体が開きがちなので、左肩を残す意識を持つ。",
+            ],
+            4: [
+                6: "スクワット100回を3セット実施。フォームを崩さず最後まで完遂できた。前回より膝を深く曲げられるようになった。加えてボックスジャンプ20回×3セットも実施。着地時の膝の角度を意識して怪我予防。",
+                7: "5kmランニングを実施。タイムは24分30秒で前回より30秒短縮。後半の失速が少なくなってきた。走った後にインターバルトレーニング（30秒ダッシュ→30秒ジョグ）を10本実施。心拍数の回復が早くなっている。",
+            ],
+            5: [
+                7: "試合を想定した3セット連続の実戦練習を実施。1・2セット目は問題なく動けたが、3セット目後半に足が止まりがちに。給水タイミングを工夫し、セット間のリカバリーを意識。スタミナ不足がまだ課題だが、先月と比較すると明らかに持久力が向上。",
+                6: "プライオメトリクストレーニングとしてデプスジャンプ15回×3セット実施。最高到達点が先月比で約2cm向上。膝の使い方と腕の振りを連動させることで跳躍力が増す感覚を掴んだ。",
+                0: "サーブ練習50本。エンドライン際への精度を重点的に練習。狙った位置に落とせる確率は70%程度まで向上。フローターサーブの無回転が安定してきた。試合で使えるレベルに近づいている。",
+            ],
         ]
 
         // 各練習ノートにメモを作成
-        for (noteIndex, measuresIndices) in noteMeasuresMap {
+        for (noteIndex, taskIndices) in noteTasksMap {
             guard noteIndex < practiceNotes.count else { continue }
             let note = practiceNotes[noteIndex]
 
-            for measuresIndex in measuresIndices {
-                guard measuresIndex < measures.count else { continue }
+            for taskIndex in taskIndices {
+                guard taskIndex < tasks.count,
+                    let measure = priorityMeasure(for: tasks[taskIndex])
+                else { continue }
 
                 let memo = Memo()
                 memo.memoID = UUIDGenerator.generateID()
                 memo.userID = userID
-                memo.measuresID = measures[measuresIndex].measuresID
+                memo.measuresID = measure.measuresID
                 memo.noteID = note.noteID
-                memo.noteDate = note.date
+                memo.detail = memoDetails[noteIndex]?[taskIndex] ?? "練習メモ"
                 memo.isDeleted = false
                 memo.created_at = note.created_at
                 memo.updated_at = Date()
-                memo.detail = memoDetails[measuresIndex] ?? "練習メモ"
 
                 try RealmManager.shared.saveItem(memo)
                 memos.append(memo)
