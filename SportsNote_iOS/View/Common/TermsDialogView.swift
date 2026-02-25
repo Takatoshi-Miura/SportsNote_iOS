@@ -10,7 +10,7 @@ struct TermsDialogView: View {
                     title: Text(LocalizedStrings.termsOfServiceTitle),
                     message: Text(LocalizedStrings.termsOfServiceMessage),
                     primaryButton: .default(Text(LocalizedStrings.checkTermsOfService)) {
-                        termsManager.navigateToTermsOfServiceAndPrivacyPolicy()
+                        TermsManager.navigateToTermsOfService()
                     },
                     secondaryButton: .default(Text(LocalizedStrings.agree)) {
                         termsManager.agreeToTerms()
