@@ -11,7 +11,7 @@ class Memo: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    @Persisted var noteDate: Date
+    var noteDate: Date = Date()
 
     /// デフォルトイニシャライザ
     override init() {
@@ -23,8 +23,6 @@ class Memo: Object {
         self.isDeleted = false
         self.created_at = Date()
         self.updated_at = Date()
-        self.noteDate = Date()
-
         // UserDefaultsから同期的に値を取得
         if let userID = UserDefaults.standard.string(forKey: "userID") {
             self.userID = userID

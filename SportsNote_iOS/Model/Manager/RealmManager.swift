@@ -2,7 +2,7 @@ import RealmSwift
 import UIKit
 
 struct RealmConstants {
-    static let databaseName = "sportsnote.realm"
+    static let databaseName = "default.realm"
     static let schemaVersion: UInt64 = 0
 }
 
@@ -45,36 +45,36 @@ final class RealmManager {
     }
 
     // MARK: - Test Helper
-    
+
     #if DEBUG
-    /// テスト用のRealm設定
-    var testConfiguration: Realm.Configuration?
-    
-    /// テスト用のインメモリRealmを設定
-    func setupInMemoryRealm() {
-        var config = Realm.Configuration()
-        config.inMemoryIdentifier = "RealmManagerTests_\(UUID().uuidString)"
-        self.testConfiguration = config
-    }
-    
-    /// テスト用：削除済みデータも含めてIDで取得
-    func getRawObjectById<T: Object>(id: String, type: T.Type) -> T? {
-        do {
-            let realm = try getRealm()
-            return realm.object(ofType: type, forPrimaryKey: id)
-        } catch {
-            return nil
+        /// テスト用のRealm設定
+        var testConfiguration: Realm.Configuration?
+
+        /// テスト用のインメモリRealmを設定
+        func setupInMemoryRealm() {
+            var config = Realm.Configuration()
+            config.inMemoryIdentifier = "RealmManagerTests_\(UUID().uuidString)"
+            self.testConfiguration = config
         }
-    }
+
+        /// テスト用：削除済みデータも含めてIDで取得
+        func getRawObjectById<T: Object>(id: String, type: T.Type) -> T? {
+            do {
+                let realm = try getRealm()
+                return realm.object(ofType: type, forPrimaryKey: id)
+            } catch {
+                return nil
+            }
+        }
     #endif
 
     /// Realmインスタンスを取得するヘルパーメソッド
     private func getRealm() throws -> Realm {
         #if DEBUG
-        if let config = testConfiguration {
-            fputs("DEBUG: Using test configuration: \(config.inMemoryIdentifier ?? "nil")\n", stderr)
-            return try Realm(configuration: config)
-        }
+            if let config = testConfiguration {
+                fputs("DEBUG: Using test configuration: \(config.inMemoryIdentifier ?? "nil")\n", stderr)
+                return try Realm(configuration: config)
+            }
         #endif
         return try Realm()
     }

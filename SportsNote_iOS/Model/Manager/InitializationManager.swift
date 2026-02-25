@@ -22,6 +22,9 @@ final class InitializationManager {
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.firstLaunch, value: false)
         }
 
+        // 旧アプリからのアップデート時にisLoginフラグを補完
+        migrateLoginStateIfNeeded()
+
         // CrashlyticsにuserID情報を付加
         if let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String? {
             Crashlytics.crashlytics().setUserID(userID)
@@ -123,5 +126,19 @@ final class InitializationManager {
     /// - Returns: ログイン済みかどうか
     private func isUserLoggedIn() -> Bool {
         return UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
+    }
+
+    /// 旧アプリからのアップデート時にisLoginフラグを補完
+    /// 旧アプリは address + password の存在でログイン判定していたため、
+    /// これらが存在する場合は isLogin = true をセットする
+    private func migrateLoginStateIfNeeded() {
+        let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
+        if !isLogin,
+            let address = UserDefaults.standard.string(forKey: "address"),
+            let password = UserDefaults.standard.string(forKey: "password"),
+            !address.isEmpty, !password.isEmpty
+        {
+            UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
+        }
     }
 }
