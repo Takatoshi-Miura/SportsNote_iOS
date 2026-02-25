@@ -215,32 +215,33 @@ struct NoteRow: View {
     }
 
     var body: some View {
+        let noteType = NoteType(rawValue: note.noteType) ?? .free
+
         HStack(spacing: 12) {
             noteTypeIndicator
                 .padding(.vertical, 2)
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    let noteType = NoteType(rawValue: note.noteType) ?? .free
+                if noteType == .free {
+                    // フリーノート: タイトル + 詳細
                     Text(noteType.displayTitle(from: note))
                         .font(.headline)
                         .lineLimit(1)
 
-                    Spacer()
+                    Text(noteType.content(from: note))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                } else {
+                    // 練習・大会ノート: 内容 + 日付
+                    Text(noteType.content(from: note))
+                        .font(.headline)
+                        .lineLimit(1)
 
-                    // フリーノート以外は日付を表示
-                    if noteType != .free {
-                        Text(DateFormatterUtil.formatDateWithDayOfWeek(note.date))
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
+                    Text(DateFormatterUtil.formatDateWithDayOfWeek(note.date))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
-
-                let noteType = NoteType(rawValue: note.noteType) ?? .free
-                Text(noteType.content(from: note))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
             }
         }
         .padding(.vertical, 4)

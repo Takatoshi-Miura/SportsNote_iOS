@@ -519,7 +519,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     func getNoteIndicatorColor(noteID: String, noteType: NoteType) -> UIColor {
         switch noteType {
         case .free:
-            return .systemBlue
+            return .systemGray
         case .practice:
             return realmManager.getNoteBackgroundColor(noteID: noteID)
         case .tournament:
