@@ -8,16 +8,19 @@ struct TabTopView<Trailing: View, Content: View>: View {
     let trailingItem: Trailing
     let content: () -> Content
     let actionItems: [(title: String, action: () -> Void)]
+    let showActionButton: Bool
 
     init(
         title: String,
         isMenuOpen: Binding<Bool>,
+        showActionButton: Bool = true,
         @ViewBuilder trailingItem: () -> Trailing,
         @ViewBuilder content: @escaping () -> Content,
         actionItems: [(title: String, action: () -> Void)]
     ) {
         self.title = title
         self._isMenuOpen = isMenuOpen
+        self.showActionButton = showActionButton
         self.trailingItem = trailingItem()
         self.content = content
         self.actionItems = actionItems
@@ -45,31 +48,34 @@ struct TabTopView<Trailing: View, Content: View>: View {
             )
 
             // ＋ボタン
-            VStack {
-                Spacer()
-                HStack {
+            if showActionButton {
+                VStack {
                     Spacer()
-                    Button(action: {
-                        showActionSheet = true
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .resizable()
-                            .frame(width: 60, height: 60)
-                            .foregroundColor(.blue)
-                    }
-                    .padding()
-                    .confirmationDialog(
-                        LocalizedStrings.addPrompt, isPresented: $showActionSheet, titleVisibility: .visible
-                    ) {
-                        ForEach(actionItems.indices, id: \.self) { index in
-                            Button(actionItems[index].title) {
-                                actionItems[index].action()
-                            }
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showActionSheet = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .resizable()
+                                .frame(width: 60, height: 60)
+                                .foregroundColor(.blue)
                         }
-                        Button(LocalizedStrings.cancel, role: .cancel) {}
+                        .padding()
+                        .confirmationDialog(
+                            LocalizedStrings.addPrompt, isPresented: $showActionSheet,
+                            titleVisibility: .visible
+                        ) {
+                            ForEach(actionItems.indices, id: \.self) { index in
+                                Button(actionItems[index].title) {
+                                    actionItems[index].action()
+                                }
+                            }
+                            Button(LocalizedStrings.cancel, role: .cancel) {}
+                        }
                     }
+                    .padding(.bottom, 50)  // 広告の高さ分だけ上に移動
                 }
-                .padding(.bottom, 50)  // 広告の高さ分だけ上に移動
             }
         }
     }

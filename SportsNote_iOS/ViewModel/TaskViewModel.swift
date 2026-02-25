@@ -456,6 +456,42 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return .success(())
     }
 
+    // MARK: - 並び替え処理
+
+    /// 課題の並び替え
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Result
+    func moveTask(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        // filteredTaskListData上で移動
+        var reordered = filteredTaskListData
+        reordered.move(fromOffsets: source, toOffset: destination)
+        filteredTaskListData = reordered
+
+        // TaskDataの配列に変換してRealmに保存
+        let reorderedTasks = reordered.compactMap { listData in
+            tasks.first { $0.taskID == listData.taskID }
+        }
+
+        do {
+            try RealmManager.shared.updateTaskOrder(tasks: reorderedTasks)
+
+            // Firebase同期（バックグラウンド）
+            Task {
+                for task in reorderedTasks {
+                    _ = await syncEntityToFirebase(task, isUpdate: true)
+                }
+            }
+
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(
+                error, context: "TaskViewModel-moveTask")
+            return .failure(sportsNoteError)
+        }
+    }
+
     // MARK: - Firebase同期処理
 
     /// 指定された課題をFirebaseに同期する

@@ -6,6 +6,7 @@ struct TaskView: View {
     @State private var isAddGroupPresented = false
     @State private var isAddTaskPresented = false
     @State private var selectedGroupID: String? = nil
+    @State private var isReorderMode = false
     @State private var selectedGroupForEdit: Group? = nil
     @State private var navigateToGroupEdit = false
     @StateObject private var viewModel = GroupViewModel()
@@ -20,8 +21,14 @@ struct TaskView: View {
         TabTopView(
             title: LocalizedStrings.task,
             isMenuOpen: $isMenuOpen,
+            showActionButton: !isReorderMode,
             trailingItem: {
-                FilterMenuButton(showCompletedTasks: $taskViewModel.showCompletedTasks)
+                HStack(spacing: 16) {
+                    ReorderButton(isReorderMode: $isReorderMode)
+                        .disabled(selectedGroupID != nil)
+                    FilterMenuButton(showCompletedTasks: $taskViewModel.showCompletedTasks)
+                        .disabled(isReorderMode)
+                }
             },
             content: {
                 // refreshTriggerの変更で強制的に再構築させる
@@ -49,10 +56,12 @@ struct TaskView: View {
                             navigateToGroupEdit = true
                         }
                     )
+                    .disabled(isReorderMode)
                     // 課題セクション
                     MainTaskList(
                         taskListData: taskViewModel.filteredTaskListData,
                         tasks: taskViewModel.tasks,
+                        isReorderMode: $isReorderMode,
                         onDelete: { taskID in
                             Task {
                                 let result = await taskViewModel.delete(id: taskID)
@@ -64,6 +73,15 @@ struct TaskView: View {
                         onToggleCompletion: { taskID in
                             Task {
                                 let result = await taskViewModel.toggleTaskCompletion(taskID: taskID)
+                                if case .failure(let error) = result {
+                                    taskViewModel.showErrorAlert(error)
+                                }
+                            }
+                        },
+                        onMoveTask: { source, destination in
+                            Task {
+                                let result = await taskViewModel.moveTask(
+                                    from: source, to: destination)
                                 if case .failure(let error) = result {
                                     taskViewModel.showErrorAlert(error)
                                 }

@@ -159,6 +159,25 @@ final class RealmManager {
         }
     }
 
+    /// 課題の並び順を一括更新
+    /// - Parameter tasks: 新しい順序の課題配列
+    /// - Throws: SportsNoteError更新に失敗した場合
+    func updateTaskOrder(tasks: [TaskData]) throws {
+        do {
+            let realm = try getRealm()
+            try realm.write {
+                for (index, task) in tasks.enumerated() {
+                    if let obj = realm.object(ofType: TaskData.self, forPrimaryKey: task.taskID) {
+                        obj.order = index
+                        obj.updated_at = Date()
+                    }
+                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "updateTaskOrder")
+        }
+    }
+
     // MARK: - Select
 
     /// 指定したクラスに対応するプライマリキーのプロパティ名を取得
@@ -303,7 +322,7 @@ final class RealmManager {
         }
     }
 
-    /// 指定された文字列を含むノートを検索
+    /// 指定された文字列を含むノートを検索（メモ内容も検索対象）
     /// - Parameter query: 検索する文字列
     /// - Returns: 検索結果のノートリスト
     func searchNotesByQuery(query: String) -> [Note] {
@@ -323,14 +342,27 @@ final class RealmManager {
                         "condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@",
                         query, query, query, query, query, query, query))
 
-            // IDが空でないことを確認し、無効なIDのノートを除外
-            let validFreeNotes = freeNotes.filter { note in
-                !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
+            // メモのdetailフィールドを検索し、該当メモに紐づくノートを逆引き
+            let matchingMemos = realm.objects(Memo.self)
+                .filter("detail CONTAINS[c] %@ AND isDeleted == false", query)
+            let queryNoteIDs = Set(queryNotes.map { $0.noteID })
+            var memoNotes: [Note] = []
+            for noteID in Set(matchingMemos.map({ $0.noteID })) {
+                if !queryNoteIDs.contains(noteID),
+                    let note = realm.object(ofType: Note.self, forPrimaryKey: noteID),
+                    !note.isDeleted,
+                    note.noteType != NoteType.free.rawValue
+                {
+                    memoNotes.append(note)
+                }
             }
 
-            let validQueryNotes = queryNotes.filter { note in
-                !note.noteID.isEmpty && realm.object(ofType: Note.self, forPrimaryKey: note.noteID) != nil
-            }
+            // Note検索結果とメモ逆引き結果をマージ
+            let allQueryNotes = queryNotes + memoNotes
+
+            // IDが空でないことを確認し、無効なIDのノートを除外
+            let validFreeNotes = freeNotes.filter { !$0.noteID.isEmpty }
+            let validQueryNotes = allQueryNotes.filter { !$0.noteID.isEmpty }
 
             // フリーノートを先頭にして、検索結果を日付の降順でソート
             return validFreeNotes + validQueryNotes.sorted(by: { $0.date > $1.date })

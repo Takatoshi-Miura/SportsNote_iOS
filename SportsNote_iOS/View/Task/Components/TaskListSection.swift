@@ -4,8 +4,10 @@ import SwiftUI
 struct MainTaskList: View {
     let taskListData: [TaskListData]
     let tasks: [TaskData]
+    @Binding var isReorderMode: Bool
     let onDelete: (String) -> Void
     let onToggleCompletion: (String) -> Void
+    var onMoveTask: ((IndexSet, Int) -> Void)?
     let refreshAction: () async -> Void
     // ViewModelを受け取るように追加
     @ObservedObject var taskViewModel: TaskViewModel
@@ -15,6 +17,7 @@ struct MainTaskList: View {
     @ObservedObject var noteViewModel: NoteViewModel
     @State private var showDeleteConfirmation = false
     @State private var taskToDelete: String? = nil
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         List {
@@ -46,8 +49,18 @@ struct MainTaskList: View {
                     .tint(isTaskComplete(taskID: taskList.taskID) ? .orange : .green)
                 }
             }
+            .onMove { source, destination in
+                onMoveTask?(source, destination)
+            }
         }
         .listStyle(.plain)
+        .environment(\.editMode, $editMode)
+        .onChange(of: isReorderMode) { newValue in
+            editMode = newValue ? .active : .inactive
+        }
+        .onAppear {
+            editMode = isReorderMode ? .active : .inactive
+        }
         .refreshable {
             await refreshAction()
         }
