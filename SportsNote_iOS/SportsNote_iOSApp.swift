@@ -106,7 +106,7 @@ struct MainTabView: View {
                     TaskView(isMenuOpen: $isMenuOpen)
                 }
                 .tabItem {
-                    Label(LocalizedStrings.task, systemImage: "checkmark.circle.fill")
+                    Label(LocalizedStrings.task, systemImage: "list.bullet")
                 }
                 .tag(Tab.task)
 
@@ -114,7 +114,7 @@ struct MainTabView: View {
                     NoteView(isMenuOpen: $isMenuOpen)
                 }
                 .tabItem {
-                    Label(LocalizedStrings.note, systemImage: "note.text")
+                    Label(LocalizedStrings.note, systemImage: "book")
                 }
                 .tag(Tab.note)
 
@@ -122,7 +122,7 @@ struct MainTabView: View {
                     TargetView(isMenuOpen: $isMenuOpen)
                 }
                 .tabItem {
-                    Label(LocalizedStrings.target, systemImage: "target")
+                    Label(LocalizedStrings.target, systemImage: "calendar")
                 }
                 .tag(Tab.target)
             }
