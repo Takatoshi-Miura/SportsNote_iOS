@@ -25,8 +25,7 @@ class TutorialViewModel: ObservableObject {
                 title: "SportsNoteとは",
                 description: """
                     課題解決に特化したノートアプリです。
-                    原因と対策を考えて実践し、反省を通して
-                    解決を目指すことができます。
+                    原因と対策を考えて実践し、反省を通して解決を目指すことができます。
                     """,
                 imageName: "screenshot_1"
             ),
@@ -34,8 +33,7 @@ class TutorialViewModel: ObservableObject {
                 title: "課題の管理①",
                 description: """
                     課題を一覧で管理できます。
-                    グループを作成することで課題を分類して
-                    管理することができます。
+                    グループを作成することで課題を分類して管理することができます。
                     """,
                 imageName: "screenshot_2"
             ),
@@ -43,8 +41,7 @@ class TutorialViewModel: ObservableObject {
                 title: "課題の管理②",
                 description: """
                     課題毎に原因と対策を登録できます。
-                    優先度が最も高い対策が
-                    ノートに読み込まれるようになります。
+                    優先度が最も高い対策がノートに読み込まれるようになります。
                     """,
                 imageName: "screenshot_3"
             ),
@@ -52,8 +49,7 @@ class TutorialViewModel: ObservableObject {
                 title: "ノートを作成",
                 description: """
                     練習ノートを作成できます。
-                    ノートには登録した課題が読み込まれ、
-                    課題への取り組みを記録しておくことができます。
+                    ノートには登録した課題が読み込まれ、課題の取り組みを記録しておくことができます。
                     """,
                 imageName: "screenshot_4"
             ),
@@ -61,17 +57,15 @@ class TutorialViewModel: ObservableObject {
                 title: "振り返り",
                 description: """
                     記録した内容はノートで振り返ることができます。
-                    課題＞対策へと進めば、その課題への取り組み内容を
-                    まとめて振り返ることもできます。
+                    課題＞対策へと進めば、その課題の取り組み内容をまとめて振り返ることもできます。
                     """,
                 imageName: "screenshot_5"
             ),
             TutorialPage(
                 title: "課題を完了にする",
                 description: """
-                    解決した課題は完了にすることで
-                    ノートへ読み込まれなくなります。完了にしても
-                    完了した課題からいつでも振り返ることができます。
+                    解決した課題は完了にすることでノートへ読み込まれなくなります。
+                    完了にしても完了した課題からいつでも振り返ることができます。
                     """,
                 imageName: "screenshot_6"
             ),

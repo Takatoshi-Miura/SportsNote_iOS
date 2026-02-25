@@ -17,57 +17,6 @@ struct TutorialView: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
-
-                // ナビゲーションボタン
-                HStack {
-                    // 戻るボタン（最初のページでは非表示）
-                    if currentPage > 0 {
-                        Button(action: {
-                            withAnimation {
-                                currentPage -= 1
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "chevron.left")
-                                Text(LocalizedStrings.previous)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(10)
-                        }
-                    } else {
-                        Spacer()
-                    }
-
-                    Spacer()
-
-                    // 次へボタンまたは完了ボタン
-                    Button(action: {
-                        if currentPage < viewModel.pages.count - 1 {
-                            withAnimation {
-                                currentPage += 1
-                            }
-                        } else {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }) {
-                        HStack {
-                            Text(
-                                currentPage < viewModel.pages.count - 1
-                                    ? LocalizedStrings.next : LocalizedStrings.complete)
-                            if currentPage < viewModel.pages.count - 1 {
-                                Image(systemName: "chevron.right")
-                            }
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                }
-                .padding()
             }
             .navigationTitle(LocalizedStrings.howToUseThisApp)
             .navigationBarTitleDisplayMode(.inline)
@@ -87,28 +36,31 @@ struct TutorialPageView: View {
     let page: TutorialPage
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 0) {
+            // タイトル（上寄せ）
             Text(page.title)
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .padding(.top)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
 
-            // スクリーンショットイメージ
+            // 説明
+            Text(page.description)
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+                .padding(.bottom, 16)
+
+            // スクリーンショットイメージ（残り領域に収まるように表示）
             Image(page.imageName)
                 .resizable()
                 .scaledToFit()
                 .cornerRadius(12)
                 .shadow(radius: 5)
-                .padding(.horizontal)
-
-            Text(page.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            Spacer()
+                .padding(.horizontal, 40)
+                .frame(maxHeight: .infinity)
+                .padding(.bottom, 48)
         }
-        .padding()
     }
 }
 
