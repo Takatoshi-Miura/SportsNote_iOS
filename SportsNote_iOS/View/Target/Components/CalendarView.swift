@@ -11,7 +11,8 @@ struct CalendarView: View {
     @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
     @State private var isAnimating: Bool = false  // アニメーション中かどうか
     @ObservedObject var noteViewModel: NoteViewModel  // 親から渡されるNoteViewModel
-    @State private var datesWithNotes: Set<Date> = []  // ノートがある日付のセット
+    @State private var datesWithPractice: Set<Date> = []   // 練習ノートがある日付のセット
+    @State private var datesWithTournament: Set<Date> = []  // 大会ノートがある日付のセット
 
     // 曜日の配列（日曜始まり）
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -164,7 +165,8 @@ struct CalendarView: View {
 
     // 表示中の月のノートがある日付を更新
     private func updateDatesWithNotes() {
-        datesWithNotes.removeAll()
+        datesWithPractice.removeAll()
+        datesWithTournament.removeAll()
 
         // 表示している月の初日と末日を取得
         let calendar = Calendar.current
@@ -179,9 +181,16 @@ struct CalendarView: View {
             var date = startDate
             while date <= endDate {
                 let notesForDate = noteViewModel.filterNotesByDate(date)
-                if !notesForDate.isEmpty {
-                    // この日にノートがある場合、セットに追加
-                    datesWithNotes.insert(calendar.startOfDay(for: date))
+                let startOfDay = calendar.startOfDay(for: date)
+                for note in notesForDate {
+                    switch NoteType(rawValue: note.noteType) {
+                    case .practice:
+                        datesWithPractice.insert(startOfDay)
+                    case .tournament:
+                        datesWithTournament.insert(startOfDay)
+                    default:
+                        break
+                    }
                 }
                 date = calendar.date(byAdding: .day, value: 1, to: date)!
             }
@@ -264,9 +273,12 @@ struct CalendarView: View {
         return date.isSameDay(as: selectedDate)
     }
 
-    private func hasNoteForDate(_ date: Date) -> Bool {
-        let startOfDay = date.startOfDay
-        return datesWithNotes.contains(startOfDay)
+    private func hasPracticeForDate(_ date: Date) -> Bool {
+        return datesWithPractice.contains(date.startOfDay)
+    }
+
+    private func hasTournamentForDate(_ date: Date) -> Bool {
+        return datesWithTournament.contains(date.startOfDay)
     }
 
     private func foregroundColorFor(_ date: Date) -> Color {
@@ -287,12 +299,14 @@ struct CalendarView: View {
     @ViewBuilder
     private func backgroundFor(_ date: Date) -> some View {
         // 選択中の日付 > 今日 > ノートがある日付 の優先順位で背景を決定
+        // ノート種別: 大会（赤）> 練習（緑）
         if isSelectedDate(date) {
             Circle().fill(Color.blue)
         } else if isToday(date) {
             Circle().stroke(Color.blue, lineWidth: 1)
-        } else if hasNoteForDate(date) {
-            // ノートがある日付は緑色の背景
+        } else if hasTournamentForDate(date) {
+            Circle().fill(Color.red.opacity(0.3))
+        } else if hasPracticeForDate(date) {
             Circle().fill(Color.green.opacity(0.3))
         } else {
             EmptyView()
