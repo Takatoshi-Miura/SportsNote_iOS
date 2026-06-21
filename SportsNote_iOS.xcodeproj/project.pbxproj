@@ -26,13 +26,6 @@
 			remoteGlobalIDString = 8D79F2D72D80660200D5D685;
 			remoteInfo = SportsNote_iOS;
 		};
-		8D79F2F42D80660300D5D685 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8D79F2D02D80660200D5D685 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D79F2D72D80660200D5D685;
-			remoteInfo = SportsNote_iOS;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,7 +45,6 @@
 /* Begin PBXFileReference section */
 		8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SportsNote_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D79F2E92D80660300D5D685 /* SportsNote_iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsNote_iOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsNote_iOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -91,13 +83,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8D79F2F02D80660300D5D685 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -115,7 +100,6 @@
 			children = (
 				8D79F2D82D80660200D5D685 /* SportsNote_iOS.app */,
 				8D79F2E92D80660300D5D685 /* SportsNote_iOSTests.xctest */,
-				8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -177,26 +161,6 @@
 			productReference = 8D79F2E92D80660300D5D685 /* SportsNote_iOSTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		8D79F2F22D80660300D5D685 /* SportsNote_iOSUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8D79F3032D80660300D5D685 /* Build configuration list for PBXNativeTarget "SportsNote_iOSUITests" */;
-			buildPhases = (
-				8D79F2EF2D80660300D5D685 /* Sources */,
-				8D79F2F02D80660300D5D685 /* Frameworks */,
-				8D79F2F12D80660300D5D685 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8D79F2F52D80660300D5D685 /* PBXTargetDependency */,
-			);
-			name = SportsNote_iOSUITests;
-			packageProductDependencies = (
-			);
-			productName = SportsNote_iOSUITests;
-			productReference = 8D79F2F32D80660300D5D685 /* SportsNote_iOSUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -211,10 +175,6 @@
 						CreatedOnToolsVersion = 16.2;
 					};
 					8D79F2E82D80660300D5D685 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 8D79F2D72D80660200D5D685;
-					};
-					8D79F2F22D80660300D5D685 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 8D79F2D72D80660200D5D685;
 					};
@@ -242,7 +202,6 @@
 			targets = (
 				8D79F2D72D80660200D5D685 /* SportsNote_iOS */,
 				8D79F2E82D80660300D5D685 /* SportsNote_iOSTests */,
-				8D79F2F22D80660300D5D685 /* SportsNote_iOSUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -256,13 +215,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8D79F2E72D80660300D5D685 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8D79F2F12D80660300D5D685 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -286,13 +238,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8D79F2EF2D80660300D5D685 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -300,11 +245,6 @@
 			isa = PBXTargetDependency;
 			target = 8D79F2D72D80660200D5D685 /* SportsNote_iOS */;
 			targetProxy = 8D79F2EA2D80660300D5D685 /* PBXContainerItemProxy */;
-		};
-		8D79F2F52D80660300D5D685 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8D79F2D72D80660200D5D685 /* SportsNote_iOS */;
-			targetProxy = 8D79F2F42D80660300D5D685 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -565,52 +505,6 @@
 			};
 			name = Release;
 		};
-		8D79F3042D80660300D5D685 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				ENABLE_BITCODE = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = SportsNote_iOS;
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Debug;
-		};
-		8D79F3052D80660300D5D685 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				ENABLE_BITCODE = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "it6210.SportsNote-iOSUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = SportsNote_iOS;
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -637,15 +531,6 @@
 			buildConfigurations = (
 				8D79F3012D80660300D5D685 /* Debug */,
 				8D79F3022D80660300D5D685 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8D79F3032D80660300D5D685 /* Build configuration list for PBXNativeTarget "SportsNote_iOSUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8D79F3042D80660300D5D685 /* Debug */,
-				8D79F3052D80660300D5D685 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

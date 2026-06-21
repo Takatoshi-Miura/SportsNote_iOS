@@ -18,10 +18,15 @@ final class DateFormatterUtil {
     /// フォーマット文字列をキーにしたDateFormatterキャッシュ
     private nonisolated(unsafe) static var formatterCache: [String: DateFormatter] = [:]
 
+    /// formatterCacheへのアクセスを排他制御するロック
+    private static let formatterCacheLock = NSLock()
+
     // MARK: - Private Methods
 
     /// フォーマット文字列に対応するキャッシュ済みDateFormatterを返す
     private static func formatter(for formatString: String) -> DateFormatter {
+        formatterCacheLock.lock()
+        defer { formatterCacheLock.unlock() }
         if let cached = formatterCache[formatString] {
             return cached
         }

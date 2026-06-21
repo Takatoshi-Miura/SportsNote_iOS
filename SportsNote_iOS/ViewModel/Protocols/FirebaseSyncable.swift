@@ -25,6 +25,14 @@ extension FirebaseSyncable {
     /// デフォルトのオンライン・ログイン状態判定
     /// Network.isOnline()とUserDefaultsのログイン状態をチェック
     var isOnlineAndLoggedIn: Bool {
+        #if DEBUG
+            // テスト用インメモリRealm使用時はFirebase同期を行わない
+            // （バックグラウンドTaskが保持するRealmオブジェクトが、後続テストの
+            //   Realm切り替えによりinvalidateされてクラッシュするのを防ぐ）
+            if RealmManager.shared.testConfiguration != nil {
+                return false
+            }
+        #endif
         return Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
     }
 }
