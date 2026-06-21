@@ -1,48 +1,6 @@
 import SwiftUI
 import UIKit
 
-struct MenuButton: View {
-    @Binding var isMenuOpen: Bool
-
-    var body: some View {
-        Button(action: {
-            withAnimation {
-                isMenuOpen.toggle()
-            }
-        }) {
-            Image(systemName: "line.horizontal.3")
-                .imageScale(.large)
-        }
-    }
-}
-
-enum DialogType {
-    case none, login, tutorial
-}
-
-struct SectionData: Identifiable {
-    let id = UUID()
-    let title: String
-    let items: [ItemData]
-}
-
-struct ItemData: Identifiable {
-    let id = UUID()
-    let title: String
-    let subTitle: String
-    let iconRes: String
-    let isEnabled: Bool
-    let onClick: () -> Void
-
-    init(title: String, subTitle: String, iconRes: String, isEnabled: Bool = true, onClick: @escaping () -> Void) {
-        self.title = title
-        self.subTitle = subTitle
-        self.iconRes = iconRes
-        self.isEnabled = isEnabled
-        self.onClick = onClick
-    }
-}
-
 struct MenuView: View {
     @Binding var isMenuOpen: Bool
     @State private var isLoginDialogVisible: Bool = false
@@ -203,45 +161,5 @@ struct MenuView: View {
                 }
             }
         }
-    }
-}
-
-/// メニュー項目のビュー
-struct MenuItemView: View {
-    let item: ItemData
-
-    var body: some View {
-        HStack {
-            Image(systemName: item.iconRes)
-            VStack(alignment: .leading) {
-                Text(item.title)
-            }
-            Spacer()
-            if !item.subTitle.isEmpty {
-                Text(item.subTitle)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            } else {
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard item.isEnabled else { return }
-            item.onClick()
-        }
-        .opacity(item.isEnabled ? 1.0 : 0.4)
-    }
-}
-
-struct TutorialScreen: View {
-    var onDismiss: () -> Void
-
-    var body: some View {
-        TutorialView()
-            .onDisappear {
-                onDismiss()
-            }
     }
 }

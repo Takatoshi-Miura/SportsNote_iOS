@@ -11,4 +11,17 @@ extension View {
                 KeyboardUtil.hideKeyboard()
             }
     }
+
+    func eraseToAnyView() -> AnyView {
+        return AnyView(self)
+    }
+
+    /// 条件付きでビューを修飾する
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
 }
