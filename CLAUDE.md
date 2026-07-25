@@ -13,7 +13,7 @@ MVVMアーキテクチャを採用し、ローカルのRealmデータベース�
 ### ビルドと実行
 ```bash
 # プロジェクトディレクトリに移動
-cd /Users/it6210/Documents/Program/Github/SportsNote_iOS
+cd /Users/it6210/Documents/Git/SportsNote_iOS
 
 # 🚨 ビルド前必須: swift-formatの実行（コード品質確保）
 # 全ViewModelファイルにswift-formatを適用（推奨）
@@ -39,7 +39,7 @@ xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination
 ```
 
 ### swift-format設定
-- **設定ファイル場所**: `/Users/it6210/Documents/Program/Github/SportsNote_iOS/.swift-format`
+- **設定ファイル場所**: `/Users/it6210/Documents/Git/SportsNote_iOS/.swift-format`
 - **フォーマット形式**: JSON設定ファイル（120文字/行、4スペースインデント等）
 - **適用タイミング**: ビルド前に必須実行（コード品質確保）
 
@@ -68,8 +68,7 @@ SportsNote_iOS/
 │       ├── Assets.xcassets/          # アプリアイコン・画像
 │       ├── ja.lproj/                 # 日本語ローカライゼーション
 │       └── en.lproj/                 # 英語ローカライゼーション
-├── SportsNote_iOSTests/              # 単体テスト
-├── SportsNote_iOSUITests/            # UIテスト
+├── SportsNote_iOSTests/              # 単体テスト（UIテストディレクトリは未作成）
 └── SportsNote_iOS.xcodeproj/         # Xcodeプロジェクトファイル
 ```
 
@@ -138,7 +137,7 @@ SportsNote_iOS/
 
 ### テスト
 - 単体テスト: `SportsNote_iOSTests/`
-- UIテスト: `SportsNote_iOSUITests/`
+- UIテストディレクトリは現時点で未作成
 - Xcodeの組み込みテストフレームワークを使用
 
 ## プロジェクト設定からのコーディングルール
