@@ -115,7 +115,7 @@ final class SyncManager {
             }
 
             if realmItem.updated_at > firebaseItem.updated_at {
-                try await updateFirebase(realmItem)
+                try? await updateFirebase(realmItem)
             } else if firebaseItem.updated_at > realmItem.updated_at {
                 try? RealmManager.shared.saveItem(firebaseItem)
             }
