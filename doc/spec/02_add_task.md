@@ -9,7 +9,7 @@
 - ナビゲーションバー: 「キャンセル」ボタン、「保存」ボタン
 - フォーム:
   - タイトル（TextField、必須）
-  - 原因（TextField）
+  - 原因（AutoResizingTextEditor）
   - グループ選択（GroupSelectorView）
   - 対策（TextField）
 
