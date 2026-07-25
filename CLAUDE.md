@@ -91,6 +91,7 @@ SportsNote_iOS/
 - 場所: `SportsNote_iOS/ViewModel/`
 - 命名規則: `[Entity]ViewModel.swift`（例: `TaskViewModel.swift`）
 - リアクティブプログラミングにCombineを使用
+- CRUD操作を持つViewModel（Group/Measures/Memo/Note/Target/Task）は`SportsNote_iOS/ViewModel/Protocols/`配下の`BaseViewModelProtocol`（fetchData/エラー状態管理）・`CRUDViewModelProtocol`（save/delete/fetchById）・`FirebaseSyncable`（Firebase同期）に準拠する
 
 **View層**: 機能別に整理されたSwiftUIビュー
 - 場所: `SportsNote_iOS/View/`
