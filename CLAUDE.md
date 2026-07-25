@@ -110,6 +110,7 @@ SportsNote_iOS/
 - `SyncManager`: ローカル-クラウドデータ同期の調整
 - `UserDefaultsManager`: アプリ設定とユーザー設定
 - `InitializationManager`: 初回起動時のセットアップとデフォルトデータ作成
+- `MigrationManager`: 旧アプリ（UIKit版）のFirebaseデータを新形式（Task+Measures+Memo、Target、Note）に変換するマイグレーション処理
 
 ## 開発ガイドライン
 
