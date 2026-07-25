@@ -151,8 +151,9 @@ Target (独立)
    - UserDefaults を初期化
    - ユーザーID（UUID）を自動生成
    - フリーノート・未分類グループを自動作成
-4. **通常起動（ログイン済み＋オンライン）**:
-   - 旧データマイグレーション実行（必要時）
+4. 旧アプリ（UIKit版）からのアップデート時、`isLogin`フラグが未設定かつ旧`address`/`password`（UserDefaults）が存在する場合は`isLogin = true`を補完（`InitializationManager.migrateLoginStateIfNeeded()`）
+5. **通常起動（ログイン済み＋オンライン）**:
+   - 旧データマイグレーション実行（必要時、`MigrationManager`が旧Firebaseコレクションを新形式に変換）
    - Firebaseとデータ同期
-5. MainTabView を表示
-6. 利用規約の同意状態を確認（未同意なら同意ダイアログ表示）
+6. MainTabView を表示
+7. 利用規約の同意状態を確認（未同意なら同意ダイアログ表示）
