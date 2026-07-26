@@ -53,7 +53,8 @@ xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination
 SportsNote_iOS/
 ├── SportsNote_iOS/                    # メインアプリケーション
 │   ├── Model/                         # データモデル層
-│   │   └── Manager/                   # データ管理クラス
+│   │   ├── Manager/                   # データ管理クラス
+│   │   └── Error/                     # エラー型定義
 │   ├── View/                         # ビュー層
 │   │   ├── Common/                   # 共通UIコンポーネント
 │   │   ├── Task/                     # 課題関連画面
@@ -63,6 +64,7 @@ SportsNote_iOS/
 │   │   ├── Measures/                 # 対策関連画面
 │   │   └── Setting/                  # 設定関連画面
 │   ├── ViewModel/                    # ビューモデル層
+│   │   └── Protocols/                # 共通ViewModelプロトコル
 │   ├── Utils/                        # ユーティリティ
 │   └── Resource/                     # リソース
 │       ├── Assets.xcassets/          # アプリアイコン・画像
@@ -111,6 +113,7 @@ SportsNote_iOS/
 - `UserDefaultsManager`: アプリ設定とユーザー設定
 - `InitializationManager`: 初回起動時のセットアップとデフォルトデータ作成
 - `MigrationManager`: 旧アプリ（UIKit版）のFirebaseデータを新形式（Task+Measures+Memo、Target、Note）に変換するマイグレーション処理
+- `TestDataManager`: DEBUG専用のテストデータ生成・旧形式データのFirebase投入・マイグレーション検証用ユーティリティ
 
 ## 開発ガイドライン
 
