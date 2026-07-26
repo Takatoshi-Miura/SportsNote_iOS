@@ -261,21 +261,26 @@ struct RealmManagerTests {
     @Test("logicalDelete - 連鎖削除（Group -> Task -> Measures -> Memo）")
     func logicalDelete_cascadesDeletion() async throws {
         // let manager = RealmManager.shared
+        let oldDate = Date().addingTimeInterval(-3600)  // 1時間前
 
-        // 階層データ作成
-        let group = Group(groupID: "g-cascade", title: "Group", color: 0, order: 0, created_at: Date())
+        // 階層データ作成（updated_atをいずれも過去日時にしておき、カスケード削除で更新されるか確認する）
+        let group = Group(groupID: "g-cascade", title: "Group", color: 0, order: 0, created_at: oldDate)
+        group.updated_at = oldDate
 
         let task = TaskData()
         task.taskID = "t-cascade"
         task.groupID = "g-cascade"
+        task.updated_at = oldDate
 
         let measures = Measures()
         measures.measuresID = "m-cascade"
         measures.taskID = "t-cascade"
+        measures.updated_at = oldDate
 
         let memo = Memo()
         memo.memoID = "memo-cascade"
         memo.measuresID = "m-cascade"
+        memo.updated_at = oldDate
 
         try manager.saveItem(group)
         try manager.saveItem(task)
@@ -297,6 +302,12 @@ struct RealmManagerTests {
         #expect(rawTask?.isDeleted == true)
         #expect(rawMeasures?.isDeleted == true)
         #expect(rawMemo?.isDeleted == true)
+
+        // issue #26: カスケード削除された子レコードもupdated_atが更新されている（markAsDeleted共通関数経由）
+        #expect(rawGroup != nil && rawGroup!.updated_at > oldDate)
+        #expect(rawTask != nil && rawTask!.updated_at > oldDate)
+        #expect(rawMeasures != nil && rawMeasures!.updated_at > oldDate)
+        #expect(rawMemo != nil && rawMemo!.updated_at > oldDate)
 
         manager.clearAll()
     }
