@@ -276,6 +276,25 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的な最大order取得メソッド（新規レコードのorder初期値算出に使用）
+    /// - Parameters:
+    ///   - clazz: 取得するデータ型のクラス（"order"プロパティを持つ必要がある）
+    ///   - predicate: 絞り込み条件（省略時はisDeleted==falseのみで絞り込み）
+    /// - Returns: 条件に一致する（isDeleted==falseの）レコードの最大order。該当データが1件もない場合はnil
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getMaxOrder<T: Object>(clazz: T.Type, predicate: NSPredicate? = nil) throws -> Int? {
+        do {
+            let realm = try getRealm()
+            var results = realm.objects(T.self).filter("isDeleted == false")
+            if let predicate = predicate {
+                results = results.filter(predicate)
+            }
+            return results.max(ofProperty: "order")
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getMaxOrder-\(String(describing: T.self))")
+        }
+    }
+
     /// groupIDに合致する完了した課題を取得
     /// - Parameter groupID: groupID
     /// - Returns: 完了した課題のリスト
