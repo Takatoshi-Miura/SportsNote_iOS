@@ -18,50 +18,61 @@ struct SyncManagerTests {
     let syncManager = SyncManager.shared
 
     init() async throws {
-        // テストごとにインメモリRealmを設定（syncData内でRealmManager.shared.saveItemが呼ばれる分岐を検証するため）
+        // テストごとにインメモリRealmを設定
+        // getFirebaseData/saveToFirebase/updateFirebaseのみスタブに差し替え、
+        // getRealmDataは本番実装（RealmManager.shared.getDataListIncludingDeleted）を
+        // そのまま経由させることで、SyncManager.syncGroup内の実際の配線（isDeleted復活バグ対策）を検証する
         RealmManager.shared.setupInMemoryRealm()
     }
 
-    // MARK: - issue #26: 削除の同期伝播テスト
+    // MARK: - issue #26: 削除の同期伝播テスト（syncGroupの本番配線を経由）
 
     @Test(
-        "syncData - ローカルでオフライン削除されたレコード（isDeleted=true, updated_atが新しい）は、Firebase側の古い未削除コピーで上書きされず、削除がFirebaseへ反映される"
+        "syncGroup - ローカルでオフライン削除されたレコード（isDeleted=true, updated_atが新しい）は、Firebase側の古い未削除コピーで上書きされず、削除がFirebaseへ反映される"
     )
-    func syncData_localDeletionNewerThanFirebase_propagatesDeleteToFirebase() async throws {
+    func syncGroup_localDeletionNewerThanFirebase_propagatesDeleteToFirebase() async throws {
         let id = "g-local-delete"
         let oldDate = Date().addingTimeInterval(-3600)
-        let newDate = Date()
 
-        // Firebase側はまだ削除前の古いコピー
+        // ローカルはオフラインで論理削除済み（実際にRealmへ保存し、logicalDeleteでupdated_atも更新させる）
+        let realmGroup = Group(groupID: id, title: "G", color: 0, order: 0, created_at: oldDate)
+        realmGroup.updated_at = oldDate
+        try RealmManager.shared.saveItem(realmGroup)
+        try RealmManager.shared.logicalDelete(id: id, type: Group.self)
+
+        // Firebase側はまだ削除前の古いコピー（isDeleted=false, updated_atが古いまま）
         let firebaseGroup = Group(groupID: id, title: "G", color: 0, order: 0, created_at: oldDate)
         firebaseGroup.updated_at = oldDate
         firebaseGroup.isDeleted = false
 
-        // ローカルはオフラインで論理削除済み（markAsDeletedによりupdated_atが更新されている想定）
-        let realmGroup = Group(groupID: id, title: "G", color: 0, order: 0, created_at: oldDate)
-        realmGroup.updated_at = newDate
-        realmGroup.isDeleted = true
-
         var updateFirebaseCalledWith: Group?
         var saveToFirebaseCalled = false
 
-        try await syncManager.syncData(
+        // getRealmDataは本番デフォルト（RealmManager.shared.getDataListIncludingDeleted）をそのまま使う。
+        // ここでgetDataList（isDeletedフィルタあり）に戻す退行が起きた場合、
+        // ローカル削除済みレコードがrealmMapに含まれなくなりonlyFirebaseID扱いとなって
+        // Firebase側の古いコピーで上書き（削除が復活）されるため、本テストは失敗する
+        try await syncManager.syncGroup(
             getFirebaseData: { [firebaseGroup] },
-            getRealmData: { [realmGroup] },
             saveToFirebase: { _ in saveToFirebaseCalled = true },
             updateFirebase: { item in updateFirebaseCalledWith = item }
         )
 
-        // Realm側の削除済みレコード（isDeleted=true）がFirebaseへの更新として反映される
         #expect(updateFirebaseCalledWith != nil)
         #expect(updateFirebaseCalledWith?.isDeleted == true)
         #expect(saveToFirebaseCalled == false)
+
+        // 削除復活バグが起きていないことも直接確認する
+        let rawGroup = RealmManager.shared.getRawObjectById(id: id, type: Group.self)
+        #expect(rawGroup?.isDeleted == true)
+
+        RealmManager.shared.clearAll()
     }
 
     @Test(
-        "syncData - Firebase側で削除された（isDeleted=true, updated_atが新しい）レコードは、Realm側にも削除として反映される（saveItem経由でisDeletedを含めて上書きされる）"
+        "syncGroup - Firebase側で削除された（isDeleted=true, updated_atが新しい）レコードは、Realm側にも削除として反映される（saveItem経由でisDeletedを含めて上書きされる）"
     )
-    func syncData_firebaseDeletionNewerThanRealm_propagatesDeleteToRealm() async throws {
+    func syncGroup_firebaseDeletionNewerThanRealm_propagatesDeleteToRealm() async throws {
         let id = "g-firebase-delete"
         let oldDate = Date().addingTimeInterval(-3600)
         let newDate = Date()
@@ -77,9 +88,8 @@ struct SyncManagerTests {
         firebaseGroup.updated_at = newDate
         firebaseGroup.isDeleted = true
 
-        try await syncManager.syncData(
+        try await syncManager.syncGroup(
             getFirebaseData: { [firebaseGroup] },
-            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Group.self) },
             saveToFirebase: { _ in Issue.record("saveToFirebaseは呼ばれないはず") },
             updateFirebase: { _ in Issue.record("updateFirebaseは呼ばれないはず") }
         )
@@ -92,29 +102,30 @@ struct SyncManagerTests {
         RealmManager.shared.clearAll()
     }
 
-    @Test("syncData - Realmにのみ存在する新規データはFirebaseへ保存される（既存ロジックの回帰確認）")
-    func syncData_onlyInRealm_savesToFirebase() async throws {
+    @Test("syncGroup - Realmにのみ存在する新規データはFirebaseへ保存される（既存ロジックの回帰確認）")
+    func syncGroup_onlyInRealm_savesToFirebase() async throws {
         let realmOnlyGroup = Group(groupID: "g-only-realm", title: "G", color: 0, order: 0, created_at: Date())
+        try RealmManager.shared.saveItem(realmOnlyGroup)
 
         var saveToFirebaseCalledWith: Group?
 
-        try await syncManager.syncData(
+        try await syncManager.syncGroup(
             getFirebaseData: { [] },
-            getRealmData: { [realmOnlyGroup] },
             saveToFirebase: { item in saveToFirebaseCalledWith = item },
             updateFirebase: { _ in Issue.record("updateFirebaseは呼ばれないはず") }
         )
 
         #expect(saveToFirebaseCalledWith?.groupID == "g-only-realm")
+
+        RealmManager.shared.clearAll()
     }
 
-    @Test("syncData - Firebaseにのみ存在するデータはRealmへ保存される（既存ロジックの回帰確認）")
-    func syncData_onlyInFirebase_savesToRealm() async throws {
+    @Test("syncGroup - Firebaseにのみ存在するデータはRealmへ保存される（既存ロジックの回帰確認）")
+    func syncGroup_onlyInFirebase_savesToRealm() async throws {
         let firebaseOnlyGroup = Group(groupID: "g-only-firebase", title: "G", color: 0, order: 0, created_at: Date())
 
-        try await syncManager.syncData(
+        try await syncManager.syncGroup(
             getFirebaseData: { [firebaseOnlyGroup] },
-            getRealmData: { [] },
             saveToFirebase: { _ in Issue.record("saveToFirebaseは呼ばれないはず") },
             updateFirebase: { _ in Issue.record("updateFirebaseは呼ばれないはず") }
         )
