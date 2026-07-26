@@ -13,7 +13,7 @@ struct FreeNoteView: View {
             ZStack {
                 if viewModel.isLoading {
                     VStack {
-                        Text("Loading note...")
+                        Text(LocalizedStrings.loading)
                             .foregroundColor(.gray)
                             .italic()
                         ProgressView()
