@@ -119,13 +119,8 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
-            // Firebase同期を非同期で実行（MainActorを維持）
-            Task {
-                let syncResult = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                if case .failure(let error) = syncResult {
-                    showErrorAlert(error)
-                }
-            }
+            // Firebase同期はバックグラウンドで実行
+            performBackgroundSync(entity, isUpdate: isUpdate)
 
             // UI更新 - 現在の年月のデータを再取得
             let allTargets = try RealmManager.shared.getDataList(clazz: Target.self)
@@ -203,13 +198,10 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
             // Realm操作はMainActorで実行
             try RealmManager.shared.logicalDelete(id: id, type: Target.self)
 
-            // Firebase同期を非同期で実行（MainActorを維持）
+            // Firebase同期はバックグラウンドで実行（論理削除なので更新として扱う）
             if let target = targetToDelete {
                 Task {
-                    let syncResult = await syncEntityToFirebase(target, isUpdate: true)  // 論理削除なので更新として扱う
-                    if case .failure(let error) = syncResult {
-                        showErrorAlert(error)
-                    }
+                    performBackgroundSync(target, isUpdate: true)
                 }
             }
 
