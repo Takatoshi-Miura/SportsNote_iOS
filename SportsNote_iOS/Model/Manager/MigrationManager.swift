@@ -9,6 +9,7 @@ final class MigrationManager {
 
     static let shared = MigrationManager()
     private let db = Firestore.firestore()
+    private let dedupeGuard = MigrationDedupeGuard()
 
     private init() {}
 
@@ -30,8 +31,12 @@ final class MigrationManager {
         print("OldTask変換開始")
         let oldTaskDocs = try await fetchOldTaskDocuments()
         for doc in oldTaskDocs {
-            try await migrateTask(data: doc.data())
-            try await markOldTaskDeleted(documentID: doc.documentID)
+            try await dedupeGuard.run(
+                entity: "Task",
+                documentID: doc.documentID,
+                migrate: { try await self.migrateTask(data: doc.data()) },
+                markDeleted: { try await self.markOldTaskDeleted(documentID: doc.documentID) }
+            )
         }
         print("OldTask変換終了: \(oldTaskDocs.count)件")
 
@@ -43,8 +48,12 @@ final class MigrationManager {
                 print("OldTarget変換開始")
                 let docs = try await fetchOldTargetDocuments()
                 for doc in docs {
-                    try await migrateTarget(data: doc.data())
-                    try await markOldTargetDeleted(documentID: doc.documentID)
+                    try await self.dedupeGuard.run(
+                        entity: "Target",
+                        documentID: doc.documentID,
+                        migrate: { try await self.migrateTarget(data: doc.data()) },
+                        markDeleted: { try await self.markOldTargetDeleted(documentID: doc.documentID) }
+                    )
                 }
                 print("OldTarget変換終了: \(docs.count)件")
             }
@@ -65,8 +74,12 @@ final class MigrationManager {
         print("OldNote変換開始")
         let oldNoteDocs = try await fetchOldNoteDocuments()
         for doc in oldNoteDocs {
-            try await migrateNote(data: doc.data())
-            try await markOldNoteDeleted(documentID: doc.documentID)
+            try await dedupeGuard.run(
+                entity: "Note",
+                documentID: doc.documentID,
+                migrate: { try await self.migrateNote(data: doc.data()) },
+                markDeleted: { try await self.markOldNoteDeleted(documentID: doc.documentID) }
+            )
         }
         print("OldNote変換終了: \(oldNoteDocs.count)件")
 
@@ -174,7 +187,7 @@ final class MigrationManager {
 
         // 未分類グループに割り当て（旧データにグループ概念なし）
         if let groups = try? RealmManager.shared.getDataList(clazz: Group.self),
-           let uncategorized = groups.first
+            let uncategorized = groups.first
         {
             task.groupID = uncategorized.groupID
         } else {
@@ -328,7 +341,7 @@ final class MigrationManager {
         switch noteTypeStr {
         case "練習記録": noteType = NoteType.practice.rawValue
         case "大会記録": noteType = NoteType.tournament.rawValue
-        default:         noteType = NoteType.practice.rawValue
+        default: noteType = NoteType.practice.rawValue
         }
 
         let note = Note()
@@ -431,10 +444,10 @@ final class MigrationManager {
     /// 旧天気文字列（"晴れ"/"くもり"/"雨"）を Weather enum の rawValue に変換
     private func convertWeather(from weatherString: String) -> Int {
         switch weatherString {
-        case "晴れ":   return Weather.sunny.rawValue
+        case "晴れ": return Weather.sunny.rawValue
         case "くもり": return Weather.cloudy.rawValue
-        case "雨":     return Weather.rainy.rawValue
-        default:       return Weather.sunny.rawValue
+        case "雨": return Weather.rainy.rawValue
+        default: return Weather.sunny.rawValue
         }
     }
 }
