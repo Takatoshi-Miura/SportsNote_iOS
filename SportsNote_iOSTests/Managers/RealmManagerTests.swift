@@ -104,6 +104,31 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    // MARK: - getDataListIncludingDeleted テスト（issue #26: 同期時の削除復活バグ対策）
+
+    @Test("getDataListIncludingDeleted - 論理削除済みレコードも含めて取得できる")
+    func getDataListIncludingDeleted_includesLogicallyDeletedRecords() async throws {
+        let group1 = Group(groupID: "g1", title: "Group 1", color: 0, order: 1, created_at: Date())
+        let group2 = Group(groupID: "g2", title: "Group 2", color: 0, order: 0, created_at: Date())  // orderが小さい
+        let group3 = Group(groupID: "g3", title: "Group 3", color: 0, order: 2, created_at: Date())
+        group3.isDeleted = true  // 削除済み
+
+        try manager.saveItem(group1)
+        try manager.saveItem(group2)
+        try manager.saveItem(group3)
+
+        let results = try manager.getDataListIncludingDeleted(clazz: Group.self)
+
+        // 削除済みも含めて全件（3件）返る
+        #expect(results.count == 3)
+        #expect(results[0].groupID == "g2")  // order順（0 -> 1 -> 2）
+        #expect(results[1].groupID == "g1")
+        #expect(results[2].groupID == "g3")
+        #expect(results[2].isDeleted == true)
+
+        manager.clearAll()
+    }
+
     @Test("getCount - 有効なデータ件数を取得できる")
     func getCount_returnsValidCount() async throws {
         // let manager = RealmManager.shared
@@ -211,6 +236,24 @@ struct RealmManagerTests {
         let rawNote = manager.getRawObjectById(id: "del-1", type: Note.self)
         #expect(rawNote != nil)
         #expect(rawNote?.isDeleted == true)
+
+        manager.clearAll()
+    }
+
+    @Test("logicalDelete - updated_atが更新される（issue #26: Firebase同期時に削除が新しいと判定されるようにするため）")
+    func logicalDelete_updatesUpdatedAt() async throws {
+        let oldDate = Date().addingTimeInterval(-3600)  // 1時間前
+
+        let group = Group(groupID: "g-updated-at", title: "Group", color: 0, order: 0, created_at: oldDate)
+        group.updated_at = oldDate
+        try manager.saveItem(group)
+
+        try manager.logicalDelete(id: "g-updated-at", type: Group.self)
+
+        let rawGroup = manager.getRawObjectById(id: "g-updated-at", type: Group.self)
+        #expect(rawGroup?.isDeleted == true)
+        #expect(rawGroup != nil)
+        #expect(rawGroup!.updated_at > oldDate)
 
         manager.clearAll()
     }

@@ -261,6 +261,27 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的なデータ一覧取得メソッド（論理削除済みも含む）
+    /// Firebaseとの同期比較（`SyncManager`）専用に使用し、isDeletedによる絞り込みは行わない
+    /// - Parameter clazz: 取得するデータ型のクラス
+    /// - Returns: 論理削除フラグに関わらない全データのリスト
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getDataListIncludingDeleted<T: Object>(clazz: T.Type) throws -> [T] {
+        do {
+            let realm = try getRealm()
+            var results = realm.objects(clazz)
+            // "order" プロパティが存在する場合のみソート
+            if let schema = clazz.sharedSchema(),
+                schema.properties.contains(where: { $0.name == "order" })
+            {
+                results = results.sorted(byKeyPath: "order", ascending: true)
+            }
+            return Array(results)
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getDataListIncludingDeleted-\(String(describing: T.self))")
+        }
+    }
+
     /// 汎用的なデータカウント取得メソッド
     /// - Parameter clazz: RealmObjectのクラス型
     /// - Returns: isDeletedがfalseのデータ数
@@ -560,6 +581,8 @@ final class RealmManager {
     }
 
     /// 任意のオブジェクトを論理削除
+    /// updated_atも現在時刻に更新し、Firebaseとの同期時に削除操作が
+    /// Firebase側の未削除コピーより新しいと判定されるようにする
     /// - Parameters:
     ///   - item: データ
     ///   - realm: Realmインスタンス
@@ -567,21 +590,27 @@ final class RealmManager {
         // itemが「削除フラグ」を持っているかどうかでチェックし、削除マークを付ける
         if let itemWithDeleteFlag = item as? Note {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Group {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? TaskData {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Measures {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Memo {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Target {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         }
     }

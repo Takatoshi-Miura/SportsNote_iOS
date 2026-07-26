@@ -73,7 +73,7 @@ final class SyncManager {
     /// @param getRealmData Realm からデータを取得する関数
     /// @param saveToFirebase Firebase にデータを保存する関数
     /// @param updateFirebase Firebase のデータを更新する関数
-    private func syncData<T>(
+    func syncData<T>(
         getFirebaseData: @MainActor () async throws -> [T],
         getRealmData: @MainActor () throws -> [T],
         saveToFirebase: @MainActor (T) async throws -> Void,
@@ -125,7 +125,7 @@ final class SyncManager {
     private func syncGroup() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllGroup() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Group.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Group.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveGroup(group: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateGroup(group: $0) }
         )
@@ -136,7 +136,7 @@ final class SyncManager {
     private func syncTask() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllTask() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: TaskData.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: TaskData.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveTask(task: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateTask(task: $0) }
         )
@@ -147,7 +147,7 @@ final class SyncManager {
     private func syncMeasures() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllMeasures() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Measures.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Measures.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveMeasures(measures: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateMeasures(measures: $0) }
         )
@@ -158,7 +158,7 @@ final class SyncManager {
     private func syncMemo() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllMemo() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Memo.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Memo.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveMemo(memo: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateMemo(memo: $0) }
         )
@@ -169,7 +169,7 @@ final class SyncManager {
     private func syncTarget() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllTarget() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Target.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Target.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveTarget(target: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateTarget(target: $0) }
         )
@@ -180,7 +180,7 @@ final class SyncManager {
     private func syncNote() async throws {
         try await syncData(
             getFirebaseData: { try await FirebaseManager.shared.getAllNote() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Note.self) },
+            getRealmData: { try RealmManager.shared.getDataListIncludingDeleted(clazz: Note.self) },
             saveToFirebase: { try await FirebaseManager.shared.saveNote(note: $0) },
             updateFirebase: { try await FirebaseManager.shared.updateNote(note: $0) }
         )
