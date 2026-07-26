@@ -118,7 +118,8 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Returns: 並び順
     private func getDefaultOrder() -> Int {
         do {
-            return try RealmManager.shared.getCount(clazz: Group.self)
+            let maxOrder = try RealmManager.shared.getMaxOrder(clazz: Group.self)
+            return (maxOrder ?? -1) + 1
         } catch {
             // エラー時は0を返す（デフォルト値）
             return 0
