@@ -208,4 +208,18 @@ struct LocalizedStrings {
     static let userCollisionError = "userCollisionError".localized
     static let weakPasswordError = "weakPasswordError".localized
     static let recentLoginRequiredError = "recentLoginRequiredError".localized
+
+    // MARK: Tutorial
+    static let tutorialPage1Title = "tutorialPage1Title".localized
+    static let tutorialPage1Description = "tutorialPage1Description".localized
+    static let tutorialPage2Title = "tutorialPage2Title".localized
+    static let tutorialPage2Description = "tutorialPage2Description".localized
+    static let tutorialPage3Title = "tutorialPage3Title".localized
+    static let tutorialPage3Description = "tutorialPage3Description".localized
+    static let tutorialPage4Title = "tutorialPage4Title".localized
+    static let tutorialPage4Description = "tutorialPage4Description".localized
+    static let tutorialPage5Title = "tutorialPage5Title".localized
+    static let tutorialPage5Description = "tutorialPage5Description".localized
+    static let tutorialPage6Title = "tutorialPage6Title".localized
+    static let tutorialPage6Description = "tutorialPage6Description".localized
 }

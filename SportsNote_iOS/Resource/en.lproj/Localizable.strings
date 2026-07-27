@@ -199,3 +199,17 @@
 "userCollisionError" = "This email is already in use";
 "weakPasswordError" = "Please use a stronger password";
 "recentLoginRequiredError" = "Please login again before this operation";
+
+// MARK: Tutorial
+"tutorialPage1Title" = "About SportsNote";
+"tutorialPage1Description" = "A note-taking app focused on solving challenges.\nThink through causes and countermeasures, put them into practice, and work toward resolution through reflection.";
+"tutorialPage2Title" = "Managing Tasks (1)";
+"tutorialPage2Description" = "Manage your tasks in a list view.\nYou can create groups to organize and categorize your tasks.";
+"tutorialPage3Title" = "Managing Tasks (2)";
+"tutorialPage3Description" = "Register causes and countermeasures for each task.\nThe measure with the highest priority is automatically loaded into your notes.";
+"tutorialPage4Title" = "Create a Note";
+"tutorialPage4Description" = "Create practice notes.\nRegistered tasks are loaded into the note, letting you record your progress on each one.";
+"tutorialPage5Title" = "Reflection";
+"tutorialPage5Description" = "Review what you've recorded in your notes.\nGo from Task to Measures to review a summary of everything you've done for that task.";
+"tutorialPage6Title" = "Completing a Task";
+"tutorialPage6Description" = "Marking a resolved task as complete keeps it from being loaded into notes.\nEven after completion, you can look back on completed tasks at any time.";
