@@ -111,7 +111,7 @@ SportsNote_iOS/
 - `FirebaseManager`: すべてのエンティティのクラウドCRUD操作
 - `SyncManager`: ローカル-クラウドデータ同期の調整
 - `UserDefaultsManager`: アプリ設定とユーザー設定
-- `InitializationManager`: 初回起動時のセットアップとデフォルトデータ作成
+- `InitializationManager`: アプリ初期化処理の統括。初回起動時のセットアップ・デフォルトデータ作成に加え、`initializeApp()`は起動時・ログイン時・ログアウト時にも呼び出され、旧アプリからのログイン状態補完（`migrateLoginStateIfNeeded()`）、ログイン済み＋オンライン時の`MigrationManager`による旧データマイグレーションと`SyncManager`によるFirebase同期の実行も担う
 - `MigrationManager`: 旧アプリ（UIKit版）のFirebaseデータを新形式（Task+Measures+Memo、Target、Note）に変換するマイグレーション処理
 - `TestDataManager`: DEBUG専用のテストデータ生成・旧形式データのFirebase投入・マイグレーション検証用ユーティリティ
 
