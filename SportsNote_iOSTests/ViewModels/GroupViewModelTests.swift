@@ -500,6 +500,44 @@ struct GroupViewModelTests {
 
         manager.clearAll()
     }
+
+    // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
+
+    @Test(
+        "convertFirebaseSyncError - 既にSportsNoteErrorの場合は再変換せずそのまま返す",
+        arguments: [
+            SportsNoteError.firebasePermissionDenied,
+            SportsNoteError.firebaseDocumentNotFound,
+            SportsNoteError.firebaseQuotaExceeded,
+            SportsNoteError.networkUnavailable,
+            SportsNoteError.networkTimeout,
+        ])
+    func convertFirebaseSyncError_doesNotReconvertExistingSportsNoteError(original: SportsNoteError) async {
+        let viewModel = GroupViewModel()
+
+        let converted = viewModel.convertFirebaseSyncError(original, context: "GroupViewModel-syncEntityToFirebase")
+
+        // 再変換されていれば、SportsNoteErrorがNSErrorへブリッジされる際のenum宣言順オーディナルが
+        // Firestoreエラーコードと誤って一致し、errorDescriptionが変化してしまう
+        #expect(converted.errorDescription == original.errorDescription)
+    }
+
+    @Test("convertFirebaseSyncError - SportsNoteError以外のエラーはErrorMapper.mapFirebaseErrorで変換される")
+    func convertFirebaseSyncError_mapsUnknownErrorViaErrorMapper() async {
+        let viewModel = GroupViewModel()
+        struct DummyError: Error {}
+
+        let converted = viewModel.convertFirebaseSyncError(DummyError(), context: "test")
+
+        // DummyErrorはNSErrorへの標準ブリッジでcodeが既知のFirestoreエラーコード（7,5,14,8,16,13,4）や
+        // 1000以上に該当しないため、ErrorMapper.mapFirebaseErrorのdefault分岐によりunexpectedErrorに変換される
+        switch converted {
+        case .unexpectedError:
+            break  // ErrorMapper.mapFirebaseErrorの想定フォールバック経路
+        default:
+            Issue.record("想定外の変換結果: \(converted)")
+        }
+    }
 }
 
 // MARK: - テストヘルパー拡張

@@ -257,7 +257,7 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "TargetViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "TargetViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }
