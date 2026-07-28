@@ -6,6 +6,21 @@ struct RealmConstants {
     static let schemaVersion: UInt64 = 0
 }
 
+/// 論理削除フラグ(isDeleted)を持つRealmモデルの共通インターフェース
+/// issue #38でmarkAsDeleted用にSoftDeletableプロトコルが新設された場合は、
+/// 本プロトコルとの重複を解消し統合すること
+protocol SoftDeletable {
+    var isDeleted: Bool { get }
+}
+
+// Realmモデルに対してSoftDeletableプロトコルを適用する拡張
+extension Note: SoftDeletable {}
+extension Group: SoftDeletable {}
+extension TaskData: SoftDeletable {}
+extension Measures: SoftDeletable {}
+extension Memo: SoftDeletable {}
+extension Target: SoftDeletable {}
+
 /// Realmデータベースを管理するクラス
 @MainActor
 final class RealmManager {
@@ -218,18 +233,8 @@ final class RealmManager {
 
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {
-                // オブジェクトがisDeletedプロパティを持っているか確認
-                if let noteObj = object as? Note, noteObj.isDeleted {
-                    return nil
-                } else if let groupObj = object as? Group, groupObj.isDeleted {
-                    return nil
-                } else if let taskObj = object as? TaskData, taskObj.isDeleted {
-                    return nil
-                } else if let measuresObj = object as? Measures, measuresObj.isDeleted {
-                    return nil
-                } else if let memoObj = object as? Memo, memoObj.isDeleted {
-                    return nil
-                } else if let targetObj = object as? Target, targetObj.isDeleted {
+                // SoftDeletableに適合し、かつisDeleted == trueなら論理削除済みとみなす
+                if (object as? SoftDeletable)?.isDeleted == true {
                     return nil
                 }
                 return object
