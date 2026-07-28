@@ -199,3 +199,17 @@
 "userCollisionError" = "このメールアドレスは既に使用されています";
 "weakPasswordError" = "より強力なパスワードを設定してください";
 "recentLoginRequiredError" = "再度ログインしてから操作を行ってください";
+
+// MARK: Tutorial
+"tutorialPage1Title" = "SportsNoteとは";
+"tutorialPage1Description" = "課題解決に特化したノートアプリです。\n原因と対策を考えて実践し、反省を通して解決を目指すことができます。";
+"tutorialPage2Title" = "課題の管理①";
+"tutorialPage2Description" = "課題を一覧で管理できます。\nグループを作成することで課題を分類して管理することができます。";
+"tutorialPage3Title" = "課題の管理②";
+"tutorialPage3Description" = "課題毎に原因と対策を登録できます。\n優先度が最も高い対策がノートに読み込まれるようになります。";
+"tutorialPage4Title" = "ノートを作成";
+"tutorialPage4Description" = "練習ノートを作成できます。\nノートには登録した課題が読み込まれ、課題の取り組みを記録しておくことができます。";
+"tutorialPage5Title" = "振り返り";
+"tutorialPage5Description" = "記録した内容はノートで振り返ることができます。\n課題＞対策へと進めば、その課題の取り組み内容をまとめて振り返ることもできます。";
+"tutorialPage6Title" = "課題を完了にする";
+"tutorialPage6Description" = "解決した課題は完了にすることでノートへ読み込まれなくなります。\n完了にしても完了した課題からいつでも振り返ることができます。";
