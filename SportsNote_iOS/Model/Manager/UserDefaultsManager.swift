@@ -52,8 +52,8 @@ class UserDefaultsManager {
     static func get<T>(key: String, defaultValue: T) -> T {
         // ユーザーIDの特別な処理
         if key == Keys.userID {
-            if let cachedID = cachedUserID as? T {
-                return cachedID
+            if let cachedID = cachedUserID {
+                return cachedID as! T
             }
             if let savedID = userDefaults.string(forKey: key) {
                 cachedUserID = savedID

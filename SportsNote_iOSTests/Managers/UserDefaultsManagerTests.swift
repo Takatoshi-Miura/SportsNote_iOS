@@ -123,6 +123,43 @@ struct UserDefaultsManagerTests {
         UserDefaultsManager.clearAll()
     }
 
+    @Test("userID - Optional型(String?)呼び出し時もcachedUserIDがnilなら新規UUIDが返る（#37回帰防止）")
+    func userID_optionalCall_returnsGeneratedUUIDWhenCacheIsNil() {
+        // cachedUserIDはinit()のclearAll()でnilになっている（コールドスタート相当）
+        let value = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String?
+        #expect(value != nil)
+        #expect(UUIDGenerator.isValidUUID(value ?? ""))
+
+        UserDefaultsManager.clearAll()
+    }
+
+    @Test("userID - Optional型(String?)呼び出し時、永続化済みIDがcachedUserID未設定でも返る（#37回帰防止）")
+    func userID_optionalCall_returnsPersistedValueWhenCacheIsNil() {
+        // キャッシュを経由せず、UserDefaultsに直接値を仕込む（コールドスタート相当）
+        UserDefaults.standard.set("persisted-id", forKey: UserDefaultsManager.Keys.userID)
+
+        let value = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String?
+        #expect(value == "persisted-id")
+
+        UserDefaultsManager.clearAll()
+    }
+
+    @Test("userID - Optional型(String?)呼び出しと非Optional呼び出しで同一の永続化済みIDが返る")
+    func userID_optionalAndNonOptionalCallsReturnSameValue() {
+        UserDefaults.standard.set("shared-id", forKey: UserDefaultsManager.Keys.userID)
+
+        let optionalValue = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String?
+        UserDefaultsManager.clearAll()
+        UserDefaults.standard.set("shared-id", forKey: UserDefaultsManager.Keys.userID)
+        let nonOptionalValue = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
+
+        #expect(optionalValue == "shared-id")
+        #expect(nonOptionalValue == "shared-id")
+        #expect(optionalValue == nonOptionalValue)
+
+        UserDefaultsManager.clearAll()
+    }
+
     // MARK: - remove
 
     @Test("remove - 指定キーの値が削除されデフォルト値に戻る")
