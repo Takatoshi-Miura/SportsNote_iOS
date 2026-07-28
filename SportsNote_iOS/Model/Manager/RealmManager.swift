@@ -180,28 +180,6 @@ final class RealmManager {
 
     // MARK: - Select
 
-    /// 指定したクラスに対応するプライマリキーのプロパティ名を取得
-    /// - Returns: Tに対応するプライマリキーのプロパティ名
-    /// - Throws: 対応していないクラスの場合にスローされる
-    private func getPrimaryKeyName<T: Object>(_ type: T.Type) -> String {
-        switch type {
-        case is Group.Type:
-            return "groupID"
-        case is Measures.Type:
-            return "measuresID"
-        case is Memo.Type:
-            return "memoID"
-        case is Note.Type:
-            return "noteID"
-        case is Target.Type:
-            return "targetID"
-        case is TaskData.Type:
-            return "taskID"
-        default:
-            fatalError("Unsupported class")
-        }
-    }
-
     /// 汎用的なデータ取得メソッド（ID指定）
     /// - Parameter id: 検索するID（文字列）
     /// - Returns: 取得データ（存在しない場合は`nil`）
@@ -213,8 +191,6 @@ final class RealmManager {
 
         do {
             let realm = try getRealm()
-            // PrimaryKeyで安全に検索
-            _ = getPrimaryKeyName(type)
 
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {
