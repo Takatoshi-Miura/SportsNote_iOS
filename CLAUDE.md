@@ -29,13 +29,16 @@ find SportsNote_iOS/ViewModel -name "*.swift" -exec xcrun swift-format --configu
 open SportsNote_iOS.xcodeproj
 
 # コマンドラインからビルド
-xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16e' build
+# 🚨 注意: 同名（iPhone 16e）のシミュレータが複数存在する環境では、name指定のみだと
+# 「error: Unable to find a device matching the provided destination specifier」で失敗する。
+# その場合は`xcrun simctl list devices available`でidを確認し、id指定に切り替える。
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,id=F0355670-E20E-41A6-A5B9-B41E21EC87CB' build
 
 # ビルド結果の確認（エラー・警告・結果のみ表示）
-xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16e' build 2>&1 | grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" | tail -10
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,id=F0355670-E20E-41A6-A5B9-B41E21EC87CB' build 2>&1 | grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" | tail -10
 
 # テスト実行
-xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,name=iPhone 16e' test
+xcodebuild -project SportsNote_iOS.xcodeproj -scheme SportsNote_iOS -destination 'platform=iOS Simulator,id=F0355670-E20E-41A6-A5B9-B41E21EC87CB' test
 ```
 
 ### swift-format設定
