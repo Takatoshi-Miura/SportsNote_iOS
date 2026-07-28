@@ -151,29 +151,12 @@ struct PracticeNoteView: View {
         // ノートに関連するメモを取得
         let noteMemos = viewModel.memos.filter { $0.noteID == note.noteID }
 
-        // 各メモをタスクに関連付け
-        for memo in noteMemos {
-            // TaskListDataをmeasuresIDで検索
-            if let taskIndex = taskViewModel.taskListData.firstIndex(where: { $0.measuresID == memo.measuresID }) {
-                // 元のタスクを取得
-                let task = taskViewModel.taskListData[taskIndex]
-
-                // TaskListDataを変更するためにカスタムTaskListDataを作成
-                let taskWithMemo = TaskListData(
-                    taskID: task.taskID,
-                    groupID: task.groupID,
-                    groupColor: task.groupColor,
-                    title: task.title,
-                    measuresID: task.measuresID,
-                    measures: task.measures,
-                    memoID: memo.memoID,
-                    order: task.order,
-                    isComplete: task.isComplete
-                )
-                taskReflections[taskWithMemo] = memo.detail
-            } else {
-                print("No matching task found for memo.measuresID: \(memo.measuresID)")
-            }
+        // TaskViewModel.associateTasksWithMemosに集約したロジックでタスク-メモペアを構築し、
+        // 編集時に対応するMemoを特定できるようmemoIDを設定したTaskListDataをキーにする
+        for pair in taskViewModel.associateTasksWithMemos(memos: noteMemos) {
+            var taskWithMemo = pair.task
+            taskWithMemo.memoID = pair.memo.memoID
+            taskReflections[taskWithMemo] = pair.memo.detail
         }
     }
 
