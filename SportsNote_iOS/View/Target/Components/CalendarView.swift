@@ -11,7 +11,7 @@ struct CalendarView: View {
     @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
     @State private var isAnimating: Bool = false  // アニメーション中かどうか
     @ObservedObject var noteViewModel: NoteViewModel  // 親から渡されるNoteViewModel
-    @State private var datesWithPractice: Set<Date> = []   // 練習ノートがある日付のセット
+    @State private var datesWithPractice: Set<Date> = []  // 練習ノートがある日付のセット
     @State private var datesWithTournament: Set<Date> = []  // 大会ノートがある日付のセット
 
     // 曜日の配列（日曜始まり）
@@ -242,18 +242,6 @@ struct CalendarView: View {
 
     // 曜日ヘッダーの色を返す関数（0=Sunday, 6=Saturday）
     private func colorForWeekdayHeader(_ weekday: Int) -> Color {
-        switch weekday {
-        case 0:  // Sunday
-            return .red
-        case 6:  // Saturday
-            return .blue
-        default:
-            return .primary
-        }
-    }
-
-    // 曜日に応じた色を返す関数（日付セルの色）
-    private func colorForWeekday(_ weekday: Int) -> Color {
         switch weekday {
         case 0:  // Sunday
             return .red
