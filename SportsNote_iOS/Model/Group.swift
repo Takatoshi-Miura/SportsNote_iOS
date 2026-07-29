@@ -48,6 +48,12 @@ class Group: Object {
     override static func primaryKey() -> String? {
         return "groupID"
     }
+
+    /// 安全にGroupColorを取得するアクセサ
+    /// - Note: colorがGroupColorの範囲外（Firestore経由の不正値等）の場合はgrayにフォールバックする
+    var groupColor: GroupColor {
+        GroupColor(rawValue: color) ?? .gray
+    }
 }
 
 enum GroupColor: Int, CaseIterable {

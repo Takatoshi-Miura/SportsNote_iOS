@@ -564,6 +564,37 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    @Test("getNoteBackgroundColor - 範囲外のcolor値でもクラッシュせずgrayを返す（issue #43）")
+    func getNoteBackgroundColor_returnsGrayForOutOfRangeColor() async throws {
+        // Group.colorがGroupColorの範囲外（0〜7外）の不正値を持つケース
+        let group = Group(
+            groupID: "g-invalid-color", title: "Broken Group", color: 99, order: 0, created_at: Date())
+
+        let task = TaskData()
+        task.taskID = "t-invalid-color"
+        task.groupID = "g-invalid-color"
+
+        let measures = Measures()
+        measures.measuresID = "m-invalid-color"
+        measures.taskID = "t-invalid-color"
+
+        let memo = Memo()
+        memo.memoID = "memo-invalid-color"
+        memo.measuresID = "m-invalid-color"
+        memo.noteID = "n-invalid-color"
+
+        try manager.saveItem(group)
+        try manager.saveItem(task)
+        try manager.saveItem(measures)
+        try manager.saveItem(memo)
+
+        let color = manager.getNoteBackgroundColor(noteID: "n-invalid-color")
+
+        #expect(color.cgColor == GroupColor.gray.color.cgColor)
+
+        manager.clearAll()
+    }
+
     // MARK: - パラメータ化テスト
 
     @Test("searchNotesByQuery - 複数のクエリパターン", arguments: ["Swift", "Testing", "Learn"])
