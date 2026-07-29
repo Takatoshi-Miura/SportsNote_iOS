@@ -357,6 +357,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             if reflectionText.isEmpty { continue }
 
             let memo = Memo()
+            var existingCreatedAt: Date?
 
             // memoIDの決定ロジック:
             // 1. task.memoIDがあればそれを使用(既存メモ編集)
@@ -365,12 +366,16 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             // 4. なければ新規ID生成(新規作成)
             if let existingMemoID = task.memoID {
                 memo.memoID = existingMemoID
+                // 既存メモをRealmから取得し、created_atを引き継ぐ
+                existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
             } else {
                 let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
                 if let existingMemo = existingMemos.first(where: {
                     $0.measuresID == task.measuresID
                 }) {
                     memo.memoID = existingMemo.memoID  // 既存IDを使用
+                    // 検索でヒットした既存メモのcreated_atを引き継ぐ
+                    existingCreatedAt = existingMemo.created_at
                 } else {
                     memo.memoID = UUIDGenerator.generateID()  // 新規生成
                 }
@@ -379,6 +384,8 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             memo.measuresID = task.measuresID
             memo.noteID = noteID
             memo.detail = reflectionText
+            // 既存メモを更新する場合はcreated_atを維持し、新規作成時のみ現在時刻とする
+            memo.created_at = existingCreatedAt ?? Date()
             try? realmManager.saveItem(memo)
         }
 
