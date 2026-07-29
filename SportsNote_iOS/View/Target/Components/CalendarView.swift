@@ -98,7 +98,7 @@ struct CalendarView: View {
 
             // 「今日」ボタンの通知を受け取る
             NotificationCenter.default.addObserver(
-                forName: NSNotification.Name("MoveToToday"),
+                forName: .moveToToday,
                 object: nil,
                 queue: .main
             ) { _ in
@@ -128,7 +128,7 @@ struct CalendarView: View {
             // 通知の登録解除
             NotificationCenter.default.removeObserver(
                 self,
-                name: NSNotification.Name("MoveToToday"),
+                name: .moveToToday,
                 object: nil
             )
         }

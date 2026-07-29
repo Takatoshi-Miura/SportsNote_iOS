@@ -20,7 +20,7 @@ struct TodayButton: View {
             targetViewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
 
             NotificationCenter.default.post(
-                name: NSNotification.Name("MoveToToday"),
+                name: .moveToToday,
                 object: nil
             )
 
