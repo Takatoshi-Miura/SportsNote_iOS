@@ -28,10 +28,10 @@ final class MigrationManager {
 
         // 1. Task → TaskData + Measures + Memo（Note変換より先に実行）
         print("OldTask変換開始")
-        let oldTaskDocs = try await fetchOldTaskDocuments()
+        let oldTaskDocs = try await fetchOldDocuments(collection: "TaskData")
         for doc in oldTaskDocs {
             try await migrateTask(data: doc.data())
-            try await markOldTaskDeleted(documentID: doc.documentID)
+            try await markOldDocumentDeleted(collection: "TaskData", documentID: doc.documentID)
         }
         print("OldTask変換終了: \(oldTaskDocs.count)件")
 
@@ -41,10 +41,10 @@ final class MigrationManager {
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask { [self] in
                 print("OldTarget変換開始")
-                let docs = try await fetchOldTargetDocuments()
+                let docs = try await fetchOldDocuments(collection: "TargetData")
                 for doc in docs {
                     try await migrateTarget(data: doc.data())
-                    try await markOldTargetDeleted(documentID: doc.documentID)
+                    try await markOldDocumentDeleted(collection: "TargetData", documentID: doc.documentID)
                 }
                 print("OldTarget変換終了: \(docs.count)件")
             }
@@ -63,10 +63,10 @@ final class MigrationManager {
 
         // 3. Note → Note（practice/tournament）（Task変換完了後）
         print("OldNote変換開始")
-        let oldNoteDocs = try await fetchOldNoteDocuments()
+        let oldNoteDocs = try await fetchOldDocuments(collection: "NoteData")
         for doc in oldNoteDocs {
             try await migrateNote(data: doc.data())
-            try await markOldNoteDeleted(documentID: doc.documentID)
+            try await markOldDocumentDeleted(collection: "NoteData", documentID: doc.documentID)
         }
         print("OldNote変換終了: \(oldNoteDocs.count)件")
 
@@ -77,28 +77,12 @@ final class MigrationManager {
 
     // MARK: - 旧コレクション取得（FirebaseManager.getAllDocuments() は private のため直接アクセス）
 
-    /// 旧コレクション "TaskData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldTaskDocuments() async throws -> [QueryDocumentSnapshot] {
+    /// 指定した旧コレクションから isDeleted=false のドキュメントを全取得
+    /// - Parameter collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
+    private func fetchOldDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
         let userID = getUserID()
         return try await withCheckedThrowingContinuation { continuation in
-            db.collection("TaskData")
-                .whereField("userID", isEqualTo: userID)
-                .whereField("isDeleted", isEqualTo: false)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents ?? [])
-                    }
-                }
-        }
-    }
-
-    /// 旧コレクション "TargetData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldTargetDocuments() async throws -> [QueryDocumentSnapshot] {
-        let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection("TargetData")
+            db.collection(collection)
                 .whereField("userID", isEqualTo: userID)
                 .whereField("isDeleted", isEqualTo: false)
                 .getDocuments { snapshot, error in
@@ -112,6 +96,7 @@ final class MigrationManager {
     }
 
     /// 旧コレクション "FreeNoteData" からドキュメントを取得（ドキュメントID = userID）
+    /// isDeleted フィルタを持たず単一ドキュメントを返す点で fetchOldDocuments(collection:) とは構造が異なるため対象外
     private func fetchOldFreeNoteDocument() async throws -> QueryDocumentSnapshot? {
         let userID = getUserID()
         return try await withCheckedThrowingContinuation { continuation in
@@ -122,23 +107,6 @@ final class MigrationManager {
                         continuation.resume(throwing: error)
                     } else {
                         continuation.resume(returning: snapshot?.documents.first)
-                    }
-                }
-        }
-    }
-
-    /// 旧コレクション "NoteData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldNoteDocuments() async throws -> [QueryDocumentSnapshot] {
-        let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection("NoteData")
-                .whereField("userID", isEqualTo: userID)
-                .whereField("isDeleted", isEqualTo: false)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents ?? [])
                     }
                 }
         }
@@ -174,7 +142,7 @@ final class MigrationManager {
 
         // 未分類グループに割り当て（旧データにグループ概念なし）
         if let groups = try? RealmManager.shared.getDataList(clazz: Group.self),
-           let uncategorized = groups.first
+            let uncategorized = groups.first
         {
             task.groupID = uncategorized.groupID
         } else {
@@ -328,7 +296,7 @@ final class MigrationManager {
         switch noteTypeStr {
         case "練習記録": noteType = NoteType.practice.rawValue
         case "大会記録": noteType = NoteType.tournament.rawValue
-        default:         noteType = NoteType.practice.rawValue
+        default: noteType = NoteType.practice.rawValue
         }
 
         let note = Note()
@@ -357,24 +325,13 @@ final class MigrationManager {
 
     // MARK: - 旧データ削除
 
-    /// 旧 TaskData ドキュメントを論理削除（isDeleted = true）
-    private func markOldTaskDeleted(documentID: String) async throws {
+    /// 指定した旧コレクションのドキュメントを論理削除（isDeleted = true）
+    /// - Parameters:
+    ///   - collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
+    ///   - documentID: 対象ドキュメントID
+    private func markOldDocumentDeleted(collection: String, documentID: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("TaskData").document(documentID)
-                .updateData(["isDeleted": true]) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
-        }
-    }
-
-    /// 旧 TargetData ドキュメントを論理削除（isDeleted = true）
-    private func markOldTargetDeleted(documentID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("TargetData").document(documentID)
+            db.collection(collection).document(documentID)
                 .updateData(["isDeleted": true]) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
@@ -386,24 +343,11 @@ final class MigrationManager {
     }
 
     /// 旧 FreeNoteData ドキュメントを物理削除
+    /// 論理削除ではなく物理削除である点で markOldDocumentDeleted(collection:documentID:) とは構造が異なるため対象外
     private func deleteOldFreeNoteDocument(userID: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             db.collection("FreeNoteData").document(userID)
                 .delete { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
-        }
-    }
-
-    /// 旧 NoteData ドキュメントを論理削除（isDeleted = true）
-    private func markOldNoteDeleted(documentID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("NoteData").document(documentID)
-                .updateData(["isDeleted": true]) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
                     } else {
@@ -431,10 +375,10 @@ final class MigrationManager {
     /// 旧天気文字列（"晴れ"/"くもり"/"雨"）を Weather enum の rawValue に変換
     private func convertWeather(from weatherString: String) -> Int {
         switch weatherString {
-        case "晴れ":   return Weather.sunny.rawValue
+        case "晴れ": return Weather.sunny.rawValue
         case "くもり": return Weather.cloudy.rawValue
-        case "雨":     return Weather.rainy.rawValue
-        default:       return Weather.sunny.rawValue
+        case "雨": return Weather.rainy.rawValue
+        default: return Weather.sunny.rawValue
         }
     }
 }
