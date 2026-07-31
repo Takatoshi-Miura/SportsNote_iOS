@@ -133,11 +133,9 @@ final class InitializationManager {
     /// これらが存在する場合は isLogin = true をセットする
     private func migrateLoginStateIfNeeded() {
         let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
-        if !isLogin,
-            let address = UserDefaults.standard.string(forKey: "address"),
-            let password = UserDefaults.standard.string(forKey: "password"),
-            !address.isEmpty, !password.isEmpty
-        {
+        let address = UserDefaultsManager.get(key: UserDefaultsManager.Keys.address, defaultValue: "")
+        let password = UserDefaultsManager.get(key: UserDefaultsManager.Keys.password, defaultValue: "")
+        if !isLogin, !address.isEmpty, !password.isEmpty {
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
         }
     }
