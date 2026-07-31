@@ -46,7 +46,7 @@ struct GroupForm: View {
                     ForEach(groups, id: \.groupID) { group in
                         HStack(spacing: 12) {
                             GroupColorCircle(
-                                color: Color(GroupColor.allCases[Int(group.color)].color),
+                                color: Color(group.groupColor.color),
                                 size: 16
                             )
                             Text(group.title)

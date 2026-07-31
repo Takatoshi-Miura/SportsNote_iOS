@@ -9,6 +9,7 @@ final class MigrationManager {
 
     static let shared = MigrationManager()
     private let db = Firestore.firestore()
+    private let stepRunner = MigrationStepRunner()
 
     private init() {}
 
@@ -30,8 +31,14 @@ final class MigrationManager {
         print("OldTask変換開始")
         let oldTaskDocs = try await fetchOldDocuments(collection: "TaskData")
         for doc in oldTaskDocs {
-            try await migrateTask(data: doc.data())
-            try await markOldDocumentDeleted(collection: "TaskData", documentID: doc.documentID)
+            try await stepRunner.run(
+                entity: "Task",
+                documentID: doc.documentID,
+                migrate: { try await self.migrateTask(documentID: doc.documentID, data: doc.data()) },
+                markDeleted: {
+                    try await self.markOldDocumentDeleted(collection: "TaskData", documentID: doc.documentID)
+                }
+            )
         }
         print("OldTask変換終了: \(oldTaskDocs.count)件")
 
@@ -43,16 +50,26 @@ final class MigrationManager {
                 print("OldTarget変換開始")
                 let docs = try await fetchOldDocuments(collection: "TargetData")
                 for doc in docs {
-                    try await migrateTarget(data: doc.data())
-                    try await markOldDocumentDeleted(collection: "TargetData", documentID: doc.documentID)
+                    try await stepRunner.run(
+                        entity: "Target",
+                        documentID: doc.documentID,
+                        migrate: { try await self.migrateTarget(documentID: doc.documentID, data: doc.data()) },
+                        markDeleted: {
+                            try await self.markOldDocumentDeleted(collection: "TargetData", documentID: doc.documentID)
+                        }
+                    )
                 }
                 print("OldTarget変換終了: \(docs.count)件")
             }
             group.addTask { [self] in
                 print("OldFreeNote変換開始")
                 if let doc = try await fetchOldFreeNoteDocument() {
-                    try await migrateFreeNote(data: doc.data())
-                    try await deleteOldFreeNoteDocument(userID: currentUserID)
+                    try await stepRunner.run(
+                        entity: "FreeNote",
+                        documentID: doc.documentID,
+                        migrate: { try await self.migrateFreeNote(documentID: doc.documentID, data: doc.data()) },
+                        markDeleted: { try await self.deleteOldFreeNoteDocument(userID: currentUserID) }
+                    )
                     print("OldFreeNote変換終了: 1件")
                 } else {
                     print("OldFreeNote変換終了: 0件（データなし）")
@@ -65,8 +82,14 @@ final class MigrationManager {
         print("OldNote変換開始")
         let oldNoteDocs = try await fetchOldDocuments(collection: "NoteData")
         for doc in oldNoteDocs {
-            try await migrateNote(data: doc.data())
-            try await markOldDocumentDeleted(collection: "NoteData", documentID: doc.documentID)
+            try await stepRunner.run(
+                entity: "Note",
+                documentID: doc.documentID,
+                migrate: { try await self.migrateNote(documentID: doc.documentID, data: doc.data()) },
+                markDeleted: {
+                    try await self.markOldDocumentDeleted(collection: "NoteData", documentID: doc.documentID)
+                }
+            )
         }
         print("OldNote変換終了: \(oldNoteDocs.count)件")
 
@@ -116,13 +139,13 @@ final class MigrationManager {
 
     /// 旧課題データを TaskData + Measures + Memo に変換して保存
     /// measuresData: [対策タイトル: [[有効性コメント: ノートID(Int)]]]
-    private func migrateTask(data: [String: Any]) async throws {
+    private func migrateTask(documentID: String, data: [String: Any]) async throws {
         guard
             let title = data["taskTitle"] as? String,
             let cause = data["taskCause"] as? String,
             let isAchieve = data["taskAchievement"] as? Bool,
             let isDeleted = data["isDeleted"] as? Bool
-        else { return }
+        else { throw MigrationError.invalidData(entity: "Task", documentID: documentID) }
 
         let order = data["order"] as? Int ?? 0
         let userID = getUserID()
@@ -197,13 +220,13 @@ final class MigrationManager {
 
     /// 旧目標データを Target に変換して保存
     /// month == 13 は年間目標を示す旧仕様
-    private func migrateTarget(data: [String: Any]) async throws {
+    private func migrateTarget(documentID: String, data: [String: Any]) async throws {
         guard
             let year = data["year"] as? Int,
             let month = data["month"] as? Int,
             let detail = data["detail"] as? String,
             let isDeleted = data["isDeleted"] as? Bool
-        else { return }
+        else { throw MigrationError.invalidData(entity: "Target", documentID: documentID) }
 
         let userID = getUserID()
         let now = Date()
@@ -225,11 +248,11 @@ final class MigrationManager {
 
     /// 旧フリーノートデータを Note(free) に変換して保存
     /// Realm に既存のフリーノートがあれば内容を上書き、なければ新規作成
-    private func migrateFreeNote(data: [String: Any]) async throws {
+    private func migrateFreeNote(documentID: String, data: [String: Any]) async throws {
         guard
             let title = data["title"] as? String,
             let detail = data["detail"] as? String
-        else { return }
+        else { throw MigrationError.invalidData(entity: "FreeNote", documentID: documentID) }
 
         let userID = getUserID()
         let now = Date()
@@ -268,7 +291,7 @@ final class MigrationManager {
 
     /// 旧ノートデータを Note(practice/tournament) に変換して保存
     /// noteID は旧 Int を String に変換して保持（Memo との紐付けを維持するため）
-    private func migrateNote(data: [String: Any]) async throws {
+    private func migrateNote(documentID: String, data: [String: Any]) async throws {
         guard
             let oldNoteIDInt = data["noteID"] as? Int,
             let noteTypeStr = data["noteType"] as? String,
@@ -280,7 +303,7 @@ final class MigrationManager {
             let physicalCondition = data["physicalCondition"] as? String,
             let reflection = data["reflection"] as? String,
             let isDeleted = data["isDeleted"] as? Bool
-        else { return }
+        else { throw MigrationError.invalidData(entity: "Note", documentID: documentID) }
 
         let purpose = data["purpose"] as? String ?? ""
         let detail = data["detail"] as? String ?? ""

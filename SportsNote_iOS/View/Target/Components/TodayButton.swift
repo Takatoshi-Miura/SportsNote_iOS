@@ -11,9 +11,8 @@ struct TodayButton: View {
     var body: some View {
         Button {
             let today = Date()
-            let calendar = Calendar.current
-            selectedYear = calendar.component(.year, from: today)
-            selectedMonth = calendar.component(.month, from: today)
+            selectedYear = today.get(.year)
+            selectedMonth = today.get(.month)
             selectedDate = today
 
             // ViewModelの年月も更新
