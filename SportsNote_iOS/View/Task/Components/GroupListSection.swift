@@ -43,7 +43,7 @@ private struct GroupChip: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 6) {
-                GroupColorCircle(color: Color(GroupColor.allCases[Int(group.color)].color))
+                GroupColorCircle(color: Color(group.groupColor.color))
 
                 Text(group.title)
                     .font(.subheadline)
@@ -76,7 +76,7 @@ private struct GroupChip: View {
 
     private func chipBackgroundColor() -> Color {
         if isSelected {
-            return Color(GroupColor.allCases[Int(group.color)].color).opacity(0.2)
+            return Color(group.groupColor.color).opacity(0.2)
         } else {
             return Color(.tertiarySystemBackground)
         }
@@ -84,7 +84,7 @@ private struct GroupChip: View {
 
     private func chipStrokeColor() -> Color {
         if isSelected {
-            return Color(GroupColor.allCases[Int(group.color)].color)
+            return Color(group.groupColor.color)
         } else {
             return Color(.systemGray4)
         }
@@ -92,7 +92,7 @@ private struct GroupChip: View {
 
     private func infoIconColor() -> Color {
         if isSelected {
-            return Color(GroupColor.allCases[Int(group.color)].color)
+            return Color(group.groupColor.color)
         } else {
             return Color(.systemGray)
         }

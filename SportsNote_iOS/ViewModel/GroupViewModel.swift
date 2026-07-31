@@ -118,7 +118,8 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Returns: 並び順
     private func getDefaultOrder() -> Int {
         do {
-            return try RealmManager.shared.getCount(clazz: Group.self)
+            let maxOrder = try RealmManager.shared.getMaxOrder(clazz: Group.self)
+            return (maxOrder ?? -1) + 1
         } catch {
             // エラー時は0を返す（デフォルト値）
             return 0
@@ -138,13 +139,8 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
-            // Firebase同期を非同期で実行（MainActorを維持）
-            Task {
-                let syncResult = await syncEntityToFirebase(entity, isUpdate: isUpdate)
-                if case .failure(let error) = syncResult {
-                    showErrorAlert(error)
-                }
-            }
+            // Firebase同期はバックグラウンドで実行
+            performBackgroundSync(entity, isUpdate: isUpdate)
 
             // UI更新
             groups = try RealmManager.shared.getDataList(clazz: Group.self)
@@ -191,13 +187,10 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             // Realm操作はMainActorで実行
             try RealmManager.shared.logicalDelete(id: id, type: Group.self)
 
-            // Firebase同期を非同期で実行（削除前に取得したオブジェクトを使用）
+            // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             if let groupToDelete = groupToDelete {
                 Task {
-                    let syncResult = await syncEntityToFirebase(groupToDelete, isUpdate: true)
-                    if case .failure(let error) = syncResult {
-                        showErrorAlert(error)
-                    }
+                    performBackgroundSync(groupToDelete, isUpdate: true)
                 }
             }
 
@@ -238,7 +231,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Returns: GroupColorの列挙型
     static func getGroupColor(groupID: String) -> GroupColor {
         if let group = try? RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
-            return GroupColor.allCases[Int(group.color)]
+            return group.groupColor
         }
         return GroupColor.gray
     }

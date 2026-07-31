@@ -129,7 +129,15 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     /// - Parameter taskID: 課題ID
     /// - Returns: 並び順
     private func getDefaultOrderForTask(taskID: String) -> Int {
-        return RealmManager.shared.getMeasuresByTaskID(taskID: taskID).count
+        do {
+            let maxOrder = try RealmManager.shared.getMaxOrder(
+                clazz: Measures.self,
+                predicate: NSPredicate(format: "taskID == %@", taskID)
+            )
+            return (maxOrder ?? -1) + 1
+        } catch {
+            return 0
+        }
     }
 
     /// 対策保存処理（プロトコル準拠）

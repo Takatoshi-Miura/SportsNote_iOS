@@ -62,10 +62,13 @@ struct PracticeNoteView: View {
 
                     // 取り組んだ課題
                     Section(header: Text(LocalizedStrings.taskReflection)) {
-                        TaskListSection(taskReflections: $taskReflections, unaddedTasks: getUnaddedTasks())
-                            .onChange(of: taskReflections) { _ in
-                                updateNote()
-                            }
+                        TaskListSection(
+                            taskReflections: $taskReflections,
+                            unaddedTasks: taskViewModel.getUnaddedTasks(taskReflections: taskReflections)
+                        )
+                        .onChange(of: taskReflections) { _ in
+                            updateNote()
+                        }
                     }
 
                     // 反省
@@ -136,12 +139,6 @@ struct PracticeNoteView: View {
         Task {
             _ = await taskViewModel.fetchData()
         }
-    }
-
-    /// 未追加のタスクを取得
-    private func getUnaddedTasks() -> [TaskListData] {
-        let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
-        return taskViewModel.getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     // タスクのリフレクションをロードする

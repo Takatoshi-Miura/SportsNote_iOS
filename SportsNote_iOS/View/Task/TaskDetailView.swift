@@ -44,18 +44,7 @@ struct TaskDetailView: View {
             Section(header: Text(LocalizedStrings.title)) {
                 TextField(LocalizedStrings.title, text: $taskTitle)
                     .onChange(of: taskTitle) { _ in
-                        Task {
-                            guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
-                            let result = await viewModel.updateTask(
-                                taskID: taskData.taskID,
-                                title: taskTitle,
-                                cause: cause,
-                                groupID: groups[selectedGroupIndex].groupID
-                            )
-                            if case .failure(let error) = result {
-                                viewModel.showErrorAlert(error)
-                            }
-                        }
+                        persistTaskChanges()
                     }
             }
             // 原因
@@ -66,18 +55,7 @@ struct TaskDetailView: View {
                     minHeight: 50
                 )
                 .onChange(of: cause) { _ in
-                    Task {
-                        guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
-                        let result = await viewModel.updateTask(
-                            taskID: taskData.taskID,
-                            title: taskTitle,
-                            cause: cause,
-                            groupID: groups[selectedGroupIndex].groupID
-                        )
-                        if case .failure(let error) = result {
-                            viewModel.showErrorAlert(error)
-                        }
-                    }
+                    persistTaskChanges()
                 }
             }
             // グループ
@@ -87,18 +65,7 @@ struct TaskDetailView: View {
                         selectedGroupIndex: $selectedGroupIndex,
                         viewModel: groupViewModel,
                         onSelectionChanged: {
-                            Task {
-                                guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
-                                let result = await viewModel.updateTask(
-                                    taskID: taskData.taskID,
-                                    title: taskTitle,
-                                    cause: cause,
-                                    groupID: groups[selectedGroupIndex].groupID
-                                )
-                                if case .failure(let error) = result {
-                                    viewModel.showErrorAlert(error)
-                                }
-                            }
+                            persistTaskChanges()
                         }
                     )
                 }
@@ -212,6 +179,22 @@ struct TaskDetailView: View {
             if newAlertType == nil {
                 // アラートが閉じられたらエラー状態をクリア
                 viewModel.hideErrorAlert()
+            }
+        }
+    }
+
+    /// タイトル・原因・グループの変更をRealmへ反映し、失敗時はエラーアラートを表示する
+    private func persistTaskChanges() {
+        Task {
+            guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
+            let result = await viewModel.updateTask(
+                taskID: taskData.taskID,
+                title: taskTitle,
+                cause: cause,
+                groupID: groups[selectedGroupIndex].groupID
+            )
+            if case .failure(let error) = result {
+                viewModel.showErrorAlert(error)
             }
         }
     }

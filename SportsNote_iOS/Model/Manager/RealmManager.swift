@@ -180,28 +180,6 @@ final class RealmManager {
 
     // MARK: - Select
 
-    /// 指定したクラスに対応するプライマリキーのプロパティ名を取得
-    /// - Returns: Tに対応するプライマリキーのプロパティ名
-    /// - Throws: 対応していないクラスの場合にスローされる
-    private func getPrimaryKeyName<T: Object>(_ type: T.Type) -> String {
-        switch type {
-        case is Group.Type:
-            return "groupID"
-        case is Measures.Type:
-            return "measuresID"
-        case is Memo.Type:
-            return "memoID"
-        case is Note.Type:
-            return "noteID"
-        case is Target.Type:
-            return "targetID"
-        case is TaskData.Type:
-            return "taskID"
-        default:
-            fatalError("Unsupported class")
-        }
-    }
-
     /// 汎用的なデータ取得メソッド（ID指定）
     /// - Parameter id: 検索するID（文字列）
     /// - Returns: 取得データ（存在しない場合は`nil`）
@@ -213,8 +191,6 @@ final class RealmManager {
 
         do {
             let realm = try getRealm()
-            // PrimaryKeyで安全に検索
-            _ = getPrimaryKeyName(type)
 
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {
@@ -261,6 +237,27 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的なデータ一覧取得メソッド（論理削除済みも含む）
+    /// Firebaseとの同期比較（`SyncManager`）専用に使用し、isDeletedによる絞り込みは行わない
+    /// - Parameter clazz: 取得するデータ型のクラス
+    /// - Returns: 論理削除フラグに関わらない全データのリスト
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getDataListIncludingDeleted<T: Object>(clazz: T.Type) throws -> [T] {
+        do {
+            let realm = try getRealm()
+            var results = realm.objects(clazz)
+            // "order" プロパティが存在する場合のみソート
+            if let schema = clazz.sharedSchema(),
+                schema.properties.contains(where: { $0.name == "order" })
+            {
+                results = results.sorted(byKeyPath: "order", ascending: true)
+            }
+            return Array(results)
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getDataListIncludingDeleted-\(String(describing: T.self))")
+        }
+    }
+
     /// 汎用的なデータカウント取得メソッド
     /// - Parameter clazz: RealmObjectのクラス型
     /// - Returns: isDeletedがfalseのデータ数
@@ -273,6 +270,25 @@ final class RealmManager {
                 .count
         } catch let error {
             throw ErrorMapper.mapRealmError(error, context: "getCount-\(String(describing: T.self))")
+        }
+    }
+
+    /// 汎用的な最大order取得メソッド（新規レコードのorder初期値算出に使用）
+    /// - Parameters:
+    ///   - clazz: 取得するデータ型のクラス（"order"プロパティを持つ必要がある）
+    ///   - predicate: 絞り込み条件（省略時はisDeleted==falseのみで絞り込み）
+    /// - Returns: 条件に一致する（isDeleted==falseの）レコードの最大order。該当データが1件もない場合はnil
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getMaxOrder<T: Object>(clazz: T.Type, predicate: NSPredicate? = nil) throws -> Int? {
+        do {
+            let realm = try getRealm()
+            var results = realm.objects(T.self).filter("isDeleted == false")
+            if let predicate = predicate {
+                results = results.filter(predicate)
+            }
+            return results.max(ofProperty: "order")
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getMaxOrder-\(String(describing: T.self))")
         }
     }
 
@@ -460,7 +476,7 @@ final class RealmManager {
                             .filter("groupID == %@", taskData.groupID)
                             .first
                         {
-                            return GroupColor.allCases[Int(group.color)].color
+                            return group.groupColor.color
                         }
                     }
                 }
@@ -541,6 +557,8 @@ final class RealmManager {
     }
 
     /// 任意のオブジェクトを論理削除
+    /// updated_atも現在時刻に更新し、Firebaseとの同期時に削除操作が
+    /// Firebase側の未削除コピーより新しいと判定されるようにする
     /// - Parameters:
     ///   - item: データ
     ///   - realm: Realmインスタンス
@@ -548,21 +566,27 @@ final class RealmManager {
         // itemが「削除フラグ」を持っているかどうかでチェックし、削除マークを付ける
         if let itemWithDeleteFlag = item as? Note {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Group {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? TaskData {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Measures {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Memo {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         } else if let itemWithDeleteFlag = item as? Target {
             itemWithDeleteFlag.isDeleted = true
+            itemWithDeleteFlag.updated_at = Date()
             realm.add(itemWithDeleteFlag, update: .modified)
         }
     }

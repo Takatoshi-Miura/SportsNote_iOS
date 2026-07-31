@@ -348,7 +348,16 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         } else {
             // 新規作成の場合: 新しいTaskDataを作成
             let newTaskID = UUIDGenerator.generateID()
-            let newOrder = (try? RealmManager.shared.getCount(clazz: TaskData.self)) ?? 0
+            let newOrder: Int
+            do {
+                let maxOrder = try RealmManager.shared.getMaxOrder(
+                    clazz: TaskData.self,
+                    predicate: NSPredicate(format: "groupID == %@", groupID)
+                )
+                newOrder = (maxOrder ?? -1) + 1
+            } catch {
+                newOrder = 0
+            }
 
             return TaskData(
                 taskID: newTaskID,
@@ -417,6 +426,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 && !taskListItem.measuresID.isEmpty
                 && !excludingTaskIds.contains(taskListItem.taskID)
         }
+    }
+
+    /// 未追加のタスクを取得（taskReflectionsから直接算出）
+    /// - Parameter taskReflections: ノートに追加済みの課題と感想のマップ
+    /// - Returns: 未追加タスクのリスト
+    func getUnaddedTasks(taskReflections: [TaskListData: String]) -> [TaskListData] {
+        let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
+        return getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     // MARK: - Measures委譲メソッド

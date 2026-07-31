@@ -22,51 +22,33 @@ class TutorialViewModel: ObservableObject {
     private func setupTutorialPages() {
         pages = [
             TutorialPage(
-                title: "SportsNoteとは",
-                description: """
-                    課題解決に特化したノートアプリです。
-                    原因と対策を考えて実践し、反省を通して解決を目指すことができます。
-                    """,
+                title: LocalizedStrings.tutorialPage1Title,
+                description: LocalizedStrings.tutorialPage1Description,
                 imageName: "screenshot_1"
             ),
             TutorialPage(
-                title: "課題の管理①",
-                description: """
-                    課題を一覧で管理できます。
-                    グループを作成することで課題を分類して管理することができます。
-                    """,
+                title: LocalizedStrings.tutorialPage2Title,
+                description: LocalizedStrings.tutorialPage2Description,
                 imageName: "screenshot_2"
             ),
             TutorialPage(
-                title: "課題の管理②",
-                description: """
-                    課題毎に原因と対策を登録できます。
-                    優先度が最も高い対策がノートに読み込まれるようになります。
-                    """,
+                title: LocalizedStrings.tutorialPage3Title,
+                description: LocalizedStrings.tutorialPage3Description,
                 imageName: "screenshot_3"
             ),
             TutorialPage(
-                title: "ノートを作成",
-                description: """
-                    練習ノートを作成できます。
-                    ノートには登録した課題が読み込まれ、課題の取り組みを記録しておくことができます。
-                    """,
+                title: LocalizedStrings.tutorialPage4Title,
+                description: LocalizedStrings.tutorialPage4Description,
                 imageName: "screenshot_4"
             ),
             TutorialPage(
-                title: "振り返り",
-                description: """
-                    記録した内容はノートで振り返ることができます。
-                    課題＞対策へと進めば、その課題の取り組み内容をまとめて振り返ることもできます。
-                    """,
+                title: LocalizedStrings.tutorialPage5Title,
+                description: LocalizedStrings.tutorialPage5Description,
                 imageName: "screenshot_5"
             ),
             TutorialPage(
-                title: "課題を完了にする",
-                description: """
-                    解決した課題は完了にすることでノートへ読み込まれなくなります。
-                    完了にしても完了した課題からいつでも振り返ることができます。
-                    """,
+                title: LocalizedStrings.tutorialPage6Title,
+                description: LocalizedStrings.tutorialPage6Description,
                 imageName: "screenshot_6"
             ),
         ]

@@ -10,6 +10,16 @@ final class FirebaseManager {
 
     private init() {}
 
+    /**
+     * 現在のuserIDを取得
+     *
+     * @return userID
+     */
+    private func currentUserID() -> String {
+        UserDefaultsManager.get(
+            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+    }
+
     // MARK: - Create
 
     /**
@@ -196,8 +206,7 @@ final class FirebaseManager {
      * @return 取得したドキュメント
      */
     private func getAllDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
 
         do {
             return try await withCheckedThrowingContinuation { continuation in
@@ -499,8 +508,7 @@ final class FirebaseManager {
      * @param group グループデータ
      */
     func updateGroup(group: Group) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(group.groupID)"
 
         let data: [String: Any] = [
@@ -520,8 +528,7 @@ final class FirebaseManager {
      * @param task 課題データ
      */
     func updateTask(task: TaskData) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(task.taskID)"
 
         let data: [String: Any] = [
@@ -543,8 +550,7 @@ final class FirebaseManager {
      * @param measures 対策データ
      */
     func updateMeasures(measures: Measures) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(measures.measuresID)"
 
         let data: [String: Any] = [
@@ -563,8 +569,7 @@ final class FirebaseManager {
      * @param memo メモデータ
      */
     func updateMemo(memo: Memo) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(memo.memoID)"
 
         let data: [String: Any] = [
@@ -582,8 +587,7 @@ final class FirebaseManager {
      * @param target 目標データ
      */
     func updateTarget(target: Target) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(target.targetID)"
 
         let data: [String: Any] = [
@@ -604,8 +608,7 @@ final class FirebaseManager {
      * @param note ノートデータ
      */
     func updateNote(note: Note) async throws {
-        let userID = UserDefaultsManager.get(
-            key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
+        let userID = currentUserID()
         let documentID = "\(userID)_\(note.noteID)"
 
         let data: [String: Any] = [

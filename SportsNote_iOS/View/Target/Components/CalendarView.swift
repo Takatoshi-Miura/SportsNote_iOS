@@ -11,7 +11,7 @@ struct CalendarView: View {
     @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
     @State private var isAnimating: Bool = false  // アニメーション中かどうか
     @ObservedObject var noteViewModel: NoteViewModel  // 親から渡されるNoteViewModel
-    @State private var datesWithPractice: Set<Date> = []   // 練習ノートがある日付のセット
+    @State private var datesWithPractice: Set<Date> = []  // 練習ノートがある日付のセット
     @State private var datesWithTournament: Set<Date> = []  // 大会ノートがある日付のセット
 
     // 曜日の配列（日曜始まり）
@@ -98,7 +98,7 @@ struct CalendarView: View {
 
             // 「今日」ボタンの通知を受け取る
             NotificationCenter.default.addObserver(
-                forName: NSNotification.Name("MoveToToday"),
+                forName: .moveToToday,
                 object: nil,
                 queue: .main
             ) { _ in
@@ -106,10 +106,10 @@ struct CalendarView: View {
                     // 現在の月が今日の月と異なる場合は月を切り替える
                     let today = Date()
                     let calendar = Calendar.current
-                    let currentMonthValue = calendar.component(.month, from: self.currentMonth)
-                    let currentYearValue = calendar.component(.year, from: self.currentMonth)
-                    let todayMonthValue = calendar.component(.month, from: today)
-                    let todayYearValue = calendar.component(.year, from: today)
+                    let currentMonthValue = self.currentMonth.get(.month)
+                    let currentYearValue = self.currentMonth.get(.year)
+                    let todayMonthValue = today.get(.month)
+                    let todayYearValue = today.get(.year)
 
                     if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
                         // アニメーションなしで今日の月に直接移動
@@ -128,7 +128,7 @@ struct CalendarView: View {
             // 通知の登録解除
             NotificationCenter.default.removeObserver(
                 self,
-                name: NSNotification.Name("MoveToToday"),
+                name: .moveToToday,
                 object: nil
             )
         }
@@ -170,8 +170,8 @@ struct CalendarView: View {
 
         // 表示している月の初日と末日を取得
         let calendar = Calendar.current
-        let year = calendar.component(.year, from: currentMonth)
-        let month = calendar.component(.month, from: currentMonth)
+        let year = currentMonth.get(.year)
+        let month = currentMonth.get(.month)
 
         if let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
             let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate)
@@ -242,18 +242,6 @@ struct CalendarView: View {
 
     // 曜日ヘッダーの色を返す関数（0=Sunday, 6=Saturday）
     private func colorForWeekdayHeader(_ weekday: Int) -> Color {
-        switch weekday {
-        case 0:  // Sunday
-            return .red
-        case 6:  // Saturday
-            return .blue
-        default:
-            return .primary
-        }
-    }
-
-    // 曜日に応じた色を返す関数（日付セルの色）
-    private func colorForWeekday(_ weekday: Int) -> Color {
         switch weekday {
         case 0:  // Sunday
             return .red
