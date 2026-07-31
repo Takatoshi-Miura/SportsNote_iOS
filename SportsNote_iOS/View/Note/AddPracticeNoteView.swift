@@ -55,7 +55,7 @@ struct AddPracticeNoteView: View {
                 Section(header: Text(LocalizedStrings.taskReflection)) {
                     TaskListSection(
                         taskReflections: $taskReflections,
-                        unaddedTasks: getUnaddedTasks()
+                        unaddedTasks: taskViewModel.getUnaddedTasks(taskReflections: taskReflections)
                     )
                 }
 
@@ -97,12 +97,6 @@ struct AddPracticeNoteView: View {
             .dismissKeyboardOnTap()
             .allowsHitTesting(true)
         }
-    }
-
-    /// 未追加のタスクを取得
-    private func getUnaddedTasks() -> [TaskListData] {
-        let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
-        return taskViewModel.getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     /// 保存処理

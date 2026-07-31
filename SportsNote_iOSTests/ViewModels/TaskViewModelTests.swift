@@ -624,6 +624,69 @@ struct TaskViewModelTests {
         #expect(viewModel.filteredTaskListData.allSatisfy { $0.groupID == "group-1" })
     }
 
+    // MARK: - 未追加課題取得テスト（issue #86: getUnaddedTasksの重複解消）
+
+    @Test("未追加課題取得 - taskReflectionsに含まれる課題を除外する")
+    func getUnaddedTasks_excludesTasksInTaskReflections() async {
+        let viewModel = TaskViewModel()
+
+        let allTasks = (0..<3)
+            .map { i in
+                TaskListData(
+                    taskID: "task-\(i)",
+                    groupID: "group-1",
+                    groupColor: .red,
+                    title: "Task \(i)",
+                    measuresID: "measures-\(i)",
+                    measures: "Measures \(i)",
+                    memoID: nil,
+                    order: i,
+                    isComplete: false
+                )
+            }
+        viewModel.taskListData = allTasks
+
+        // task-0のみをtaskReflectionsに追加済みとする
+        let taskReflections: [TaskListData: String] = [allTasks[0]: "感想"]
+
+        let unaddedTasks = viewModel.getUnaddedTasks(taskReflections: taskReflections)
+
+        #expect(unaddedTasks.count == 2)
+        #expect(!unaddedTasks.contains { $0.taskID == "task-0" })
+        #expect(unaddedTasks.contains { $0.taskID == "task-1" })
+        #expect(unaddedTasks.contains { $0.taskID == "task-2" })
+    }
+
+    @Test("未追加課題取得 - excludingTaskIds版と同じ結果になる")
+    func getUnaddedTasks_matchesExcludingTaskIdsOverload() async {
+        let viewModel = TaskViewModel()
+
+        let allTasks = (0..<4)
+            .map { i in
+                TaskListData(
+                    taskID: "task-\(i)",
+                    groupID: "group-1",
+                    groupColor: .red,
+                    title: "Task \(i)",
+                    measuresID: "measures-\(i)",
+                    measures: "Measures \(i)",
+                    memoID: nil,
+                    order: i,
+                    isComplete: i == 3  // task-3は完了済み
+                )
+            }
+        viewModel.taskListData = allTasks
+
+        let taskReflections: [TaskListData: String] = [allTasks[1]: "感想"]
+        let excludingTaskIds: Set<String> = ["task-1"]
+
+        let resultFromTaskReflections = viewModel.getUnaddedTasks(taskReflections: taskReflections)
+        let resultFromExcludingIds = viewModel.getUnaddedTasks(excludingTaskIds: excludingTaskIds)
+
+        #expect(Set(resultFromTaskReflections.map { $0.taskID }) == Set(resultFromExcludingIds.map { $0.taskID }))
+        #expect(!resultFromTaskReflections.contains { $0.taskID == "task-3" })  // 完了済みは除外
+    }
+
     // MARK: - 完了/未完了の混在テスト
 
     @Test("完了/未完了 - 混在する課題リスト")

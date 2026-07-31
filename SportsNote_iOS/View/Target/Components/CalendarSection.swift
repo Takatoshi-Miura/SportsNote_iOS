@@ -43,9 +43,8 @@ struct CalendarSection: View {
                 initialDate: currentMonth,
                 onDateSelected: onDateSelected,
                 onMonthChanged: { newDate in
-                    let calendar = Calendar.current
-                    let year = calendar.component(.year, from: newDate)
-                    let month = calendar.component(.month, from: newDate)
+                    let year = newDate.get(.year)
+                    let month = newDate.get(.month)
 
                     // 年月が変わったら表示される月と目標を更新
                     if year != currentDisplayedYearMonth.year || month != currentDisplayedYearMonth.month {

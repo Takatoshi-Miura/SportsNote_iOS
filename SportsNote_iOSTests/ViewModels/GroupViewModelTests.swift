@@ -335,6 +335,21 @@ struct GroupViewModelTests {
         #expect(color == .gray)
     }
 
+    @Test("getGroupColor - 範囲外のcolor値でもクラッシュせずgrayを返す（issue #43）")
+    func getGroupColor_returnsGrayForOutOfRangeColor() throws {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let group = Group(
+            groupID: "g-invalid-color", title: "Broken Group", color: 99, order: 0, created_at: Date())
+        try manager.saveItem(group)
+
+        let color = GroupViewModel.getGroupColor(groupID: "g-invalid-color")
+        #expect(color == .gray)
+
+        manager.clearAll()
+    }
+
     // MARK: - CRUD操作テスト
 
     @Test("fetchData - データを取得できる")

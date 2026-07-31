@@ -270,17 +270,4 @@ struct NotePageContentView: View {
                 .cornerRadius(10)
         }
     }
-
-    /// 読み取り専用の行（キー: 値）
-    private func readOnlyRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-                .foregroundColor(.primary)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
 }

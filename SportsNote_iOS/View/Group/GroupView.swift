@@ -14,7 +14,7 @@ struct GroupView: View {
         self.viewModel = viewModel
         _selectedGroup = State(initialValue: group)
         _title = State(initialValue: group.title)
-        _selectedColor = State(initialValue: GroupColor.allCases[Int(group.color)])
+        _selectedColor = State(initialValue: group.groupColor)
     }
 
     var body: some View {
@@ -27,7 +27,7 @@ struct GroupView: View {
             onSelectGroup: { group in
                 selectedGroup = group
                 title = group.title
-                selectedColor = GroupColor.allCases[Int(group.color)]
+                selectedColor = group.groupColor
             },
             onMoveGroup: { source, destination in
                 Task {
@@ -63,7 +63,7 @@ struct GroupView: View {
                         if let first = viewModel.groups.first {
                             selectedGroup = first
                             title = first.title
-                            selectedColor = GroupColor.allCases[Int(first.color)]
+                            selectedColor = first.groupColor
                         } else {
                             dismiss()
                         }
