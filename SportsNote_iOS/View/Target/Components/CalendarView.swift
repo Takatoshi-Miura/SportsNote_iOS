@@ -106,10 +106,10 @@ struct CalendarView: View {
                     // 現在の月が今日の月と異なる場合は月を切り替える
                     let today = Date()
                     let calendar = Calendar.current
-                    let currentMonthValue = calendar.component(.month, from: self.currentMonth)
-                    let currentYearValue = calendar.component(.year, from: self.currentMonth)
-                    let todayMonthValue = calendar.component(.month, from: today)
-                    let todayYearValue = calendar.component(.year, from: today)
+                    let currentMonthValue = self.currentMonth.get(.month)
+                    let currentYearValue = self.currentMonth.get(.year)
+                    let todayMonthValue = today.get(.month)
+                    let todayYearValue = today.get(.year)
 
                     if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
                         // アニメーションなしで今日の月に直接移動
@@ -170,8 +170,8 @@ struct CalendarView: View {
 
         // 表示している月の初日と末日を取得
         let calendar = Calendar.current
-        let year = calendar.component(.year, from: currentMonth)
-        let month = calendar.component(.month, from: currentMonth)
+        let year = currentMonth.get(.year)
+        let month = currentMonth.get(.month)
 
         if let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
             let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate)
