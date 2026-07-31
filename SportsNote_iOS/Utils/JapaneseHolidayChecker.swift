@@ -30,6 +30,11 @@ class JapaneseHolidayChecker {
             return true
         }
 
+        // 国民の休日（祝日と祝日に挟まれた平日）をチェック
+        if isCitizensHoliday(date) {
+            return true
+        }
+
         return false
     }
 
@@ -143,6 +148,36 @@ class JapaneseHolidayChecker {
         }
 
         return false
+    }
+
+    // 国民の休日（祝日法第3条3項: 前日・翌日がともに祝日である平日を休日とする）
+    private static func isCitizensHoliday(_ date: Date) -> Bool {
+        let weekday = jpCalendar.component(.weekday, from: date)
+
+        // 日曜日は対象外（既に休日であり、振替休日制度と役割が重複するため）
+        if weekday == 1 {
+            return false
+        }
+
+        guard let yesterday = jpCalendar.date(byAdding: .day, value: -1, to: date),
+            let tomorrow = jpCalendar.date(byAdding: .day, value: 1, to: date)
+        else {
+            return false
+        }
+
+        return isNamedHoliday(yesterday) && isNamedHoliday(tomorrow)
+    }
+
+    // 「国民の休日」の前日・翌日判定に用いる祝日集合（固定祝日・ハッピーマンデー・春分秋分のみ。
+    // 振替休日は祝日法上の「祝日」に含まれないため対象外とする）
+    private static func isNamedHoliday(_ date: Date) -> Bool {
+        let year = jpCalendar.component(.year, from: date)
+        let month = jpCalendar.component(.month, from: date)
+        let day = jpCalendar.component(.day, from: date)
+
+        return isFixedHoliday(month: month, day: day)
+            || isHappyMondayHoliday(year: year, month: month, day: day)
+            || isEquinoxDay(year: year, month: month, day: day)
     }
 
     // 年月日からDate型を生成するヘルパーメソッド
