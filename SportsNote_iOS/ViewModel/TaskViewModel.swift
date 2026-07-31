@@ -428,6 +428,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
     }
 
+    /// 未追加のタスクを取得（taskReflectionsから直接算出）
+    /// - Parameter taskReflections: ノートに追加済みの課題と感想のマップ
+    /// - Returns: 未追加タスクのリスト
+    func getUnaddedTasks(taskReflections: [TaskListData: String]) -> [TaskListData] {
+        let addedTaskIds = Set(taskReflections.keys.map { $0.taskID })
+        return getUnaddedTasks(excludingTaskIds: addedTaskIds)
+    }
+
     // MARK: - Measures委譲メソッド
 
     /// 最も優先度の高い（orderが低い）対策を取得（MeasuresViewModelへの委譲）

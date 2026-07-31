@@ -524,6 +524,151 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - updateTaskReflections（課題振り返りメモ）のcreated_atテスト
+
+    @Test("updateTaskReflections - 新規作成時はcreated_atに現在時刻が設定される")
+    func updateTaskReflections_newMemo_setsCurrentCreatedAt() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let beforeSave = Date()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "初回の振り返り"]
+        )
+
+        // Memoの保存はrealmManager.saveItemによる同期処理のため、この時点で既に反映されている
+        let memos = (try? manager.getDataList(clazz: Memo.self)) ?? []
+        let memo = memos.first
+
+        #expect(memo != nil)
+        #expect(memo?.detail == "初回の振り返り")
+        // 新規作成時はcreated_atに現在時刻が設定される
+        if let createdAt = memo?.created_at {
+            #expect(createdAt >= beforeSave.addingTimeInterval(-1))
+            #expect(createdAt <= Date().addingTimeInterval(1))
+        } else {
+            Issue.record("新規作成されたMemoのcreated_atが取得できませんでした")
+        }
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - task.memoIDがある場合、既存メモのcreated_atが維持される")
+    func updateTaskReflections_existingMemoWithMemoID_preservesCreatedAt() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 既存メモをRealmに直接投入（過去のcreated_atを持つ）
+        let fixedCreatedAt = Date().addingTimeInterval(-86400)
+        let existingMemo = Memo(
+            memoID: "memo-fixed-1",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "初回の振り返り",
+            created_at: fixedCreatedAt
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: "memo-fixed-1",
+            order: 0,
+            isComplete: false
+        )
+
+        // 既存メモを編集（task.memoIDあり）
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-1",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "編集後の振り返り"]
+        )
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-fixed-1", type: Memo.self)
+
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.detail == "編集後の振り返り")
+        // created_atが編集前の値のまま維持されていること（誤差を許容して比較）
+        if let updatedCreatedAt = updatedMemo?.created_at {
+            #expect(abs(updatedCreatedAt.timeIntervalSince(fixedCreatedAt)) < 0.5)
+        } else {
+            Issue.record("更新後のMemoのcreated_atが取得できませんでした")
+        }
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - task.memoIDがなくnoteID+measuresIDで既存メモが見つかる場合もcreated_atが維持される")
+    func updateTaskReflections_existingMemoFoundBySearch_preservesCreatedAt() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 既存メモをRealmに直接投入（過去のcreated_atを持つ）
+        let fixedCreatedAt = Date().addingTimeInterval(-3600)
+        let existingMemo = Memo(
+            memoID: "memo-fixed-2",
+            measuresID: "measures-2",
+            noteID: "note-2",
+            detail: "初回の振り返り",
+            created_at: fixedCreatedAt
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        // memoIDを持たないTaskListDataで渡す（noteID+measuresIDでの検索分岐を通す）
+        let task = TaskListData(
+            taskID: "task-2",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-2",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-2",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "編集後の振り返り(検索経由)"]
+        )
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-fixed-2", type: Memo.self)
+
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.detail == "編集後の振り返り(検索経由)")
+        if let updatedCreatedAt = updatedMemo?.created_at {
+            #expect(abs(updatedCreatedAt.timeIntervalSince(fixedCreatedAt)) < 0.5)
+        } else {
+            Issue.record("更新後のMemoのcreated_atが取得できませんでした")
+        }
+
+        manager.clearAll()
+    }
+
     @Test("saveTournamentNote - 大会ノートを保存できる")
     func saveTournamentNote_savesCorrectly() async {
         let viewModel = NoteViewModel()

@@ -51,7 +51,7 @@ struct NotePageView: View {
     private var noteTypeNavigationTitle: some View {
         let indicatorColor = Color(
             currentNote.map { viewModel.getNoteIndicatorColor(noteID: $0.noteID, noteType: currentNoteType) }
-            ?? UIColor.systemBlue
+                ?? UIColor.systemBlue
         )
         return HStack(spacing: 6) {
             Image(systemName: currentNoteType.icon)
@@ -69,24 +69,24 @@ struct NotePageView: View {
     var body: some View {
         contentView
             .ignoresSafeArea(edges: .bottom)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                noteTypeNavigationTitle
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    noteTypeNavigationTitle
+                }
             }
-        }
-        .task {
-            let result = await viewModel.fetchNotesExcludingFree()
-            if case .success = result, let first = viewModel.notes.first {
-                currentNoteID = first.noteID
+            .task {
+                let result = await viewModel.fetchNotesExcludingFree()
+                if case .success = result, let first = viewModel.notes.first {
+                    currentNoteID = first.noteID
+                }
+                _ = await taskViewModel.fetchData()
             }
-            _ = await taskViewModel.fetchData()
-        }
-        .errorAlert(
-            currentError: $viewModel.currentError,
-            showingAlert: $viewModel.showingErrorAlert
-        )
+            .errorAlert(
+                currentError: $viewModel.currentError,
+                showingAlert: $viewModel.showingErrorAlert
+            )
     }
 }
 
@@ -277,18 +277,5 @@ struct NotePageContentView: View {
                 .background(Color(.systemBackground))
                 .cornerRadius(10)
         }
-    }
-
-    /// 読み取り専用の行（キー: 値）
-    private func readOnlyRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-                .foregroundColor(.primary)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 }
