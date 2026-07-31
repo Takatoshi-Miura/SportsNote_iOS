@@ -93,9 +93,11 @@ final class SyncManager {
 
         // データの同期処理
         // Realm にしかないデータを Firebase に保存
+        // NOTE: 1件の保存失敗が他エンティティの同期全体を巻き添えでキャンセルしないよう、
+        //       個別のエラーは try? で握りつぶす（syncAllData の withThrowingTaskGroup 対策）
         for id in onlyRealmID {
             if let item = realmMap[id] {
-                try await saveToFirebase(item)
+                try? await saveToFirebase(item)
             }
         }
 
@@ -113,7 +115,7 @@ final class SyncManager {
             }
 
             if realmItem.updated_at > firebaseItem.updated_at {
-                try await updateFirebase(realmItem)
+                try? await updateFirebase(realmItem)
             } else if firebaseItem.updated_at > realmItem.updated_at {
                 try? RealmManager.shared.saveItem(firebaseItem)
             }
