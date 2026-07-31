@@ -402,11 +402,11 @@ final class MigrationManager {
         }
     }
 
-    /// 旧 FreeNoteData ドキュメントを物理削除
+    /// 旧 FreeNoteData ドキュメントを論理削除（isDeleted = true）
     private func deleteOldFreeNoteDocument(userID: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             db.collection("FreeNoteData").document(userID)
-                .delete { error in
+                .updateData(["isDeleted": true]) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
                     } else {
