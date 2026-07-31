@@ -89,43 +89,45 @@ struct MenuView: View {
         ]
 
         #if DEBUG
-        let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
-        sections.append(
-            SectionData(
-                title: "テスト（開発用）",
-                items: [
-                    ItemData(
-                        title: "テストデータを作成",
-                        subTitle: "新形式データをRealmに追加",
-                        iconRes: "plus.circle",
-                        onClick: {
-                            Task {
-                                try? await TestDataManager.shared.createTestData()
+            let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
+            sections.append(
+                SectionData(
+                    title: LocalizedStrings.debugSectionTitle,
+                    items: [
+                        ItemData(
+                            title: LocalizedStrings.debugCreateTestData,
+                            subTitle: LocalizedStrings.debugCreateTestDataSubtitle,
+                            iconRes: "plus.circle",
+                            onClick: {
+                                Task {
+                                    try? await TestDataManager.shared.createTestData()
+                                }
                             }
-                        }
-                    ),
-                    ItemData(
-                        title: "旧データをFirebaseに投入",
-                        subTitle: isLogin ? "マイグレーション検証用" : "ログインが必要です",
-                        iconRes: "arrow.up.doc",
-                        isEnabled: isLogin,
-                        onClick: {
-                            Task {
-                                try? await TestDataManager.shared.createOldFormatTestData()
+                        ),
+                        ItemData(
+                            title: LocalizedStrings.debugCreateOldFormatData,
+                            subTitle: isLogin
+                                ? LocalizedStrings.debugCreateOldFormatDataSubtitle
+                                : LocalizedStrings.debugLoginRequired,
+                            iconRes: "arrow.up.doc",
+                            isEnabled: isLogin,
+                            onClick: {
+                                Task {
+                                    try? await TestDataManager.shared.createOldFormatTestData()
+                                }
                             }
-                        }
-                    ),
-                    ItemData(
-                        title: "マイグレーションフラグをリセット",
-                        subTitle: "再マイグレーションを許可",
-                        iconRes: "arrow.counterclockwise",
-                        onClick: {
-                            UserDefaultsManager.remove(key: UserDefaultsManager.Keys.migrationV1Completed)
-                        }
-                    ),
-                ]
+                        ),
+                        ItemData(
+                            title: LocalizedStrings.debugResetMigrationFlag,
+                            subTitle: LocalizedStrings.debugResetMigrationFlagSubtitle,
+                            iconRes: "arrow.counterclockwise",
+                            onClick: {
+                                UserDefaultsManager.remove(key: UserDefaultsManager.Keys.migrationV1Completed)
+                            }
+                        ),
+                    ]
+                )
             )
-        )
         #endif
 
         return sections
