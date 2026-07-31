@@ -73,7 +73,7 @@ final class SyncManager {
     /// @param getRealmData Realm からデータを取得する関数
     /// @param saveToFirebase Firebase にデータを保存する関数
     /// @param updateFirebase Firebase のデータを更新する関数
-    private func syncData<T>(
+    func syncData<T>(
         getFirebaseData: @MainActor () async throws -> [T],
         getRealmData: @MainActor () throws -> [T],
         saveToFirebase: @MainActor (T) async throws -> Void,
@@ -123,68 +123,139 @@ final class SyncManager {
     }
 
     /// Group を同期
+    /// - Parameters は本番のFirebase/Realm呼び出しをデフォルト値として注入可能にしている。
+    ///   テストでは`getFirebaseData`等のみをスタブに差し替え、`getRealmData`は本番実装（`RealmManager`）を
+    ///   そのまま経由させることで、実際の同期処理の配線（isDeleted復活バグ対策の実装箇所）を検証できる
     @MainActor
-    private func syncGroup() async throws {
+    func syncGroup(
+        getFirebaseData: @MainActor () async throws -> [Group] = { try await FirebaseManager.shared.getAllGroup() },
+        getRealmData: @MainActor () throws -> [Group] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: Group.self)
+        },
+        saveToFirebase: @MainActor (Group) async throws -> Void = {
+            try await FirebaseManager.shared.saveGroup(group: $0)
+        },
+        updateFirebase: @MainActor (Group) async throws -> Void = {
+            try await FirebaseManager.shared.updateGroup(group: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllGroup() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Group.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveGroup(group: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateGroup(group: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 
-    /// Task を同期
+    /// Task を同期（テスト容易性のためデフォルト引数を持つ。syncGroupの説明を参照）
     @MainActor
-    private func syncTask() async throws {
+    func syncTask(
+        getFirebaseData: @MainActor () async throws -> [TaskData] = { try await FirebaseManager.shared.getAllTask() },
+        getRealmData: @MainActor () throws -> [TaskData] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: TaskData.self)
+        },
+        saveToFirebase: @MainActor (TaskData) async throws -> Void = {
+            try await FirebaseManager.shared.saveTask(task: $0)
+        },
+        updateFirebase: @MainActor (TaskData) async throws -> Void = {
+            try await FirebaseManager.shared.updateTask(task: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllTask() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: TaskData.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveTask(task: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateTask(task: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 
-    /// Measures を同期
+    /// Measures を同期（テスト容易性のためデフォルト引数を持つ。syncGroupの説明を参照）
     @MainActor
-    private func syncMeasures() async throws {
+    func syncMeasures(
+        getFirebaseData: @MainActor () async throws -> [Measures] = {
+            try await FirebaseManager.shared.getAllMeasures()
+        },
+        getRealmData: @MainActor () throws -> [Measures] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: Measures.self)
+        },
+        saveToFirebase: @MainActor (Measures) async throws -> Void = {
+            try await FirebaseManager.shared.saveMeasures(measures: $0)
+        },
+        updateFirebase: @MainActor (Measures) async throws -> Void = {
+            try await FirebaseManager.shared.updateMeasures(measures: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllMeasures() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Measures.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveMeasures(measures: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateMeasures(measures: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 
-    /// Memo を同期
+    /// Memo を同期（テスト容易性のためデフォルト引数を持つ。syncGroupの説明を参照）
     @MainActor
-    private func syncMemo() async throws {
+    func syncMemo(
+        getFirebaseData: @MainActor () async throws -> [Memo] = { try await FirebaseManager.shared.getAllMemo() },
+        getRealmData: @MainActor () throws -> [Memo] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: Memo.self)
+        },
+        saveToFirebase: @MainActor (Memo) async throws -> Void = {
+            try await FirebaseManager.shared.saveMemo(memo: $0)
+        },
+        updateFirebase: @MainActor (Memo) async throws -> Void = {
+            try await FirebaseManager.shared.updateMemo(memo: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllMemo() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Memo.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveMemo(memo: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateMemo(memo: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 
-    /// Target を同期
+    /// Target を同期（テスト容易性のためデフォルト引数を持つ。syncGroupの説明を参照）
     @MainActor
-    private func syncTarget() async throws {
+    func syncTarget(
+        getFirebaseData: @MainActor () async throws -> [Target] = { try await FirebaseManager.shared.getAllTarget() },
+        getRealmData: @MainActor () throws -> [Target] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: Target.self)
+        },
+        saveToFirebase: @MainActor (Target) async throws -> Void = {
+            try await FirebaseManager.shared.saveTarget(target: $0)
+        },
+        updateFirebase: @MainActor (Target) async throws -> Void = {
+            try await FirebaseManager.shared.updateTarget(target: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllTarget() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Target.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveTarget(target: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateTarget(target: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 
-    /// Note を同期
+    /// Note を同期（テスト容易性のためデフォルト引数を持つ。syncGroupの説明を参照）
     @MainActor
-    private func syncNote() async throws {
+    func syncNote(
+        getFirebaseData: @MainActor () async throws -> [Note] = { try await FirebaseManager.shared.getAllNote() },
+        getRealmData: @MainActor () throws -> [Note] = {
+            try RealmManager.shared.getDataListIncludingDeleted(clazz: Note.self)
+        },
+        saveToFirebase: @MainActor (Note) async throws -> Void = {
+            try await FirebaseManager.shared.saveNote(note: $0)
+        },
+        updateFirebase: @MainActor (Note) async throws -> Void = {
+            try await FirebaseManager.shared.updateNote(note: $0)
+        }
+    ) async throws {
         try await syncData(
-            getFirebaseData: { try await FirebaseManager.shared.getAllNote() },
-            getRealmData: { try RealmManager.shared.getDataList(clazz: Note.self) },
-            saveToFirebase: { try await FirebaseManager.shared.saveNote(note: $0) },
-            updateFirebase: { try await FirebaseManager.shared.updateNote(note: $0) }
+            getFirebaseData: getFirebaseData,
+            getRealmData: getRealmData,
+            saveToFirebase: saveToFirebase,
+            updateFirebase: updateFirebase
         )
     }
 }
