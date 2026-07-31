@@ -127,6 +127,8 @@ Target (独立)
 - オンライン＋ログイン状態の場合のみFirebase同期を実行
 - 競合解決: updated_atが新しい方を採用
 - 同期はバックグラウンドで実行（UIをブロックしない）
+- 同期対象にはisDeleted=trueの論理削除済みデータも含める（Realm側は`getDataListIncludingDeleted`で取得し、削除の同期漏れ・isDeletedの復活を防止する）
+- 1件のデータの保存・更新に失敗しても、他のデータやエンティティの同期は継続する（個別のエラーは`syncAllData`全体を失敗させない）
 
 ### 6.3 エラー表示
 
@@ -154,6 +156,7 @@ Target (独立)
 4. 旧アプリ（UIKit版）からのアップデート時、`isLogin`フラグが未設定かつ旧`address`/`password`（UserDefaults）が存在する場合は`isLogin = true`を補完（`InitializationManager.migrateLoginStateIfNeeded()`）
 5. **通常起動（ログイン済み＋オンライン）**:
    - 旧データマイグレーション実行（必要時、`MigrationManager`が旧Firebaseコレクションを新形式に変換）
+     - 1件の旧データの変換に失敗した場合（必須フィールド欠損等）、その旧データは削除せず保持したまま残りのデータの変換を継続する（データ恒久消失の防止）
    - Firebaseとデータ同期
 6. MainTabView を表示
 7. 利用規約の同意状態を確認（未同意なら同意ダイアログ表示）
