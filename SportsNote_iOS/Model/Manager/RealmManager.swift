@@ -476,7 +476,7 @@ final class RealmManager {
                             .filter("groupID == %@", taskData.groupID)
                             .first
                         {
-                            return GroupColor.allCases[Int(group.color)].color
+                            return group.groupColor.color
                         }
                     }
                 }

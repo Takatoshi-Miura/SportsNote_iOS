@@ -231,7 +231,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Returns: GroupColorの列挙型
     static func getGroupColor(groupID: String) -> GroupColor {
         if let group = try? RealmManager.shared.getObjectById(id: groupID, type: Group.self) {
-            return GroupColor.allCases[Int(group.color)]
+            return group.groupColor
         }
         return GroupColor.gray
     }
