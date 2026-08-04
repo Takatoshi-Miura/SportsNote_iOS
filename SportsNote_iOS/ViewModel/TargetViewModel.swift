@@ -116,6 +116,15 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate,
+                let existingTarget = try RealmManager.shared.getObjectById(id: entity.targetID, type: Target.self)
+            {
+                entity.userID = existingTarget.userID
+            }
+
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
