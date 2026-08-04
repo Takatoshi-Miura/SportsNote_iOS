@@ -170,6 +170,16 @@
 "checkTermsOfService" = "利用規約を確認";
 "agree" = "同意";
 
+// MARK: Debug
+"debugSectionTitle" = "テスト（開発用）";
+"debugCreateTestData" = "テストデータを作成";
+"debugCreateTestDataSubtitle" = "新形式データをRealmに追加";
+"debugCreateOldFormatData" = "旧データをFirebaseに投入";
+"debugCreateOldFormatDataSubtitle" = "マイグレーション検証用";
+"debugLoginRequired" = "ログインが必要です";
+"debugResetMigrationFlag" = "マイグレーションフラグをリセット";
+"debugResetMigrationFlagSubtitle" = "再マイグレーションを許可";
+
 // MARK: Login/Auth
 "login" = "ログイン";
 "logout" = "ログアウト";

@@ -170,6 +170,16 @@
 "checkTermsOfService" = "Check Terms of Service";
 "agree" = "Agree";
 
+// MARK: Debug
+"debugSectionTitle" = "Test (Debug)";
+"debugCreateTestData" = "Create Test Data";
+"debugCreateTestDataSubtitle" = "Add new-format data to Realm";
+"debugCreateOldFormatData" = "Upload Legacy Data to Firebase";
+"debugCreateOldFormatDataSubtitle" = "For migration verification";
+"debugLoginRequired" = "Login required";
+"debugResetMigrationFlag" = "Reset Migration Flag";
+"debugResetMigrationFlagSubtitle" = "Allow migration to run again";
+
 // MARK: Login/Auth
 "login" = "Login";
 "logout" = "Logout";
