@@ -112,17 +112,26 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
         let newMeasuresID = measuresID ?? UUIDGenerator.generateID()
         let newOrder = order ?? getDefaultOrderForTask(taskID: taskID)
         let newCreatedAt = created_at ?? Date()
+        let isUpdate = measuresID != nil
 
         let measures = Measures(
             measuresID: newMeasuresID,
             taskID: taskID,
             title: title,
             order: newOrder,
-            created_at: newCreatedAt
+            created_at: newCreatedAt,
+            isDeleted: isUpdate ? existingIsDeleted(for: newMeasuresID) : false
         )
 
-        let isUpdate = measuresID != nil
         return await save(measures, isUpdate: isUpdate)
+    }
+
+    /// 既存レコードのisDeleted値を取得する（論理削除済みも含めて取得し、更新時の意図しない復活を防ぐ）
+    /// - Parameter measuresID: 対策ID
+    /// - Returns: 既存レコードのisDeleted値（レコードが存在しない場合はfalse）
+    private func existingIsDeleted(for measuresID: String) -> Bool {
+        (try? RealmManager.shared.getObjectByIdIncludingDeleted(id: measuresID, type: Measures.self))?.isDeleted
+            ?? false
     }
 
     /// 指定課題のデフォルトの並び順を取得する
@@ -211,7 +220,8 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
                 taskID: measure.taskID,
                 title: measure.title,
                 order: index,
-                created_at: measure.created_at
+                created_at: measure.created_at,
+                isDeleted: existingIsDeleted(for: measure.measuresID)
             )
 
             let result = await save(updatedMeasures, isUpdate: true)

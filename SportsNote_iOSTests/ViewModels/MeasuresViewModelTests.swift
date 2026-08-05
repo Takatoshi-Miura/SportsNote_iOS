@@ -479,6 +479,91 @@ struct MeasuresViewModelTests {
 
         manager.clearAll()
     }
+
+    // MARK: - isDeleted保持回帰テスト（issue #75: 更新時にisDeletedがfalseにリセットされ削除済み対策が復活する不具合）
+
+    @Test("saveMeasures - 削除済みの対策を更新してもisDeletedはtrueのまま維持される")
+    func saveMeasures_updatingDeletedMeasures_keepsIsDeletedTrue() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let measures = Measures(
+            measuresID: "ms-deleted", taskID: "t1", title: "Original", order: 0, created_at: Date())
+        try? manager.saveItem(measures)
+
+        // 他デバイスでの削除がバックグラウンド同期でRealmに反映された状態を再現
+        try? manager.logicalDelete(id: "ms-deleted", type: Measures.self)
+
+        // 削除を知らずに開いたままの画面でタイトル編集が行われるケースを再現
+        let result = await viewModel.saveMeasures(
+            measuresID: "ms-deleted",
+            taskID: "t1",
+            title: "Edited After Deletion",
+            order: 0,
+            created_at: Date()
+        )
+
+        if case .failure = result {
+            Issue.record("saveMeasures failed")
+        }
+
+        // 削除済みレコードはgetDataListに含まれないため、getRawObjectByIdで直接検証する
+        let rawMeasures = manager.getRawObjectById(id: "ms-deleted", type: Measures.self)
+        #expect(rawMeasures?.isDeleted == true)
+        #expect(rawMeasures?.title == "Edited After Deletion")  // タイトル自体は更新される（isDeletedのみ保護される）
+
+        manager.clearAll()
+    }
+
+    @Test("saveMeasures - 未削除の対策を更新した場合はisDeletedがfalseのまま")
+    func saveMeasures_updatingActiveMeasures_keepsIsDeletedFalse() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let measures = Measures(
+            measuresID: "ms-active", taskID: "t1", title: "Original", order: 0, created_at: Date())
+        try? manager.saveItem(measures)
+
+        let result = await viewModel.saveMeasures(
+            measuresID: "ms-active", taskID: "t1", title: "Edited", order: 0, created_at: Date()
+        )
+        if case .failure = result {
+            Issue.record("saveMeasures failed")
+        }
+
+        let rawMeasures = manager.getRawObjectById(id: "ms-active", type: Measures.self)
+        #expect(rawMeasures?.isDeleted == false)
+
+        manager.clearAll()
+    }
+
+    @Test("updateMeasuresOrder - 論理削除済みの対策の並び順を更新してもisDeletedはtrueのまま維持される")
+    func updateMeasuresOrder_withDeletedMeasures_keepsIsDeletedTrue() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let measures1 = Measures(measuresID: "ms-1", taskID: "t1", title: "M1", order: 0, created_at: Date())
+        let measures2 = Measures(measuresID: "ms-2", taskID: "t1", title: "M2", order: 1, created_at: Date())
+        try? manager.saveItem(measures1)
+        try? manager.saveItem(measures2)
+
+        // ms-1が他デバイスの削除操作によりRealm上ではisDeleted=trueになっている状態を再現
+        try? manager.logicalDelete(id: "ms-1", type: Measures.self)
+
+        // 画面が保持している古いmeasures1インスタンス（isDeleted=falseのまま）を使って並び替えを実行
+        let result = await viewModel.updateMeasuresOrder(measures: [measures2, measures1])
+        if case .failure = result {
+            Issue.record("updateMeasuresOrder failed")
+        }
+
+        let rawMeasures1 = manager.getRawObjectById(id: "ms-1", type: Measures.self)
+        #expect(rawMeasures1?.isDeleted == true)
+
+        manager.clearAll()
+    }
 }
 
 // MARK: - テストヘルパー拡張
