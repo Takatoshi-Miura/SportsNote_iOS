@@ -8,7 +8,7 @@ struct TaskSelectionView: View {
     var onTaskSelected: (TaskListData) -> Void
     var addedTaskIds: Set<String>
     private var incompleteTasks: [TaskListData] {
-        return taskViewModel.getUnaddedTasks(excludingTaskIds: [])
+        return taskViewModel.getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     var body: some View {
