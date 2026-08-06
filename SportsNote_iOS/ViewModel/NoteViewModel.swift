@@ -19,6 +19,12 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     private let realmManager = RealmManager.shared
     private var cancellables = Set<AnyCancellable>()
 
+    #if DEBUG
+        /// テスト用: updateTaskReflectionsからのMemo Firebase同期呼び出しを記録する
+        /// （実Firebase通信を伴わずに呼び出しの発生・isUpdate判定を検証するため）
+        var memoSyncCallsForTesting: [(memoID: String, isUpdate: Bool)] = []
+    #endif
+
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
         setupNotifications()
@@ -387,10 +393,53 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             // 既存メモを更新する場合はcreated_atを維持し、新規作成時のみ現在時刻とする
             memo.created_at = existingCreatedAt ?? Date()
             try? realmManager.saveItem(memo)
+
+            // Firebase同期はバックグラウンドで実行
+            // existingCreatedAtが設定されている場合のみ既存メモの更新(isUpdate=true)、
+            // それ以外は新規作成(isUpdate=false)。memoIDの決定ロジックと同じ判定材料を再利用する
+            performMemoBackgroundSync(memo, isUpdate: existingCreatedAt != nil)
         }
 
         // メモを再読み込み
         loadMemos()
+    }
+
+    /// 課題振り返りメモ(Memo)をFirebaseに同期する
+    /// NoteViewModelのFirebaseSyncable.EntityTypeはNoteのため、
+    /// Memoの同期にはperformBackgroundSync(EntityType用)を使えず専用の同期処理を持つ
+    /// - Parameters:
+    ///   - memo: 同期するメモ
+    ///   - isUpdate: 更新かどうか
+    /// - Returns: 同期処理の結果
+    func syncMemoToFirebase(_ memo: Memo, isUpdate: Bool) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
+
+        do {
+            if isUpdate {
+                try await FirebaseManager.shared.updateMemo(memo: memo)
+            } else {
+                try await FirebaseManager.shared.saveMemo(memo: memo)
+            }
+            return .success(())
+        } catch {
+            return .failure(ErrorMapper.mapFirebaseError(error, context: "NoteViewModel-syncMemoToFirebase"))
+        }
+    }
+
+    /// 課題振り返りメモのFirebase同期をバックグラウンドで実行する
+    /// - Parameters:
+    ///   - memo: 同期するメモ
+    ///   - isUpdate: 更新かどうか
+    private func performMemoBackgroundSync(_ memo: Memo, isUpdate: Bool) {
+        #if DEBUG
+            memoSyncCallsForTesting.append((memoID: memo.memoID, isUpdate: isUpdate))
+        #endif
+        Task {
+            let result = await syncMemoToFirebase(memo, isUpdate: isUpdate)
+            if case .failure(let error) = result, currentError == nil {
+                showErrorAlert(error)
+            }
+        }
     }
 
     /// 大会ノートの保存処理
