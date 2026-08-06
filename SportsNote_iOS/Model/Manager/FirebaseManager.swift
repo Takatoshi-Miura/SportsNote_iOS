@@ -484,21 +484,26 @@ final class FirebaseManager {
      * @param collection コレクション名
      * @param documentID ドキュメントID
      * @param data 更新するデータ
+     * @throws SportsNoteError Firebase更新に失敗した場合
      */
     private func updateDocument(
         collection: String,
         documentID: String,
         data: [String: Any]
     ) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection(collection).document(documentID)
-                .updateData(data) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                db.collection(collection).document(documentID)
+                    .updateData(data) { error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: ())
+                        }
                     }
-                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapFirebaseError(error, context: "updateDocument-\(collection)-\(documentID)")
         }
     }
 
