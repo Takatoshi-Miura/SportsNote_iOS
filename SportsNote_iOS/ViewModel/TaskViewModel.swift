@@ -428,6 +428,19 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
     }
 
+    /// メモをmeasuresID経由で課題（TaskListData）に関連付ける
+    /// - Parameter memos: 対象のメモ一覧（呼び出し側でnoteID・isDeletedによるフィルタ済みを渡すこと）
+    /// - Returns: taskIDで重複排除した(task: TaskListData, memo: Memo)のペア配列
+    func associateTasksWithMemos(memos: [Memo]) -> [(task: TaskListData, memo: Memo)] {
+        var result: [String: (task: TaskListData, memo: Memo)] = [:]
+        for memo in memos {
+            if let task = taskListData.first(where: { $0.measuresID == memo.measuresID }) {
+                result[task.taskID] = (task: task, memo: memo)
+            }
+        }
+        return Array(result.values)
+    }
+
     /// 未追加のタスクを取得（taskReflectionsから直接算出）
     /// - Parameter taskReflections: ノートに追加済みの課題と感想のマップ
     /// - Returns: 未追加タスクのリスト
