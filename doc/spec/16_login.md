@@ -81,6 +81,6 @@
 ## 補足
 
 - 画面はスワイプでの閉じ操作が無効化されている（interactiveDismissDisabled）
-- ログイン/ログアウト/アカウント作成/削除成功時にNotification.shouldReinitializeAppが発行され、MainTabViewが再構築される
+- ログイン/ログアウト/アカウント削除成功時にNotification.shouldReinitializeAppが発行され、MainTabViewが再構築される（アカウント作成成功時はこの通知は発行されない）
 - ローディングオーバーレイ表示中はUI操作不可
 - ナビゲーションバーは非表示
