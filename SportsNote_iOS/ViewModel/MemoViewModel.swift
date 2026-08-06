@@ -150,7 +150,7 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "MemoViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "MemoViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

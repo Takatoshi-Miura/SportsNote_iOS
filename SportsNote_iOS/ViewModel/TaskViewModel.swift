@@ -529,7 +529,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "TaskViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "TaskViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

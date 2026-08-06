@@ -765,6 +765,23 @@ struct NoteViewModelTests {
 
         manager.clearAll()
     }
+
+    // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
+
+    @Test(
+        "convertFirebaseSyncError - 既にSportsNoteErrorの場合は再変換せずそのまま返す",
+        arguments: [
+            SportsNoteError.firebasePermissionDenied,
+            SportsNoteError.firebaseDocumentNotFound,
+            SportsNoteError.networkTimeout,
+        ])
+    func convertFirebaseSyncError_doesNotReconvertExistingSportsNoteError(original: SportsNoteError) async {
+        let viewModel = NoteViewModel()
+
+        let converted = viewModel.convertFirebaseSyncError(original, context: "NoteViewModel-syncEntityToFirebase")
+
+        #expect(converted.errorDescription == original.errorDescription)
+    }
 }
 
 extension NoteViewModelTests {

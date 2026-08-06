@@ -168,7 +168,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "GroupViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "GroupViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

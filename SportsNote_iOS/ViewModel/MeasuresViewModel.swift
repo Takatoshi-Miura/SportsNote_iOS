@@ -243,7 +243,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "MeasuresViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "MeasuresViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }
