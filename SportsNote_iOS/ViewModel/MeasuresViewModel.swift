@@ -110,7 +110,12 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
         let newMeasuresID = measuresID ?? UUIDGenerator.generateID()
-        let newOrder = order ?? getDefaultOrderForTask(taskID: taskID)
+        let newOrder =
+            order
+            ?? RealmManager.shared.getNextOrder(
+                clazz: Measures.self,
+                predicate: NSPredicate(format: "taskID == %@", taskID)
+            )
         let newCreatedAt = created_at ?? Date()
 
         let measures = Measures(
@@ -123,21 +128,6 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
 
         let isUpdate = measuresID != nil
         return await save(measures, isUpdate: isUpdate)
-    }
-
-    /// 指定課題のデフォルトの並び順を取得する
-    /// - Parameter taskID: 課題ID
-    /// - Returns: 並び順
-    private func getDefaultOrderForTask(taskID: String) -> Int {
-        do {
-            let maxOrder = try RealmManager.shared.getMaxOrder(
-                clazz: Measures.self,
-                predicate: NSPredicate(format: "taskID == %@", taskID)
-            )
-            return (maxOrder ?? -1) + 1
-        } catch {
-            return 0
-        }
     }
 
     /// 対策保存処理（プロトコル準拠）

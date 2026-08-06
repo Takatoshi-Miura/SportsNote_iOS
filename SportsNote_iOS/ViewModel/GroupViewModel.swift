@@ -74,7 +74,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
         let newGroupID = groupID ?? UUIDGenerator.generateID()
-        let newOrder = order ?? getDefaultOrder()
+        let newOrder = order ?? RealmManager.shared.getNextOrder(clazz: Group.self)
         let newCreatedAt = created_at ?? Date()
 
         let group = Group(
@@ -111,18 +111,6 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-moveGroup")
             return .failure(sportsNoteError)
-        }
-    }
-
-    /// デフォルトの並び順を取得する
-    /// - Returns: 並び順
-    private func getDefaultOrder() -> Int {
-        do {
-            let maxOrder = try RealmManager.shared.getMaxOrder(clazz: Group.self)
-            return (maxOrder ?? -1) + 1
-        } catch {
-            // エラー時は0を返す（デフォルト値）
-            return 0
         }
     }
 
