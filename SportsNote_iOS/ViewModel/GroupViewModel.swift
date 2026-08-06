@@ -136,6 +136,14 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate, let existingGroup = try RealmManager.shared.getObjectById(id: entity.groupID, type: Group.self)
+            {
+                entity.userID = existingGroup.userID
+            }
+
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
