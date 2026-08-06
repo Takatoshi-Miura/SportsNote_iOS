@@ -44,11 +44,13 @@ extension FirebaseSyncable where Self: BaseViewModelProtocol {
     ///   - entity: 同期するエンティティ
     ///   - isUpdate: 更新かどうか（デフォルトはfalse）
     func performBackgroundSync(_ entity: EntityType, isUpdate: Bool = false) {
-        Task {
+        let task = Task {
             let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
             if case .failure(let error) = result, currentError == nil {
                 showErrorAlert(error)
             }
         }
+        // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+        BackgroundSyncTracker.shared.track(task)
     }
 }

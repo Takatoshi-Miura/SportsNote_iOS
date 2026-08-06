@@ -495,11 +495,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             try RealmManager.shared.updateTaskOrder(tasks: reorderedTasks)
 
             // Firebase同期（バックグラウンド）
-            Task {
+            // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+            let syncTask = Task<Void, Never> {
                 for task in reorderedTasks {
                     _ = await syncEntityToFirebase(task, isUpdate: true)
                 }
             }
+            BackgroundSyncTracker.shared.track(syncTask)
 
             return .success(())
         } catch {
