@@ -11,6 +11,7 @@ struct TargetView: View {
     @State private var selectedMonth = Date().get(.month)
     @State private var selectedDate: Date?
     @StateObject var viewModel = TargetViewModel()
+    @State private var refreshSelectedDateNotesObserver: NSObjectProtocol?
 
     var body: some View {
         TabTopView(
@@ -106,6 +107,25 @@ struct TargetView: View {
                         noteViewModel.showingErrorAlert = true
                     }
                 }
+            }
+
+            // ノート編集画面から戻った際に選択中日付のノート一覧を再取得する
+            refreshSelectedDateNotesObserver = NotificationCenter.default.addObserver(
+                forName: .refreshSelectedDateNotes,
+                object: nil,
+                queue: .main
+            ) { notification in
+                guard let date = notification.userInfo?["date"] as? Date else { return }
+                Task { @MainActor in
+                    noteViewModel.updateNotesByDate(date)
+                }
+            }
+        }
+        .onDisappear {
+            // 通知の登録解除
+            if let refreshSelectedDateNotesObserver {
+                NotificationCenter.default.removeObserver(refreshSelectedDateNotesObserver)
+                self.refreshSelectedDateNotesObserver = nil
             }
         }
         .onChange(of: selectedYear) { newYear in
