@@ -163,6 +163,20 @@ final class MigrationManager {
 
     // MARK: - 変換・Realm + Firebase 保存
 
+    /// 未分類グループ（タイトルが「未分類」と一致するグループ）のIDを取得する
+    /// - Note: Realm/Firebaseへの外部依存を一切持たない純粋な選択ロジックとして`static func`に切り出す。
+    ///   `groups.first`（orderが最小のグループ）で判定すると、グループの並び替え後に
+    ///   意図しない別グループを「未分類」と誤判定してしまうため、タイトル一致で判定する（issue #56）。
+    ///   `MigrationManager`はinitで`Firestore.firestore()`を保持しFirebase未設定のテスト環境では
+    ///   インスタンス化するとクラッシュするため（issue #35で確立された制約）、本ロジックは
+    ///   インスタンスメンバーではなくstatic funcとして定義し、`MigrationManager.shared`に
+    ///   一切触れずに単体テスト可能にする。
+    /// - Parameter groups: 検索対象のグループ一覧（呼び出し元がRealmから取得済みのものを渡す）
+    /// - Returns: タイトルが一致するグループのgroupID。見つからない場合は空文字列
+    static func resolveUncategorizedGroupID(groups: [Group]) -> String {
+        groups.first(where: { $0.title == LocalizedStrings.uncategorized })?.groupID ?? ""
+    }
+
     /// 旧課題データを TaskData + Measures + Memo に変換して保存
     /// measuresData: [対策タイトル: [[有効性コメント: ノートID(Int)]]]
     private func migrateTask(documentID: String, data: [String: Any]) async throws {
@@ -190,13 +204,8 @@ final class MigrationManager {
         task.updated_at = now
 
         // 未分類グループに割り当て（旧データにグループ概念なし）
-        if let groups = try? RealmManager.shared.getDataList(clazz: Group.self),
-            let uncategorized = groups.first
-        {
-            task.groupID = uncategorized.groupID
-        } else {
-            task.groupID = ""
-        }
+        let groups = (try? RealmManager.shared.getDataList(clazz: Group.self)) ?? []
+        task.groupID = MigrationManager.resolveUncategorizedGroupID(groups: groups)
 
         try RealmManager.shared.saveItem(task)
         try await FirebaseManager.shared.saveTask(task: task)
