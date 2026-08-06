@@ -35,7 +35,8 @@ class Measures: Object {
         taskID: String,
         title: String,
         order: Int,
-        created_at: Date
+        created_at: Date,
+        isDeleted: Bool = false
     ) {
         self.init()
         self.measuresID = measuresID
@@ -43,6 +44,7 @@ class Measures: Object {
         self.title = title
         self.order = order
         self.created_at = created_at
+        self.isDeleted = isDeleted
     }
 
     override static func primaryKey() -> String? {

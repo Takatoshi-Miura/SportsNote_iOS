@@ -216,6 +216,25 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的なデータ取得メソッド（ID指定、論理削除済みも含む）
+    /// 更新時に既存レコードのisDeleted値を引き継ぐ用途などに使用する
+    /// - Parameter id: 検索するID（文字列）
+    /// - Returns: 取得データ（存在しない場合は`nil`）
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    internal func getObjectByIdIncludingDeleted<T: Object>(id: String, type: T.Type) throws -> T? {
+        guard !id.isEmpty else {
+            throw SportsNoteError.realmReadFailed("Empty ID provided for \(String(describing: T.self))")
+        }
+
+        do {
+            let realm = try getRealm()
+            return realm.object(ofType: type, forPrimaryKey: id)
+        } catch let error {
+            throw ErrorMapper.mapRealmError(
+                error, context: "getObjectByIdIncludingDeleted-\(String(describing: T.self))-\(id)")
+        }
+    }
+
     /// 汎用的なデータ一覧取得メソッド
     /// - Parameter clazz: 取得するデータ型のクラス
     /// - Returns: 条件に一致するデータのリスト
