@@ -829,6 +829,106 @@ struct TaskViewModelTests {
 
         manager.clearAll()
     }
+
+    // MARK: - moveTask（並び替え）テスト
+
+    @Test("moveTask - 完了課題非表示中に並び替えてもorderが重複しない")
+    func moveTask_doesNotCauseOrderCollisionWhenCompletedTasksHidden() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // A(order0,未完了) B(order1,完了) C(order2,未完了)
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: true)
+        let taskC = TaskViewModelTests.createTestTask(id: "C", groupID: "g1", order: 2, isComplete: false)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+        try? manager.saveItem(taskC)
+
+        _ = await viewModel.fetchData()
+        // showCompletedTasksはデフォルトfalse -> filteredTaskListDataは[A, C]のはず
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["A", "C"])
+
+        // CをAより前に移動（index1->0）
+        let result = await viewModel.moveTask(from: IndexSet(integer: 1), to: 0)
+        guard case .success = result else {
+            Issue.record("moveTask failed")
+            manager.clearAll()
+            return
+        }
+
+        // Realmから最新状態を取得してorderの一意性を検証
+        let updatedTasks = (try? manager.getDataList(clazz: TaskData.self)) ?? []
+        let orders = updatedTasks.map { $0.order }
+        #expect(Set(orders).count == orders.count, "orderが重複してはいけない")
+
+        // A/Bで重複していないことを明示的に確認
+        let orderA = updatedTasks.first { $0.taskID == "A" }?.order
+        let orderB = updatedTasks.first { $0.taskID == "B" }?.order
+        let orderC = updatedTasks.first { $0.taskID == "C" }?.order
+        #expect(orderA != nil && orderB != nil && orderC != nil)
+        #expect(orderA != orderB)
+
+        manager.clearAll()
+    }
+
+    @Test("moveTask - 完了課題表示ONにした際にorderが重複しない")
+    func moveTask_thenShowCompletedTasks_orderIsStable() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: true)
+        let taskC = TaskViewModelTests.createTestTask(id: "C", groupID: "g1", order: 2, isComplete: false)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+        try? manager.saveItem(taskC)
+
+        _ = await viewModel.fetchData()
+        _ = await viewModel.moveTask(from: IndexSet(integer: 1), to: 0)
+
+        // 完了課題を表示
+        _ = await viewModel.fetchData()
+        viewModel.showCompletedTasks = true
+
+        let orders = viewModel.filteredTaskListData.map { $0.order }
+        #expect(Set(orders).count == orders.count, "表示ON後もorderが重複していない")
+
+        manager.clearAll()
+    }
+
+    @Test("moveTask - showCompletedTasksがtrueの場合は全件が並び替え対象になる")
+    func moveTask_allTasksVisible_reordersAllCorrectly() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: true)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+
+        _ = await viewModel.fetchData()
+        viewModel.showCompletedTasks = true
+        #expect(viewModel.filteredTaskListData.count == 2)
+
+        // BをAより前に移動（index1->0）
+        let result = await viewModel.moveTask(from: IndexSet(integer: 1), to: 0)
+        guard case .success = result else {
+            Issue.record("moveTask failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedTasks = (try? manager.getDataList(clazz: TaskData.self)) ?? []
+        let orderA = updatedTasks.first { $0.taskID == "A" }?.order
+        let orderB = updatedTasks.first { $0.taskID == "B" }?.order
+        #expect(orderB == 0 && orderA == 1)
+
+        manager.clearAll()
+    }
 }
 
 // MARK: - テストヘルパー拡張
