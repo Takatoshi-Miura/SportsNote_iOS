@@ -55,7 +55,7 @@ struct NoteListSection: View {
                 .onDisappear {
                     // 詳細画面から戻ったときに日付で再フィルタリング
                     NotificationCenter.default.post(
-                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        name: .refreshSelectedDateNotes,
                         object: nil,
                         userInfo: ["date": date]
                     )
@@ -65,7 +65,7 @@ struct NoteListSection: View {
                 .onDisappear {
                     // 詳細画面から戻ったときに日付で再フィルタリング
                     NotificationCenter.default.post(
-                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        name: .refreshSelectedDateNotes,
                         object: nil,
                         userInfo: ["date": date]
                     )
@@ -75,7 +75,7 @@ struct NoteListSection: View {
                 .onDisappear {
                     // 詳細画面から戻ったときに日付で再フィルタリング
                     NotificationCenter.default.post(
-                        name: NSNotification.Name("RefreshSelectedDateNotes"),
+                        name: .refreshSelectedDateNotes,
                         object: nil,
                         userInfo: ["date": date]
                     )
