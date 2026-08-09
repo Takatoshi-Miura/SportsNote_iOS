@@ -9,14 +9,26 @@ struct TaskListSection: View {
     @Binding var taskReflections: [TaskListData: String]
     var unaddedTasks: [TaskListData]
 
+    /// taskReflections.keysをtask.order昇順にソートした配列。
+    /// Dictionaryの列挙順は不定（アプリ再起動のたびに変わりうる）のため、描画順の
+    /// 安定化にはこちらを使う（issue #137）。orderはグループ内スコープで採番されるため
+    /// 異なるグループの課題間で同値になり得る。taskIDを副次キーにして同値時の順序も
+    /// 決定的にする
+    private var sortedTasks: [TaskListData] {
+        taskReflections.keys.sorted {
+            $0.order != $1.order ? $0.order < $1.order : $0.taskID < $1.taskID
+        }
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
+        let sortedTasks = sortedTasks
+        return VStack(spacing: 0) {
             if taskReflections.isEmpty {
                 emptyStateView
                     .disabled(true)
             } else {
-                ForEach(Array(taskReflections.keys), id: \.taskID) { task in
-                    if task.taskID != Array(taskReflections.keys).first?.taskID {
+                ForEach(sortedTasks, id: \.taskID) { task in
+                    if task.taskID != sortedTasks.first?.taskID {
                         Divider()
                     }
 
@@ -33,7 +45,7 @@ struct TaskListSection: View {
                     )
                     .contentShape(Rectangle())
 
-                    if task.taskID != Array(taskReflections.keys).last?.taskID {
+                    if task.taskID != sortedTasks.last?.taskID {
                         Divider()
                     }
                 }
