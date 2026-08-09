@@ -71,13 +71,13 @@ struct MenuView: View {
                         title: LocalizedStrings.termsOfService,
                         subTitle: "",
                         iconRes: "doc.text",
-                        onClick: { TermsManager.navigateToTermsOfService() }
+                        onClick: { TermsViewModel.navigateToTermsOfService() }
                     ),
                     ItemData(
                         title: LocalizedStrings.privacyPolicy,
                         subTitle: "",
                         iconRes: "lock.shield",
-                        onClick: { TermsManager.navigateToPrivacyPolicy() }
+                        onClick: { TermsViewModel.navigateToPrivacyPolicy() }
                     ),
                     ItemData(
                         title: LocalizedStrings.appVersion,

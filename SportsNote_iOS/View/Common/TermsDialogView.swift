@@ -1,19 +1,19 @@
 import SwiftUI
 
 struct TermsDialogView: View {
-    @ObservedObject private var termsManager = TermsManager.shared
+    @ObservedObject private var termsViewModel = TermsViewModel.shared
 
     var body: some View {
         EmptyView()
-            .alert(isPresented: $termsManager.termsDialogShown) {
+            .alert(isPresented: $termsViewModel.termsDialogShown) {
                 Alert(
                     title: Text(LocalizedStrings.termsOfServiceTitle),
                     message: Text(LocalizedStrings.termsOfServiceMessage),
                     primaryButton: .default(Text(LocalizedStrings.checkTermsOfService)) {
-                        TermsManager.navigateToTermsOfService()
+                        TermsViewModel.navigateToTermsOfService()
                     },
                     secondaryButton: .default(Text(LocalizedStrings.agree)) {
-                        termsManager.agreeToTerms()
+                        termsViewModel.agreeToTerms()
                     }
                 )
             }
