@@ -116,7 +116,10 @@ SportsNote_iOS/
 - `UserDefaultsManager`: アプリ設定とユーザー設定
 - `InitializationManager`: アプリ初期化処理の統括。初回起動時のセットアップ・デフォルトデータ作成に加え、`initializeApp()`は起動時・ログイン時・ログアウト時にも呼び出され、旧アプリからのログイン状態補完（`migrateLoginStateIfNeeded()`）、ログイン済み＋オンライン時の`MigrationManager`による旧データマイグレーションと`SyncManager`によるFirebase同期の実行も担う
 - `MigrationManager`: 旧アプリ（UIKit版）のFirebaseデータを新形式（Task+Measures+Memo、Target、Note）に変換するマイグレーション処理
+- `MigrationStepRunner`: `MigrationManager`内で1件ごとの「変換→旧データ削除」を実行する補助struct。変換が`MigrationError`で失敗した場合は旧データ削除をスキップして保持する（データ恒久消失防止、Firebase非依存で単体テスト容易）
 - `TestDataManager`: DEBUG専用のテストデータ生成・旧形式データのFirebase投入・マイグレーション検証用ユーティリティ
+- `BackgroundSyncTracker`: `FirebaseSyncable.performBackgroundSync`が起動したバックグラウンドFirebase同期Taskを追跡するシングルトン。`InitializationManager.deleteAllData()`（ログアウト/アカウント削除）はRealm全削除の直前に`waitForAll()`を呼び、起動済み同期処理の完了を待ってからデータを削除する（同期データ消失・invalidate済みRealmオブジェクトへのアクセスクラッシュを防止）
+- `MeasuresOrderResolver`: `MigrationManager`のマイグレーション処理で使う純粋関数enum。旧アプリのmeasuresData（対策タイトルをキーとするDictionary、列挙順不定）から`Measures.order`を決定的に採番するため、"measuresPriority"（旧データのユーザー指定最優先対策）をorder=0に固定し、残りは`sorted()`で決定的にソートする
 
 ## 開発ガイドライン
 

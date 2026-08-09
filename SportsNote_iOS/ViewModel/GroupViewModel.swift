@@ -74,7 +74,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
         let newGroupID = groupID ?? UUIDGenerator.generateID()
-        let newOrder = order ?? getDefaultOrder()
+        let newOrder = order ?? RealmManager.shared.getNextOrder(clazz: Group.self)
         let newCreatedAt = created_at ?? Date()
 
         let group = Group(
@@ -102,27 +102,17 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             try RealmManager.shared.updateGroupOrder(groups: reorderedGroups)
             groups = reorderedGroups
             // Firebase 同期（各グループを order 更新で同期）
-            Task {
+            // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+            let syncTask = Task<Void, Never> {
                 for group in reorderedGroups {
                     _ = await syncEntityToFirebase(group, isUpdate: true)
                 }
             }
+            BackgroundSyncTracker.shared.track(syncTask)
             return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-moveGroup")
             return .failure(sportsNoteError)
-        }
-    }
-
-    /// デフォルトの並び順を取得する
-    /// - Returns: 並び順
-    private func getDefaultOrder() -> Int {
-        do {
-            let maxOrder = try RealmManager.shared.getMaxOrder(clazz: Group.self)
-            return (maxOrder ?? -1) + 1
-        } catch {
-            // エラー時は0を返す（デフォルト値）
-            return 0
         }
     }
 
@@ -136,6 +126,14 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate, let existingGroup = try RealmManager.shared.getObjectById(id: entity.groupID, type: Group.self)
+            {
+                entity.userID = existingGroup.userID
+            }
+
             // Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
@@ -168,7 +166,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "GroupViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "GroupViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

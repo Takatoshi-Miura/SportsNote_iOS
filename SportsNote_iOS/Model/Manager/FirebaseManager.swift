@@ -20,6 +20,21 @@ final class FirebaseManager {
             key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
     }
 
+    /**
+     * ドキュメントIDを組み立てる（userIDとentityIDから）
+     *
+     * Firestoreに一切触れない純粋関数のため、Firebase未設定のテスト環境でも呼び出し可能。
+     * 更新系メソッドは、UserDefaults上の現在のuserID（`currentUserID()`）ではなく、
+     * エンティティ自身が保持するuserIDを渡すこと（`saveXxx`系と同じ基準に揃えるため）。
+     *
+     * @param userID ドキュメントIDに使用するuserID（エンティティ自身の値を渡す）
+     * @param entityID エンティティのID
+     * @return "userID_entityID"形式のドキュメントID
+     */
+    static func buildDocumentID(userID: String, entityID: String) -> String {
+        "\(userID)_\(entityID)"
+    }
+
     // MARK: - Create
 
     /**
@@ -237,34 +252,7 @@ final class FirebaseManager {
      */
     func getAllGroup() async throws -> [Group] {
         let documents = try await getAllDocuments(collection: "Group")
-
-        return documents.compactMap { document -> Group? in
-            let data = document.data()
-            let group = Group()
-
-            guard let userID = data["userID"] as? String,
-                let groupID = data["groupID"] as? String,
-                let title = data["title"] as? String,
-                let color = data["color"] as? Int,
-                let order = data["order"] as? Int,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
-            else {
-                return nil
-            }
-
-            group.userID = userID
-            group.groupID = groupID
-            group.title = title
-            group.color = color
-            group.order = order
-            group.isDeleted = isDeleted
-            group.created_at = created_at
-            group.updated_at = updated_at
-
-            return group
-        }
+        return documents.compactMap { Group(firestoreData: $0.data()) }
     }
 
     /**
@@ -274,38 +262,7 @@ final class FirebaseManager {
      */
     func getAllTask() async throws -> [TaskData] {
         let documents = try await getAllDocuments(collection: "Task")
-
-        return documents.compactMap { document -> TaskData? in
-            let data = document.data()
-            let task = TaskData()
-
-            guard let userID = data["userID"] as? String,
-                let taskID = data["taskID"] as? String,
-                let groupID = data["groupID"] as? String,
-                let title = data["title"] as? String,
-                let cause = data["cause"] as? String,
-                let order = data["order"] as? Int,
-                let isComplete = data["isComplete"] as? Bool,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
-            else {
-                return nil
-            }
-
-            task.userID = userID
-            task.taskID = taskID
-            task.groupID = groupID
-            task.title = title
-            task.cause = cause
-            task.order = order
-            task.isComplete = isComplete
-            task.isDeleted = isDeleted
-            task.created_at = created_at
-            task.updated_at = updated_at
-
-            return task
-        }
+        return documents.compactMap { TaskData(firestoreData: $0.data()) }
     }
 
     /**
@@ -315,34 +272,7 @@ final class FirebaseManager {
      */
     func getAllMeasures() async throws -> [Measures] {
         let documents = try await getAllDocuments(collection: "Measures")
-
-        return documents.compactMap { document -> Measures? in
-            let data = document.data()
-            let measure = Measures()
-
-            guard let userID = data["userID"] as? String,
-                let measuresID = data["measuresID"] as? String,
-                let taskID = data["taskID"] as? String,
-                let title = data["title"] as? String,
-                let order = data["order"] as? Int,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
-            else {
-                return nil
-            }
-
-            measure.userID = userID
-            measure.measuresID = measuresID
-            measure.taskID = taskID
-            measure.title = title
-            measure.order = order
-            measure.isDeleted = isDeleted
-            measure.created_at = created_at
-            measure.updated_at = updated_at
-
-            return measure
-        }
+        return documents.compactMap { Measures(firestoreData: $0.data()) }
     }
 
     /**
@@ -352,34 +282,7 @@ final class FirebaseManager {
      */
     func getAllMemo() async throws -> [Memo] {
         let documents = try await getAllDocuments(collection: "Memo")
-
-        return documents.compactMap { document -> Memo? in
-            let data = document.data()
-            let memo = Memo()
-
-            guard let userID = data["userID"] as? String,
-                let memoID = data["memoID"] as? String,
-                let noteID = data["noteID"] as? String,
-                let measuresID = data["measuresID"] as? String,
-                let detail = data["detail"] as? String,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
-            else {
-                return nil
-            }
-
-            memo.userID = userID
-            memo.memoID = memoID
-            memo.noteID = noteID
-            memo.measuresID = measuresID
-            memo.detail = detail
-            memo.isDeleted = isDeleted
-            memo.created_at = created_at
-            memo.updated_at = updated_at
-
-            return memo
-        }
+        return documents.compactMap { Memo(firestoreData: $0.data()) }
     }
 
     /**
@@ -389,36 +292,7 @@ final class FirebaseManager {
      */
     func getAllTarget() async throws -> [Target] {
         let documents = try await getAllDocuments(collection: "Target")
-
-        return documents.compactMap { document -> Target? in
-            let data = document.data()
-            let target = Target()
-
-            guard let userID = data["userID"] as? String,
-                let targetID = data["targetID"] as? String,
-                let title = data["title"] as? String,
-                let year = data["year"] as? Int,
-                let month = data["month"] as? Int,
-                let isYearlyTarget = data["isYearlyTarget"] as? Bool,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
-            else {
-                return nil
-            }
-
-            target.userID = userID
-            target.targetID = targetID
-            target.title = title
-            target.year = year
-            target.month = month
-            target.isYearlyTarget = isYearlyTarget
-            target.isDeleted = isDeleted
-            target.created_at = created_at
-            target.updated_at = updated_at
-
-            return target
-        }
+        return documents.compactMap { Target(firestoreData: $0.data()) }
     }
 
     /**
@@ -428,52 +302,7 @@ final class FirebaseManager {
      */
     func getAllNote() async throws -> [Note] {
         let documents = try await getAllDocuments(collection: "Note")
-
-        return documents.compactMap { document -> Note? in
-            let data = document.data()
-            let note = Note()
-
-            guard let userID = data["userID"] as? String,
-                let noteID = data["noteID"] as? String,
-                let noteType = data["noteType"] as? Int,
-                let isDeleted = data["isDeleted"] as? Bool,
-                let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
-                let updated_at = (data["updated_at"] as? Timestamp)?.dateValue(),
-                let title = data["title"] as? String,
-                let date = (data["date"] as? Timestamp)?.dateValue(),
-                let weather = data["weather"] as? Int,
-                let temperature = data["temperature"] as? Int,
-                let condition = data["condition"] as? String,
-                let reflection = data["reflection"] as? String,
-                let purpose = data["purpose"] as? String,
-                let detail = data["detail"] as? String,
-                let target = data["target"] as? String,
-                let consciousness = data["consciousness"] as? String,
-                let result = data["result"] as? String
-            else {
-                return nil
-            }
-
-            note.userID = userID
-            note.noteID = noteID
-            note.noteType = noteType
-            note.isDeleted = isDeleted
-            note.created_at = created_at
-            note.updated_at = updated_at
-            note.title = title
-            note.date = date
-            note.weather = weather
-            note.temperature = temperature
-            note.condition = condition
-            note.reflection = reflection
-            note.purpose = purpose
-            note.detail = detail
-            note.target = target
-            note.consciousness = consciousness
-            note.result = result
-
-            return note
-        }
+        return documents.compactMap { Note(firestoreData: $0.data()) }
     }
 
     // MARK: - Update
@@ -484,21 +313,26 @@ final class FirebaseManager {
      * @param collection コレクション名
      * @param documentID ドキュメントID
      * @param data 更新するデータ
+     * @throws SportsNoteError Firebase更新に失敗した場合
      */
     private func updateDocument(
         collection: String,
         documentID: String,
         data: [String: Any]
     ) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection(collection).document(documentID)
-                .updateData(data) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                db.collection(collection).document(documentID)
+                    .updateData(data) { error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: ())
+                        }
                     }
-                }
+            }
+        } catch let error {
+            throw ErrorMapper.mapFirebaseError(error, context: "updateDocument-\(collection)-\(documentID)")
         }
     }
 
@@ -508,8 +342,7 @@ final class FirebaseManager {
      * @param group グループデータ
      */
     func updateGroup(group: Group) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(group.groupID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: group.userID, entityID: group.groupID)
 
         let data: [String: Any] = [
             "title": group.title,
@@ -528,8 +361,7 @@ final class FirebaseManager {
      * @param task 課題データ
      */
     func updateTask(task: TaskData) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(task.taskID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: task.userID, entityID: task.taskID)
 
         let data: [String: Any] = [
             "groupID": task.groupID,
@@ -550,8 +382,7 @@ final class FirebaseManager {
      * @param measures 対策データ
      */
     func updateMeasures(measures: Measures) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(measures.measuresID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: measures.userID, entityID: measures.measuresID)
 
         let data: [String: Any] = [
             "title": measures.title,
@@ -569,8 +400,7 @@ final class FirebaseManager {
      * @param memo メモデータ
      */
     func updateMemo(memo: Memo) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(memo.memoID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: memo.userID, entityID: memo.memoID)
 
         let data: [String: Any] = [
             "detail": memo.detail,
@@ -587,8 +417,7 @@ final class FirebaseManager {
      * @param target 目標データ
      */
     func updateTarget(target: Target) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(target.targetID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: target.userID, entityID: target.targetID)
 
         let data: [String: Any] = [
             "title": target.title,
@@ -608,8 +437,7 @@ final class FirebaseManager {
      * @param note ノートデータ
      */
     func updateNote(note: Note) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(note.noteID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: note.userID, entityID: note.noteID)
 
         let data: [String: Any] = [
             "isDeleted": note.isDeleted,
@@ -628,5 +456,211 @@ final class FirebaseManager {
         ]
 
         try await updateDocument(collection: "Note", documentID: documentID, data: data)
+    }
+}
+
+// MARK: - Firestoreデコード
+
+extension Group {
+    /// Firestoreドキュメントのフィールド辞書からGroupを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はGroup、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let groupID = data["groupID"] as? String,
+            let title = data["title"] as? String,
+            let color = data["color"] as? Int,
+            let order = data["order"] as? Int,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.groupID = groupID
+        self.title = title
+        self.color = color
+        self.order = order
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+    }
+}
+
+extension TaskData {
+    /// Firestoreドキュメントのフィールド辞書からTaskDataを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はTaskData、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let taskID = data["taskID"] as? String,
+            let groupID = data["groupID"] as? String,
+            let title = data["title"] as? String,
+            let cause = data["cause"] as? String,
+            let order = data["order"] as? Int,
+            let isComplete = data["isComplete"] as? Bool,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.taskID = taskID
+        self.groupID = groupID
+        self.title = title
+        self.cause = cause
+        self.order = order
+        self.isComplete = isComplete
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+    }
+}
+
+extension Measures {
+    /// Firestoreドキュメントのフィールド辞書からMeasuresを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はMeasures、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let measuresID = data["measuresID"] as? String,
+            let taskID = data["taskID"] as? String,
+            let title = data["title"] as? String,
+            let order = data["order"] as? Int,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.measuresID = measuresID
+        self.taskID = taskID
+        self.title = title
+        self.order = order
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+    }
+}
+
+extension Memo {
+    /// Firestoreドキュメントのフィールド辞書からMemoを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はMemo、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let memoID = data["memoID"] as? String,
+            let noteID = data["noteID"] as? String,
+            let measuresID = data["measuresID"] as? String,
+            let detail = data["detail"] as? String,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.memoID = memoID
+        self.noteID = noteID
+        self.measuresID = measuresID
+        self.detail = detail
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+    }
+}
+
+extension Target {
+    /// Firestoreドキュメントのフィールド辞書からTargetを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はTarget、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let targetID = data["targetID"] as? String,
+            let title = data["title"] as? String,
+            let year = data["year"] as? Int,
+            let month = data["month"] as? Int,
+            let isYearlyTarget = data["isYearlyTarget"] as? Bool,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue()
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.targetID = targetID
+        self.title = title
+        self.year = year
+        self.month = month
+        self.isYearlyTarget = isYearlyTarget
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+    }
+}
+
+extension Note {
+    /// Firestoreドキュメントのフィールド辞書からNoteを生成する
+    ///
+    /// - Parameter data: Firestoreドキュメントの`data()`
+    /// - Returns: 必須フィールドがすべて揃っている場合はNote、欠落・型不一致がある場合はnil
+    convenience init?(firestoreData data: [String: Any]) {
+        guard let userID = data["userID"] as? String,
+            let noteID = data["noteID"] as? String,
+            let noteType = data["noteType"] as? Int,
+            let isDeleted = data["isDeleted"] as? Bool,
+            let created_at = (data["created_at"] as? Timestamp)?.dateValue(),
+            let updated_at = (data["updated_at"] as? Timestamp)?.dateValue(),
+            let title = data["title"] as? String,
+            let date = (data["date"] as? Timestamp)?.dateValue(),
+            let weather = data["weather"] as? Int,
+            let temperature = data["temperature"] as? Int,
+            let condition = data["condition"] as? String,
+            let reflection = data["reflection"] as? String,
+            let purpose = data["purpose"] as? String,
+            let detail = data["detail"] as? String,
+            let target = data["target"] as? String,
+            let consciousness = data["consciousness"] as? String,
+            let result = data["result"] as? String
+        else {
+            return nil
+        }
+
+        self.init()
+        self.userID = userID
+        self.noteID = noteID
+        self.noteType = noteType
+        self.isDeleted = isDeleted
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.title = title
+        self.date = date
+        self.weather = weather
+        self.temperature = temperature
+        self.condition = condition
+        self.reflection = reflection
+        self.purpose = purpose
+        self.detail = detail
+        self.target = target
+        self.consciousness = consciousness
+        self.result = result
     }
 }

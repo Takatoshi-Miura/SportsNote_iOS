@@ -171,6 +171,16 @@ struct LocalizedStrings {
     static let checkTermsOfService = "checkTermsOfService".localized
     static let agree = "agree".localized
 
+    // MARK: Debug
+    static let debugSectionTitle = "debugSectionTitle".localized
+    static let debugCreateTestData = "debugCreateTestData".localized
+    static let debugCreateTestDataSubtitle = "debugCreateTestDataSubtitle".localized
+    static let debugCreateOldFormatData = "debugCreateOldFormatData".localized
+    static let debugCreateOldFormatDataSubtitle = "debugCreateOldFormatDataSubtitle".localized
+    static let debugLoginRequired = "debugLoginRequired".localized
+    static let debugResetMigrationFlag = "debugResetMigrationFlag".localized
+    static let debugResetMigrationFlagSubtitle = "debugResetMigrationFlagSubtitle".localized
+
     // MARK: Mail
     static let pleaseEnterInquiry = "pleaseEnterInquiry".localized
     static let doNotDeleteBelow = "doNotDeleteBelow".localized

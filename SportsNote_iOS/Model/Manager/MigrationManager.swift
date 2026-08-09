@@ -29,13 +29,15 @@ final class MigrationManager {
 
         // 1. Task → TaskData + Measures + Memo（Note変換より先に実行）
         print("OldTask変換開始")
-        let oldTaskDocs = try await fetchOldTaskDocuments()
+        let oldTaskDocs = try await fetchOldDocuments(collection: "TaskData")
         for doc in oldTaskDocs {
             try await stepRunner.run(
                 entity: "Task",
                 documentID: doc.documentID,
                 migrate: { try await self.migrateTask(documentID: doc.documentID, data: doc.data()) },
-                markDeleted: { try await self.markOldTaskDeleted(documentID: doc.documentID) }
+                markDeleted: {
+                    try await self.markOldDocumentDeleted(collection: "TaskData", documentID: doc.documentID)
+                }
             )
         }
         print("OldTask変換終了: \(oldTaskDocs.count)件")
@@ -46,13 +48,15 @@ final class MigrationManager {
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask { [self] in
                 print("OldTarget変換開始")
-                let docs = try await fetchOldTargetDocuments()
+                let docs = try await fetchOldDocuments(collection: "TargetData")
                 for doc in docs {
                     try await stepRunner.run(
                         entity: "Target",
                         documentID: doc.documentID,
                         migrate: { try await self.migrateTarget(documentID: doc.documentID, data: doc.data()) },
-                        markDeleted: { try await self.markOldTargetDeleted(documentID: doc.documentID) }
+                        markDeleted: {
+                            try await self.markOldDocumentDeleted(collection: "TargetData", documentID: doc.documentID)
+                        }
                     )
                 }
                 print("OldTarget変換終了: \(docs.count)件")
@@ -76,13 +80,15 @@ final class MigrationManager {
 
         // 3. Note → Note（practice/tournament）（Task変換完了後）
         print("OldNote変換開始")
-        let oldNoteDocs = try await fetchOldNoteDocuments()
+        let oldNoteDocs = try await fetchOldDocuments(collection: "NoteData")
         for doc in oldNoteDocs {
             try await stepRunner.run(
                 entity: "Note",
                 documentID: doc.documentID,
                 migrate: { try await self.migrateNote(documentID: doc.documentID, data: doc.data()) },
-                markDeleted: { try await self.markOldNoteDeleted(documentID: doc.documentID) }
+                markDeleted: {
+                    try await self.markOldDocumentDeleted(collection: "NoteData", documentID: doc.documentID)
+                }
             )
         }
         print("OldNote変換終了: \(oldNoteDocs.count)件")
@@ -94,28 +100,12 @@ final class MigrationManager {
 
     // MARK: - 旧コレクション取得（FirebaseManager.getAllDocuments() は private のため直接アクセス）
 
-    /// 旧コレクション "TaskData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldTaskDocuments() async throws -> [QueryDocumentSnapshot] {
+    /// 指定した旧コレクションから isDeleted=false のドキュメントを全取得
+    /// - Parameter collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
+    private func fetchOldDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
         let userID = getUserID()
         return try await withCheckedThrowingContinuation { continuation in
-            db.collection("TaskData")
-                .whereField("userID", isEqualTo: userID)
-                .whereField("isDeleted", isEqualTo: false)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents ?? [])
-                    }
-                }
-        }
-    }
-
-    /// 旧コレクション "TargetData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldTargetDocuments() async throws -> [QueryDocumentSnapshot] {
-        let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection("TargetData")
+            db.collection(collection)
                 .whereField("userID", isEqualTo: userID)
                 .whereField("isDeleted", isEqualTo: false)
                 .getDocuments { snapshot, error in
@@ -129,6 +119,7 @@ final class MigrationManager {
     }
 
     /// 旧コレクション "FreeNoteData" からドキュメントを取得（ドキュメントID = userID）
+    /// isDeleted フィルタを持たず単一ドキュメントを返す点で fetchOldDocuments(collection:) とは構造が異なるため対象外
     private func fetchOldFreeNoteDocument() async throws -> QueryDocumentSnapshot? {
         let userID = getUserID()
         return try await withCheckedThrowingContinuation { continuation in
@@ -144,24 +135,33 @@ final class MigrationManager {
         }
     }
 
-    /// 旧コレクション "NoteData" から isDeleted=false のドキュメントを全取得
-    private func fetchOldNoteDocuments() async throws -> [QueryDocumentSnapshot] {
-        let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
-            db.collection("NoteData")
-                .whereField("userID", isEqualTo: userID)
-                .whereField("isDeleted", isEqualTo: false)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents ?? [])
-                    }
-                }
-        }
-    }
-
     // MARK: - 変換・Realm + Firebase 保存
+
+    /// 未分類グループのIDを取得する。Realmにグループが1件も存在しない場合は新規作成して保存する
+    /// - Note: RealmManager経由のローカルDB操作のみで完結しFirebaseに依存しないため`static func`として定義する。
+    ///   Swiftのstatic funcはインスタンスの`init()`（`Firestore.firestore()`呼び出し）を経由しないため、
+    ///   Firebase未設定のテスト環境でも`MigrationManager.shared`をインスタンス化せずに直接検証できる（issue #73）。
+    /// - Parameter userID: 新規作成時にGroupへ設定するuserID（呼び出し元で解決済みの値を渡す）
+    /// - Returns: 既存または新規作成した未分類グループのgroupID
+    /// - Throws: RealmManagerの取得・保存に失敗した場合
+    static func resolveUncategorizedGroupID(userID: String) throws -> String {
+        let groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        if let existing = groups.first {
+            return existing.groupID
+        }
+
+        // InitializationManager.createUncategorizedGroup() と同等のロジック
+        let group = Group()
+        group.groupID = UUIDGenerator.generateID()
+        group.title = LocalizedStrings.uncategorized
+        group.color = GroupColor.gray.rawValue
+        group.userID = userID
+        group.created_at = Date()
+        group.updated_at = Date()
+
+        try RealmManager.shared.saveItem(group)
+        return group.groupID
+    }
 
     /// 旧課題データを TaskData + Measures + Memo に変換して保存
     /// measuresData: [対策タイトル: [[有効性コメント: ノートID(Int)]]]
@@ -190,13 +190,8 @@ final class MigrationManager {
         task.updated_at = now
 
         // 未分類グループに割り当て（旧データにグループ概念なし）
-        if let groups = try? RealmManager.shared.getDataList(clazz: Group.self),
-            let uncategorized = groups.first
-        {
-            task.groupID = uncategorized.groupID
-        } else {
-            task.groupID = ""
-        }
+        // Group が0件の場合でも空文字にフォールバックせず、その場で未分類グループを作成する（issue #73）
+        task.groupID = try MigrationManager.resolveUncategorizedGroupID(userID: userID)
 
         try RealmManager.shared.saveItem(task)
         try await FirebaseManager.shared.saveTask(task: task)
@@ -204,8 +199,17 @@ final class MigrationManager {
         // measuresData から Measures + Memo を生成
         guard let measuresData = data["measuresData"] as? [String: [[String: Int]]] else { return }
 
-        var measuresOrder = 0
-        for (measuresTitle, effectivenessArray) in measuresData {
+        // measuresPriority（旧データの最優先対策タイトル）を order=0 に固定し、
+        // 残りは決定的な順序（sorted）で採番する（Dictionary列挙順の不定性に依存しないため。issue #71）
+        let measuresPriority = data["measuresPriority"] as? String
+        let orderedTitles = MeasuresOrderResolver.resolveOrder(
+            measuresTitles: Array(measuresData.keys),
+            measuresPriority: measuresPriority
+        )
+
+        for (measuresOrder, measuresTitle) in orderedTitles.enumerated() {
+            guard let effectivenessArray = measuresData[measuresTitle] else { continue }
+
             let measures = Measures()
             measures.measuresID = UUIDGenerator.generateID()
             measures.userID = userID
@@ -218,7 +222,6 @@ final class MigrationManager {
 
             try RealmManager.shared.saveItem(measures)
             try await FirebaseManager.shared.saveMeasures(measures: measures)
-            measuresOrder += 1
 
             // 有効性コメントを Memo に変換
             // effectivenessArray: [ ["コメント文字列": ノートID(Int)], ... ]
@@ -374,24 +377,13 @@ final class MigrationManager {
 
     // MARK: - 旧データ削除
 
-    /// 旧 TaskData ドキュメントを論理削除（isDeleted = true）
-    private func markOldTaskDeleted(documentID: String) async throws {
+    /// 指定した旧コレクションのドキュメントを論理削除（isDeleted = true）
+    /// - Parameters:
+    ///   - collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
+    ///   - documentID: 対象ドキュメントID
+    private func markOldDocumentDeleted(collection: String, documentID: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("TaskData").document(documentID)
-                .updateData(["isDeleted": true]) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
-        }
-    }
-
-    /// 旧 TargetData ドキュメントを論理削除（isDeleted = true）
-    private func markOldTargetDeleted(documentID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("TargetData").document(documentID)
+            db.collection(collection).document(documentID)
                 .updateData(["isDeleted": true]) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
@@ -406,20 +398,6 @@ final class MigrationManager {
     private func deleteOldFreeNoteDocument(userID: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             db.collection("FreeNoteData").document(userID)
-                .updateData(["isDeleted": true]) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
-        }
-    }
-
-    /// 旧 NoteData ドキュメントを論理削除（isDeleted = true）
-    private func markOldNoteDeleted(documentID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            db.collection("NoteData").document(documentID)
                 .updateData(["isDeleted": true]) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
