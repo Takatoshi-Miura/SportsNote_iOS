@@ -494,7 +494,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             }
             return .success(())
         } catch {
-            return .failure(ErrorMapper.mapFirebaseError(error, context: "NoteViewModel-syncEntityToFirebase"))
+            return .failure(convertFirebaseSyncError(error, context: "NoteViewModel-syncEntityToFirebase"))
         }
     }
 
