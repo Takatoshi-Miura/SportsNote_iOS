@@ -345,12 +345,24 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ) -> TaskData {
         if let existingTask = existingTask {
             // 更新の場合: 既存データをベースに新しいTaskDataを作成
+            // groupIDが変更された場合は移動先グループ内の最大order+1を採番し、
+            // 既存課題とのorder衝突を防ぐ（groupIDが変わらない通常の更新ではorderを維持する）
+            let order: Int
+            if groupID != existingTask.groupID {
+                order = RealmManager.shared.getNextOrder(
+                    clazz: TaskData.self,
+                    predicate: NSPredicate(format: "groupID == %@", groupID)
+                )
+            } else {
+                order = existingTask.order
+            }
+
             return TaskData(
                 taskID: existingTask.taskID,
                 title: title,
                 cause: cause,
                 groupID: groupID,
-                order: existingTask.order,
+                order: order,
                 isComplete: overrideIsComplete ?? existingTask.isComplete,
                 created_at: existingTask.created_at
             )
