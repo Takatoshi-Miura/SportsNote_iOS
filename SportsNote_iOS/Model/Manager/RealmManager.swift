@@ -6,11 +6,10 @@ struct RealmConstants {
     static let schemaVersion: UInt64 = 0
 }
 
-/// 論理削除フラグ(isDeleted)を持つRealmモデルの共通インターフェース
-/// issue #38でmarkAsDeleted用にSoftDeletableプロトコルが新設された場合は、
-/// 本プロトコルとの重複を解消し統合すること
-protocol SoftDeletable {
-    var isDeleted: Bool { get }
+/// 論理削除フラグ(isDeleted)と更新日時(updated_at)を持つRealmモデルの共通インターフェース
+protocol SoftDeletable: Object {
+    var isDeleted: Bool { get set }
+    var updated_at: Date { get set }
 }
 
 // Realmモデルに対してSoftDeletableプロトコルを適用する拡張
@@ -625,31 +624,12 @@ final class RealmManager {
     ///   - realm: Realmインスタンス
     private func markAsDeleted(_ item: Object, realm: Realm) {
         // itemが「削除フラグ」を持っているかどうかでチェックし、削除マークを付ける
-        if let itemWithDeleteFlag = item as? Note {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        } else if let itemWithDeleteFlag = item as? Group {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        } else if let itemWithDeleteFlag = item as? TaskData {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        } else if let itemWithDeleteFlag = item as? Measures {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        } else if let itemWithDeleteFlag = item as? Memo {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        } else if let itemWithDeleteFlag = item as? Target {
-            itemWithDeleteFlag.isDeleted = true
-            itemWithDeleteFlag.updated_at = Date()
-            realm.add(itemWithDeleteFlag, update: .modified)
-        }
+        // realm.add<T: Object>への引数はexistentialの暗黙オープン(SE-0352)により
+        // 実行時の具象型（Note/Group等）で解決されるため、型不一致は起きない
+        guard let itemWithDeleteFlag = item as? SoftDeletable else { return }
+        itemWithDeleteFlag.isDeleted = true
+        itemWithDeleteFlag.updated_at = Date()
+        realm.add(itemWithDeleteFlag, update: .modified)
     }
 
     /// Note に関連する Memo を削除
