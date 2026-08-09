@@ -27,23 +27,11 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
-        setupNotifications()
-    }
-
-
-    /// 通知の設定
-    private func setupNotifications() {
-        NotificationCenter.default.publisher(for: .didClearAllData)
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.clearRealmReferences()
-                }
-            }
-            .store(in: &cancellables)
+        observeClearAllData(cancellables: &cancellables)
     }
 
     /// Realmオブジェクトの参照をクリア
-    private func clearRealmReferences() {
+    func clearRealmReferences() {
         notes = []
         selectedNote = nil
         practiceNotes = []
@@ -115,13 +103,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: エンティティのID
     /// - Returns: Result
     func fetchById(id: String) async -> Result<Note?, SportsNoteError> {
-        do {
-            let note = try realmManager.getObjectById(id: id, type: Note.self)
-            return .success(note)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-fetchById")
-            return .failure(sportsNoteError)
-        }
+        await fetchByIdDefault(id: id, context: "NoteViewModel-fetchById")
     }
 
     /// ノートタイプを取得（同期的）
@@ -553,38 +535,18 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - isUpdate: 更新フラグ
     /// - Returns: Result
     func syncEntityToFirebase(_ entity: Note, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            if isUpdate {
-                try await FirebaseManager.shared.updateNote(note: entity)
-            } else {
-                try await FirebaseManager.shared.saveNote(note: entity)
-            }
-            return .success(())
-        } catch {
-            return .failure(convertFirebaseSyncError(error, context: "NoteViewModel-syncEntityToFirebase"))
-        }
+        await syncEntityToFirebaseDefault(
+            isUpdate: isUpdate,
+            context: "NoteViewModel-syncEntityToFirebase",
+            updateAction: { try await FirebaseManager.shared.updateNote(note: entity) },
+            saveAction: { try await FirebaseManager.shared.saveNote(note: entity) }
+        )
     }
 
     /// 全データをFirebaseに同期
     /// - Returns: Result
     func syncToFirebase() async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            let allNotes = try realmManager.getDataList(clazz: Note.self)
-            for note in allNotes {
-                let result = await syncEntityToFirebase(note)
-                if case .failure = result {
-                    // 1つでも失敗したら処理を続行するがエラーを返す
-                    return result
-                }
-            }
-            return .success(())
-        } catch {
-            return .failure(convertToSportsNoteError(error, context: "NoteViewModel-syncToFirebase"))
-        }
+        await syncToFirebaseDefault(context: "NoteViewModel-syncToFirebase")
     }
 
     /// ノートのインジケーター色を取得（練習: グループカラー、大会: オレンジ、フリー: ブルー）

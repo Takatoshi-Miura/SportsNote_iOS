@@ -1,4 +1,5 @@
 import Foundation
+import RealmSwift
 
 /// Firebase同期機能を持つViewModelのプロトコル
 @MainActor
@@ -52,6 +53,34 @@ extension FirebaseSyncable {
         }
         return ErrorMapper.mapFirebaseError(error, context: context)
     }
+
+    /// エンティティをFirebaseに同期する共通実装
+    /// - Parameters:
+    ///   - isUpdate: 更新かどうか
+    ///   - context: エラー変換時のコンテキスト（メソッド名など）
+    ///   - updateAction: 更新時に呼び出すFirebaseManagerの処理
+    ///   - saveAction: 新規作成時に呼び出すFirebaseManagerの処理
+    /// - Returns: 同期処理の結果
+    func syncEntityToFirebaseDefault(
+        isUpdate: Bool,
+        context: String,
+        updateAction: () async throws -> Void,
+        saveAction: () async throws -> Void
+    ) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
+
+        do {
+            if isUpdate {
+                try await updateAction()
+            } else {
+                try await saveAction()
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = convertFirebaseSyncError(error, context: context)
+            return .failure(sportsNoteError)
+        }
+    }
 }
 
 extension FirebaseSyncable where Self: BaseViewModelProtocol {
@@ -69,5 +98,28 @@ extension FirebaseSyncable where Self: BaseViewModelProtocol {
         }
         // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
         BackgroundSyncTracker.shared.track(task)
+    }
+}
+
+extension FirebaseSyncable where Self: BaseViewModelProtocol, EntityType: Object {
+    /// 全エンティティをFirebaseに同期する共通実装
+    /// - Parameter context: エラー変換時のコンテキスト（メソッド名など）
+    /// - Returns: 同期処理の結果
+    func syncToFirebaseDefault(context: String) async -> Result<Void, SportsNoteError> {
+        guard isOnlineAndLoggedIn else { return .success(()) }
+
+        do {
+            let allEntities = try RealmManager.shared.getDataList(clazz: EntityType.self)
+            for entity in allEntities {
+                let result = await syncEntityToFirebase(entity, isUpdate: false)
+                if case .failure(let error) = result {
+                    return .failure(error)
+                }
+            }
+            return .success(())
+        } catch {
+            let sportsNoteError = convertToSportsNoteError(error, context: context)
+            return .failure(sportsNoteError)
+        }
     }
 }
