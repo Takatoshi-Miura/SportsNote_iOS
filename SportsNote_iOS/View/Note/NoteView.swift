@@ -31,10 +31,7 @@ struct NoteView: View {
                     VStack(spacing: 0) {
                         SearchBarView(searchText: $searchQuery) {
                             Task {
-                                let result = await viewModel.fetchData()
-                                if case .failure(let error) = result {
-                                    viewModel.showErrorAlert(error)
-                                }
+                                await viewModel.refresh()
                             }
                         }
                         NoteListView(viewModel: viewModel)
@@ -44,10 +41,7 @@ struct NoteView: View {
                                     viewModel.searchNotes(query: searchQuery)
                                 } else {
                                     Task {
-                                        let result = await viewModel.fetchData()
-                                        if case .failure(let error) = result {
-                                            viewModel.showErrorAlert(error)
-                                        }
+                                        await viewModel.refresh()
                                     }
                                 }
                             }
@@ -62,10 +56,7 @@ struct NoteView: View {
                             viewModel.searchNotes(query: newValue)
                         } else {
                             Task {
-                                let result = await viewModel.fetchData()
-                                if case .failure(let error) = result {
-                                    viewModel.showErrorAlert(error)
-                                }
+                                await viewModel.refresh()
                             }
                         }
                     }
@@ -79,28 +70,19 @@ struct NoteView: View {
         .sheet(isPresented: $isPracticeNotePresented) {
             AddPracticeNoteView(onSave: {
                 Task {
-                    let result = await viewModel.fetchData()
-                    if case .failure(let error) = result {
-                        viewModel.showErrorAlert(error)
-                    }
+                    await viewModel.refresh()
                 }
             })
         }
         .sheet(isPresented: $isTournamentNotePresented) {
             AddTournamentNoteView(onSave: {
                 Task {
-                    let result = await viewModel.fetchData()
-                    if case .failure(let error) = result {
-                        viewModel.showErrorAlert(error)
-                    }
+                    await viewModel.refresh()
                 }
             })
         }
         .task {
-            let result = await viewModel.fetchData()
-            if case .failure(let error) = result {
-                viewModel.showErrorAlert(error)
-            }
+            await viewModel.refresh()
         }
         .errorAlert(
             currentError: $viewModel.currentError,
