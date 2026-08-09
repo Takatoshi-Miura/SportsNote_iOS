@@ -134,7 +134,6 @@
 "noTasksAvailable" = "No tasks available to add";
 "selectTask" = "Select tasks to add to note";
 "deleteTaskFromNote" = "Delete this task from note?";
-"added" = "Added";
 "defaltFreeNoteDetail" = "This note is always displayed at the top.";
 
 // MARK: Target

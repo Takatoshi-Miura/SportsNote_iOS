@@ -8,7 +8,7 @@ struct TaskSelectionView: View {
     var onTaskSelected: (TaskListData) -> Void
     var addedTaskIds: Set<String>
     private var incompleteTasks: [TaskListData] {
-        return taskViewModel.getUnaddedTasks(excludingTaskIds: [])
+        return taskViewModel.getUnaddedTasks(excludingTaskIds: addedTaskIds)
     }
 
     var body: some View {
@@ -24,26 +24,8 @@ struct TaskSelectionView: View {
                             onTaskSelected(task)
                             dismiss()
                         }) {
-                            HStack {
-                                TaskRow(taskList: task, isComplete: false)
-
-                                Spacer()
-
-                                // 追加済みの課題にはラベル表示
-                                if addedTaskIds.contains(task.taskID) {
-                                    Text(LocalizedStrings.added)
-                                        .font(.caption)
-                                        .foregroundColor(.green)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.green.opacity(0.1))
-                                        .cornerRadius(4)
-                                }
-                            }
+                            TaskRow(taskList: task, isComplete: false)
                         }
-                        .disabled(addedTaskIds.contains(task.taskID))
-                        .listRowBackground(
-                            addedTaskIds.contains(task.taskID) ? Color(.systemGray5) : Color(.systemBackground))
                     }
                 }
             }
