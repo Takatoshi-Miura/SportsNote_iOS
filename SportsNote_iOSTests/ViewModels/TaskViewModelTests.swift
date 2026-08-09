@@ -626,6 +626,99 @@ struct TaskViewModelTests {
         manager.clearAll()
     }
 
+    @Test("associateTasksWithMemos - 戻り値がtask.order昇順にソートされる（issue #137: Dictionary列挙順への依存を排除）")
+    func associateTasksWithMemos_sortsResultByTaskOrder() async {
+        let viewModel = TaskViewModel()
+        // orderが降順になるように課題を用意し、Dictionary経由でも意図した順序に
+        // 並び替えられることを確認する
+        let task1 = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Task 1",
+            measuresID: "measures-1",
+            measures: "Measures 1",
+            memoID: nil,
+            order: 2,
+            isComplete: false
+        )
+        let task2 = TaskListData(
+            taskID: "task-2",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Task 2",
+            measuresID: "measures-2",
+            measures: "Measures 2",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        let task3 = TaskListData(
+            taskID: "task-3",
+            groupID: "group-1",
+            groupColor: .green,
+            title: "Task 3",
+            measuresID: "measures-3",
+            measures: "Measures 3",
+            memoID: nil,
+            order: 1,
+            isComplete: false
+        )
+        viewModel.taskListData = [task1, task2, task3]
+
+        let memo1 = Memo(
+            memoID: "memo-1", measuresID: "measures-1", noteID: "note-1", detail: "1", created_at: Date())
+        let memo2 = Memo(
+            memoID: "memo-2", measuresID: "measures-2", noteID: "note-1", detail: "2", created_at: Date())
+        let memo3 = Memo(
+            memoID: "memo-3", measuresID: "measures-3", noteID: "note-1", detail: "3", created_at: Date())
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo1, memo2, memo3])
+
+        #expect(pairs.map { $0.task.taskID } == ["task-2", "task-3", "task-1"])
+    }
+
+    @Test(
+        "associateTasksWithMemos - orderが同値の課題はtaskID昇順でタイブレークされる（異なるグループの課題がorder同値になるケース）"
+    )
+    func associateTasksWithMemos_sameOrderTiesBreakByTaskID() async {
+        let viewModel = TaskViewModel()
+        // 異なるグループの課題はグループ内スコープでorderが採番されるため、
+        // order=0同士が複数存在しうる
+        let taskB = TaskListData(
+            taskID: "task-b",
+            groupID: "group-b",
+            groupColor: .blue,
+            title: "Task B",
+            measuresID: "measures-b",
+            measures: "Measures B",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        let taskA = TaskListData(
+            taskID: "task-a",
+            groupID: "group-a",
+            groupColor: .red,
+            title: "Task A",
+            measuresID: "measures-a",
+            measures: "Measures A",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [taskB, taskA]
+
+        let memoB = Memo(
+            memoID: "memo-b", measuresID: "measures-b", noteID: "note-1", detail: "B", created_at: Date())
+        let memoA = Memo(
+            memoID: "memo-a", measuresID: "measures-a", noteID: "note-1", detail: "A", created_at: Date())
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memoB, memoA])
+
+        #expect(pairs.map { $0.task.taskID } == ["task-a", "task-b"])
+    }
+
     // MARK: - エラーハンドリングテスト
 
     @Test("エラーハンドリング - isLoadingの初期状態")

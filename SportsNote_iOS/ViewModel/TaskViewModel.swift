@@ -460,7 +460,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 result[task.taskID] = (task: task, memo: memo)
             }
         }
+        // Dictionary経由で組み立てるため列挙順が不定になる。task.order昇順にソートし、
+        // アプリ再起動のたびに表示順が入れ替わらないようにする（issue #137）。
+        // orderはグループ内スコープで採番されるため異なるグループの課題間で同値になり得る。
+        // taskIDを副次キーにして同値時の順序も決定的にする
         return Array(result.values)
+            .sorted {
+                $0.task.order != $1.task.order ? $0.task.order < $1.task.order : $0.task.taskID < $1.task.taskID
+            }
     }
 
     /// 未追加のタスクを取得（taskReflectionsから直接算出）
