@@ -191,6 +191,55 @@ struct JapaneseHolidayCheckerTests {
         #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
     }
 
+    // MARK: - 国民の休日テスト
+
+    @Test(
+        "国民の休日 - 敬老の日と秋分の日に挟まれた平日",
+        arguments: [2009, 2015, 2026]
+    )
+    func citizensHoliday_betweenRespectForTheAgedDayAndAutumnEquinox(year: Int) {
+        // 敬老の日（9月第3月曜）が21日、秋分の日が23日になる年は
+        // 間の22日（火曜）が「国民の休日」として休日になる
+        let date = createDate(year: year, month: 9, day: 22)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("国民の休日 - 前日（敬老の日）自体は引き続き祝日と判定される")
+    func citizensHoliday_dayBeforeIsStillHoliday() {
+        let date = createDate(year: 2026, month: 9, day: 21)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("国民の休日 - 翌日（秋分の日）自体は引き続き祝日と判定される")
+    func citizensHoliday_dayAfterIsStillHoliday() {
+        let date = createDate(year: 2026, month: 9, day: 23)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("国民の休日 - 前日のみ祝日で翌日は非祝日の場合はfalse")
+    func citizensHoliday_onlyPreviousDayIsHoliday() {
+        // 2026年9月23日（秋分の日）の翌日24日は前日(23日)は祝日だが翌々日(25日)は非祝日
+        let date = createDate(year: 2026, month: 9, day: 24)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("国民の休日 - 振替休日は前日・翌日判定の祝日集合に含まれない")
+    func citizensHoliday_substituteHolidayNotCountedAsNamedHoliday() {
+        // 2025年2月23日（天皇誕生日）は日曜日のため24日(月)が振替休日。
+        // 25日(火)は前日(24日)が振替休日のみで「祝日法上の祝日」ではないため
+        // 国民の休日にはならない
+        let date = createDate(year: 2025, month: 2, day: 25)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("国民の休日 - ゴールデンウィーク中でも前日・翌日が両方祝日でない日はfalse")
+    func citizensHoliday_goldenWeekGapDaysRemainNonHoliday() {
+        let may1 = createDate(year: 2025, month: 5, day: 1)
+        let may2 = createDate(year: 2025, month: 5, day: 2)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(may1))
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(may2))
+    }
+
     // MARK: - 異常系テスト（祝日ではない日）
 
     @Test("非祝日 - 通常の平日")
