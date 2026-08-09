@@ -669,6 +669,139 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - updateTaskReflections（課題振り返りメモ）のFirebase同期テスト
+
+    @Test("updateTaskReflections - 新規作成時、Memoの同期呼び出しがisUpdate=falseで発生する")
+    func updateTaskReflections_newMemo_triggersFirebaseSyncCall() async {
+        let viewModel = NoteViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskListData(
+            taskID: "task-sync-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-sync-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "新規の振り返り"]
+        )
+
+        #expect(viewModel.memoSyncCallsForTesting.count == 1)
+        #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == false)
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - task.memoIDによる既存メモ編集時、Memoの同期呼び出しがisUpdate=trueで発生する")
+    func updateTaskReflections_existingMemoWithMemoID_triggersFirebaseSyncCallAsUpdate() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let existingMemo = Memo(
+            memoID: "memo-sync-fixed-1",
+            measuresID: "measures-sync-2",
+            noteID: "note-sync-1",
+            detail: "旧振り返り",
+            created_at: Date().addingTimeInterval(-3600)
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        let task = TaskListData(
+            taskID: "task-sync-2",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-sync-2",
+            measures: "Test Measures",
+            memoID: "memo-sync-fixed-1",
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-sync-1",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "更新後の振り返り"]
+        )
+
+        #expect(viewModel.memoSyncCallsForTesting.count == 1)
+        #expect(viewModel.memoSyncCallsForTesting.first?.memoID == "memo-sync-fixed-1")
+        #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == true)
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - noteID+measuresID検索で既存メモが見つかる場合もMemoの同期呼び出しがisUpdate=trueで発生する")
+    func updateTaskReflections_existingMemoFoundBySearch_triggersFirebaseSyncCallAsUpdate() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let existingMemo = Memo(
+            memoID: "memo-sync-fixed-2",
+            measuresID: "measures-sync-3",
+            noteID: "note-sync-2",
+            detail: "旧振り返り",
+            created_at: Date().addingTimeInterval(-3600)
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        // memoIDを持たないTaskListDataで渡す（noteID+measuresIDでの検索分岐を通す）
+        let task = TaskListData(
+            taskID: "task-sync-3",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-sync-3",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-sync-2",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "更新後の振り返り(検索経由)"]
+        )
+
+        #expect(viewModel.memoSyncCallsForTesting.count == 1)
+        #expect(viewModel.memoSyncCallsForTesting.first?.memoID == "memo-sync-fixed-2")
+        #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == true)
+
+        manager.clearAll()
+    }
+
+    @Test("syncMemoToFirebase - オフライン/テスト環境では同期をスキップして成功を返す", arguments: [false, true])
+    func syncMemoToFirebase_offline_returnsSuccessWithoutThrowing(isUpdate: Bool) async {
+        let viewModel = NoteViewModel()
+        let memo = Memo(
+            memoID: "memo-direct-sync",
+            measuresID: "measures-direct",
+            noteID: "note-direct",
+            detail: "detail",
+            created_at: Date()
+        )
+
+        let result = await viewModel.syncMemoToFirebase(memo, isUpdate: isUpdate)
+
+        if case .failure(let error) = result {
+            Issue.record("テスト用インメモリRealm使用時は同期がスキップされ成功を返すはず: \(error)")
+        }
+    }
+
     @Test("saveTournamentNote - 大会ノートを保存できる")
     func saveTournamentNote_savesCorrectly() async {
         let viewModel = NoteViewModel()
