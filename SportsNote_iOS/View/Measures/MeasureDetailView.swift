@@ -32,6 +32,8 @@ struct MeasureDetailView: View {
                 Section(header: Text(LocalizedStrings.title)) {
                     TextField(LocalizedStrings.title, text: $title)
                         .onChange(of: title) { newValue in
+                            // 空白のみのタイトルで即時保存されるのを防ぐ（issue #133）
+                            guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                             Task {
                                 let result = await measuresViewModel.saveMeasures(
                                     measuresID: measure.measuresID,

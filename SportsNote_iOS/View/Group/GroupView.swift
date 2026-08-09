@@ -90,6 +90,8 @@ struct GroupView: View {
     }
 
     private func saveSelectedGroup() {
+        // 空白のみのタイトルで即時保存されるのを防ぐ（issue #133）
+        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         Task {
             let result = await viewModel.saveGroup(
                 groupID: selectedGroup.groupID,
