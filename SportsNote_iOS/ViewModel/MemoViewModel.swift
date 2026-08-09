@@ -15,23 +15,11 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     init() {
         // 自動データ取得は削除、View側で明示的に実行
-        setupNotifications()
-    }
-
-
-    /// 通知の設定
-    private func setupNotifications() {
-        NotificationCenter.default.publisher(for: .didClearAllData)
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.clearRealmReferences()
-                }
-            }
-            .store(in: &cancellables)
+        observeClearAllData(cancellables: &cancellables)
     }
 
     /// Realmオブジェクトの参照をクリア
-    private func clearRealmReferences() {
+    func clearRealmReferences() {
         memoList = []
         measuresMemoList = []
     }
@@ -130,13 +118,7 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: 取得するエンティティのID
     /// - Returns: Result
     func fetchById(id: String) async -> Result<Memo?, SportsNoteError> {
-        do {
-            let memo = try RealmManager.shared.getObjectById(id: id, type: Memo.self)
-            return .success(memo)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-fetchById")
-            return .failure(sportsNoteError)
-        }
+        await fetchByIdDefault(id: id, context: "MemoViewModel-fetchById")
     }
 
     // MARK: - FirebaseSyncable準拠
@@ -147,39 +129,18 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - isUpdate: 更新かどうか
     /// - Returns: 同期処理の結果
     func syncEntityToFirebase(_ entity: Memo, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            if isUpdate {
-                try await FirebaseManager.shared.updateMemo(memo: entity)
-            } else {
-                try await FirebaseManager.shared.saveMemo(memo: entity)
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertFirebaseSyncError(error, context: "MemoViewModel-syncEntityToFirebase")
-            return .failure(sportsNoteError)
-        }
+        await syncEntityToFirebaseDefault(
+            isUpdate: isUpdate,
+            context: "MemoViewModel-syncEntityToFirebase",
+            updateAction: { try await FirebaseManager.shared.updateMemo(memo: entity) },
+            saveAction: { try await FirebaseManager.shared.saveMemo(memo: entity) }
+        )
     }
 
     /// Firebaseへの同期処理を実行する
     /// - Returns: 同期処理の結果
     func syncToFirebase() async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            let allMemos = try RealmManager.shared.getDataList(clazz: Memo.self)
-            for memo in allMemos {
-                let syncResult = await syncEntityToFirebase(memo)
-                if case .failure(let error) = syncResult {
-                    return .failure(error)
-                }
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-syncToFirebase")
-            return .failure(sportsNoteError)
-        }
+        await syncToFirebaseDefault(context: "MemoViewModel-syncToFirebase")
     }
 
     /// 対策IDに紐づくメモを取得（非Reactive版 - 下位互換性のため残す）

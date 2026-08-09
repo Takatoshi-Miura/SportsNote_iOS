@@ -19,23 +19,11 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
 
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
-        setupNotifications()
-    }
-
-
-    /// 通知の設定
-    private func setupNotifications() {
-        NotificationCenter.default.publisher(for: .didClearAllData)
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.clearRealmReferences()
-                }
-            }
-            .store(in: &cancellables)
+        observeClearAllData(cancellables: &cancellables)
     }
 
     /// Realmオブジェクトの参照をクリア
-    private func clearRealmReferences() {
+    func clearRealmReferences() {
         groups = []
     }
 
@@ -156,19 +144,12 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     ///   - isUpdate: 更新要否
     /// - Returns: Result
     func syncEntityToFirebase(_ entity: Group, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else { return .success(()) }
-
-        do {
-            if isUpdate {
-                try await FirebaseManager.shared.updateGroup(group: entity)
-            } else {
-                try await FirebaseManager.shared.saveGroup(group: entity)
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertFirebaseSyncError(error, context: "GroupViewModel-syncEntityToFirebase")
-            return .failure(sportsNoteError)
-        }
+        await syncEntityToFirebaseDefault(
+            isUpdate: isUpdate,
+            context: "GroupViewModel-syncEntityToFirebase",
+            updateAction: { try await FirebaseManager.shared.updateGroup(group: entity) },
+            saveAction: { try await FirebaseManager.shared.saveGroup(group: entity) }
+        )
     }
 
     /// 指定されたIDのエンティティを削除
@@ -206,14 +187,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Parameter id: ID
     /// - Returns: Result
     func fetchById(id: String) async -> Result<Group?, SportsNoteError> {
-        do {
-            let group = try RealmManager.shared.getObjectById(id: id, type: Group.self)
-            hideErrorAlert()
-            return .success(group)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchById")
-            return .failure(sportsNoteError)
-        }
+        await fetchByIdDefault(id: id, context: "GroupViewModel-fetchById", onSuccess: { self.hideErrorAlert() })
     }
 
     /// Firebaseへの同期処理を実行

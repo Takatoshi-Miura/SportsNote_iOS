@@ -24,6 +24,9 @@ protocol BaseViewModelProtocol: ObservableObject {
 
     /// データをリフレッシュする統一メソッド
     func refresh() async
+
+    /// Realmオブジェクトの参照をクリアする（didClearAllData通知受信時に呼ばれる）
+    func clearRealmReferences()
 }
 
 /// BaseViewModelProtocolのデフォルト実装
@@ -63,5 +66,17 @@ extension BaseViewModelProtocol {
         } else {
             return ErrorMapper.mapRealmError(error, context: context)
         }
+    }
+
+    /// didClearAllData通知を購読し、受信時にclearRealmReferences()を呼び出す
+    /// - Parameter cancellables: 購読を保持するSet（呼び出し元のプロパティを渡す）
+    func observeClearAllData(cancellables: inout Set<AnyCancellable>) {
+        NotificationCenter.default.publisher(for: .didClearAllData)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.clearRealmReferences()
+                }
+            }
+            .store(in: &cancellables)
     }
 }
