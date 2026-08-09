@@ -102,11 +102,13 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             try RealmManager.shared.updateGroupOrder(groups: reorderedGroups)
             groups = reorderedGroups
             // Firebase 同期（各グループを order 更新で同期）
-            Task {
+            // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+            let syncTask = Task<Void, Never> {
                 for group in reorderedGroups {
                     _ = await syncEntityToFirebase(group, isUpdate: true)
                 }
             }
+            BackgroundSyncTracker.shared.track(syncTask)
             return .success(())
         } catch {
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-moveGroup")

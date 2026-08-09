@@ -98,6 +98,10 @@ final class InitializationManager {
 
     /// データを全削除
     func deleteAllData() async {
+        // 進行中のバックグラウンドFirebase同期の完了を待ってからRealmを全削除する
+        // （未実行/実行中の同期Taskがinvalidate済みRealmオブジェクトへアクセスしてクラッシュ・
+        //   同期データが消失するのを防ぐ。Issue #84対応）
+        await BackgroundSyncTracker.shared.waitForAll()
         RealmManager.shared.clearAll()
         UserDefaultsManager.clearAll()
     }
