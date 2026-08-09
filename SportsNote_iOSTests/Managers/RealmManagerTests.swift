@@ -286,6 +286,24 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    @Test("logicalDelete - Targetを論理削除できる（issue #38: SoftDeletable共通化の回帰防止）")
+    func logicalDelete_target_marksAsDeleted() async throws {
+        let target = Target(title: "Delete Me", year: 2025, month: 1, isYearlyTarget: false)
+        target.targetID = "target-del-1"
+        try manager.saveItem(target)
+
+        try manager.logicalDelete(id: "target-del-1", type: Target.self)
+
+        let deletedTarget = try manager.getObjectById(id: "target-del-1", type: Target.self)
+        #expect(deletedTarget == nil)
+
+        let rawTarget = manager.getRawObjectById(id: "target-del-1", type: Target.self)
+        #expect(rawTarget != nil)
+        #expect(rawTarget?.isDeleted == true)
+
+        manager.clearAll()
+    }
+
     @Test("logicalDelete - updated_atが更新される（issue #26: Firebase同期時に削除が新しいと判定されるようにするため）")
     func logicalDelete_updatesUpdatedAt() async throws {
         let oldDate = Date().addingTimeInterval(-3600)  // 1時間前
