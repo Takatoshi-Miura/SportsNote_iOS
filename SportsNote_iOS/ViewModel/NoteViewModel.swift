@@ -137,6 +137,13 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate, let existingNote = try realmManager.getObjectById(id: entity.noteID, type: Note.self) {
+                entity.userID = existingNote.userID
+            }
+
             // Realm操作はMainActorで実行
             try realmManager.saveItem(entity)
 

@@ -20,6 +20,21 @@ final class FirebaseManager {
             key: UserDefaultsManager.Keys.userID, defaultValue: UUIDGenerator.generateID())
     }
 
+    /**
+     * ドキュメントIDを組み立てる（userIDとentityIDから）
+     *
+     * Firestoreに一切触れない純粋関数のため、Firebase未設定のテスト環境でも呼び出し可能。
+     * 更新系メソッドは、UserDefaults上の現在のuserID（`currentUserID()`）ではなく、
+     * エンティティ自身が保持するuserIDを渡すこと（`saveXxx`系と同じ基準に揃えるため）。
+     *
+     * @param userID ドキュメントIDに使用するuserID（エンティティ自身の値を渡す）
+     * @param entityID エンティティのID
+     * @return "userID_entityID"形式のドキュメントID
+     */
+    static func buildDocumentID(userID: String, entityID: String) -> String {
+        "\(userID)_\(entityID)"
+    }
+
     // MARK: - Create
 
     /**
@@ -327,8 +342,7 @@ final class FirebaseManager {
      * @param group グループデータ
      */
     func updateGroup(group: Group) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(group.groupID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: group.userID, entityID: group.groupID)
 
         let data: [String: Any] = [
             "title": group.title,
@@ -347,8 +361,7 @@ final class FirebaseManager {
      * @param task 課題データ
      */
     func updateTask(task: TaskData) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(task.taskID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: task.userID, entityID: task.taskID)
 
         let data: [String: Any] = [
             "groupID": task.groupID,
@@ -369,8 +382,7 @@ final class FirebaseManager {
      * @param measures 対策データ
      */
     func updateMeasures(measures: Measures) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(measures.measuresID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: measures.userID, entityID: measures.measuresID)
 
         let data: [String: Any] = [
             "title": measures.title,
@@ -388,8 +400,7 @@ final class FirebaseManager {
      * @param memo メモデータ
      */
     func updateMemo(memo: Memo) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(memo.memoID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: memo.userID, entityID: memo.memoID)
 
         let data: [String: Any] = [
             "detail": memo.detail,
@@ -406,8 +417,7 @@ final class FirebaseManager {
      * @param target 目標データ
      */
     func updateTarget(target: Target) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(target.targetID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: target.userID, entityID: target.targetID)
 
         let data: [String: Any] = [
             "title": target.title,
@@ -427,8 +437,7 @@ final class FirebaseManager {
      * @param note ノートデータ
      */
     func updateNote(note: Note) async throws {
-        let userID = currentUserID()
-        let documentID = "\(userID)_\(note.noteID)"
+        let documentID = FirebaseManager.buildDocumentID(userID: note.userID, entityID: note.noteID)
 
         let data: [String: Any] = [
             "isDeleted": note.isDeleted,
