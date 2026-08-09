@@ -231,7 +231,7 @@ struct TaskDetailView: View {
 
     /// 対策追加処理
     private func addMeasure() {
-        guard !newMeasureTitle.isEmpty else { return }
+        guard !newMeasureTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
         // 対策の保存は非同期のため、タイトルをコピーしておかないと保存前にクリアされてしまう
         let titleToSave = newMeasureTitle
