@@ -296,4 +296,18 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     func deleteMemo(memoID: String) async -> Result<Void, SportsNoteError> {
         return await delete(id: memoID)
     }
+
+    /// noteID・measuresIDに合致する既存メモを検索し、存在すれば論理削除する
+    /// task.memoIDが未確定（課題追加直後、taskReflectionsのDictionaryキーにmemoIDが
+    /// 反映されていない）場合でも、Realm上に実際に保存されているメモを確実に削除する
+    /// - Parameters:
+    ///   - noteID: ノートID
+    ///   - measuresID: 対策ID
+    /// - Returns: Result<Void, SportsNoteError>（該当メモが存在しない場合も.success(())を返す）
+    func deleteMemoByNoteAndMeasures(noteID: String, measuresID: String) async -> Result<Void, SportsNoteError> {
+        guard let memo = RealmManager.shared.findMemo(noteID: noteID, measuresID: measuresID) else {
+            return .success(())
+        }
+        return await delete(id: memo.memoID)
+    }
 }

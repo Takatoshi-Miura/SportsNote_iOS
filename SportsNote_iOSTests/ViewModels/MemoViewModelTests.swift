@@ -429,6 +429,41 @@ struct MemoViewModelTests {
         manager.clearAll()
     }
 
+    @Test("deleteMemoByNoteAndMeasures - 一致するメモを論理削除できる")
+    func deleteMemoByNoteAndMeasures_deletesMatchingMemo() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let memo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail", created_at: Date())
+        try? manager.saveItem(memo)
+
+        let result = await viewModel.deleteMemoByNoteAndMeasures(noteID: "n1", measuresID: "ms1")
+
+        if case .failure = result {
+            Issue.record("DeleteMemoByNoteAndMeasures failed")
+        }
+
+        #expect(manager.findMemo(noteID: "n1", measuresID: "ms1") == nil)
+
+        manager.clearAll()
+    }
+
+    @Test("deleteMemoByNoteAndMeasures - 一致するメモが存在しない場合は何もせず成功を返す")
+    func deleteMemoByNoteAndMeasures_noMatchReturnsSuccess() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let result = await viewModel.deleteMemoByNoteAndMeasures(noteID: "n1", measuresID: "ms-not-exist")
+
+        if case .failure = result {
+            Issue.record("DeleteMemoByNoteAndMeasures should succeed when no match found")
+        }
+
+        manager.clearAll()
+    }
+
     @Test("getMemosByMeasuresID - noteIDが空文字のメモ（旧データのノート未紐付けメモ）も一覧に含まれる")
     func getMemosByMeasuresID_includesMemosWithEmptyNoteID() async {
         let viewModel = MemoViewModel()

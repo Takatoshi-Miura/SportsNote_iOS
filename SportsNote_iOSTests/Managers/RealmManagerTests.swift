@@ -630,6 +630,41 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    @Test("findMemo - noteIDとmeasuresIDが一致するMemoを取得できる")
+    func findMemo_returnsMatchingMemo() async throws {
+        let memo1 = Memo()
+        memo1.memoID = "memo1"
+        memo1.noteID = "n1"
+        memo1.measuresID = "ms1"
+
+        let memo2 = Memo()
+        memo2.memoID = "memo2"
+        memo2.noteID = "n1"
+        memo2.measuresID = "ms2"
+
+        try manager.saveItem(memo1)
+        try manager.saveItem(memo2)
+
+        let result = manager.findMemo(noteID: "n1", measuresID: "ms1")
+        #expect(result?.memoID == "memo1")
+
+        manager.clearAll()
+    }
+
+    @Test("findMemo - 一致するMemoが存在しない場合はnilを返す")
+    func findMemo_returnsNilWhenNoMatch() async throws {
+        let memo1 = Memo()
+        memo1.memoID = "memo1"
+        memo1.noteID = "n1"
+        memo1.measuresID = "ms1"
+        try manager.saveItem(memo1)
+
+        let result = manager.findMemo(noteID: "n1", measuresID: "ms-not-exist")
+        #expect(result == nil)
+
+        manager.clearAll()
+    }
+
     @Test("fetchYearlyTargets - 年間目標を取得できる")
     func fetchYearlyTargets_returnsTargets() async throws {
         // let manager = RealmManager.shared

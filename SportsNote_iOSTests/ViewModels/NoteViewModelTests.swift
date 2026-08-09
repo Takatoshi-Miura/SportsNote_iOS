@@ -782,6 +782,53 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    @Test("updateTaskReflections - task.memoIDがなくnoteID+measuresID検索で既存メモが見つかる場合も、空文字への編集が保存される")
+    func updateTaskReflections_existingMemoFoundBySearch_savesEmptyDetail() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let existingMemo = Memo(
+            memoID: "memo-fixed-4b",
+            measuresID: "measures-4b",
+            noteID: "note-4b",
+            detail: "頑張った",
+            created_at: Date()
+        )
+        try? manager.saveItem(existingMemo)
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-4b", taskID: "task-4b", title: "Test Measures", order: 0, created_at: Date())
+        )
+
+        let viewModel = NoteViewModel()
+        // memoIDを持たないTaskListDataで渡す（noteID+measuresIDでの検索分岐を通す）
+        let task = TaskListData(
+            taskID: "task-4b",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-4b",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-4b",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: ""]
+        )
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-fixed-4b", type: Memo.self)
+
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.detail == "")
+
+        manager.clearAll()
+    }
+
     @Test("updateTaskReflections - 既存メモがない状態で空文字のまま保存しても新規メモは作成されない")
     func updateTaskReflections_noExistingMemo_emptyText_doesNotCreateMemo() async {
         let manager = RealmManager.shared

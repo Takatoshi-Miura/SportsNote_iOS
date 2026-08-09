@@ -504,6 +504,17 @@ final class RealmManager {
         }
     }
 
+    /// noteID・measuresIDに合致する未削除Memoを1件取得する
+    /// task.memoIDが未確定（View側のtaskReflectionsのDictionaryキーにmemoIDが反映されていない）
+    /// 場合でも、Realm上に実際に保存された対象Memoを特定するために使用する
+    /// - Parameters:
+    ///   - noteID: ノートID
+    ///   - measuresID: 対策ID
+    /// - Returns: 該当するMemo（存在しない場合はnil）
+    func findMemo(noteID: String, measuresID: String) -> Memo? {
+        return getMemosByNoteID(noteID: noteID).first(where: { $0.measuresID == measuresID })
+    }
+
     /// ノートの背景色を取得
     /// - Parameter noteID: ノートID
     /// - Returns: ノートの背景色

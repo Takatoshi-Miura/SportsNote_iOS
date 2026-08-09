@@ -8,6 +8,8 @@ struct TaskListSection: View {
 
     @Binding var taskReflections: [TaskListData: String]
     var unaddedTasks: [TaskListData]
+    /// ノートID（新規作成画面ではまだノートが保存されていないためnil）
+    var noteID: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,12 +56,23 @@ struct TaskListSection: View {
             Button(LocalizedStrings.cancel, role: .cancel) {}
             Button(LocalizedStrings.delete, role: .destructive) {
                 if let task = selectedTaskForDeletion {
-                    if let deleteMemoID = task.memoID {
-                        Task {
-                            let result = await memoViewModel.deleteMemo(memoID: deleteMemoID)
-                            if case .failure(let error) = result {
-                                memoViewModel.showErrorAlert(error)
-                            }
+                    Task {
+                        let result: Result<Void, SportsNoteError>
+                        if let deleteMemoID = task.memoID {
+                            result = await memoViewModel.deleteMemo(memoID: deleteMemoID)
+                        } else if let noteID = noteID {
+                            // 新規追加直後の課題はtaskReflectionsのキーにmemoIDが反映されないため、
+                            // noteID+measuresIDでRealm上の実メモを検索してから削除する
+                            result = await memoViewModel.deleteMemoByNoteAndMeasures(
+                                noteID: noteID,
+                                measuresID: task.measuresID
+                            )
+                        } else {
+                            // 未保存のノート（新規作成画面）ではRealmにメモがまだ存在しない
+                            result = .success(())
+                        }
+                        if case .failure(let error) = result {
+                            memoViewModel.showErrorAlert(error)
                         }
                     }
                     taskReflections.removeValue(forKey: task)
