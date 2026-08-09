@@ -323,7 +323,7 @@ final class FirebaseManager {
         do {
             return try await withCheckedThrowingContinuation { continuation in
                 db.collection(collection).document(documentID)
-                    .updateData(data) { error in
+                    .setData(data, merge: true) { error in
                         if let error = error {
                             continuation.resume(throwing: error)
                         } else {
@@ -345,10 +345,13 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: group.userID, entityID: group.groupID)
 
         let data: [String: Any] = [
+            "userID": group.userID,
+            "groupID": group.groupID,
             "title": group.title,
             "color": group.color,
             "order": group.order,
             "isDeleted": group.isDeleted,
+            "created_at": group.created_at,
             "updated_at": group.updated_at,
         ]
 
@@ -364,12 +367,15 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: task.userID, entityID: task.taskID)
 
         let data: [String: Any] = [
+            "userID": task.userID,
+            "taskID": task.taskID,
             "groupID": task.groupID,
             "title": task.title,
             "cause": task.cause,
             "order": task.order,
             "isComplete": task.isComplete,
             "isDeleted": task.isDeleted,
+            "created_at": task.created_at,
             "updated_at": task.updated_at,
         ]
 
@@ -385,9 +391,13 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: measures.userID, entityID: measures.measuresID)
 
         let data: [String: Any] = [
+            "userID": measures.userID,
+            "measuresID": measures.measuresID,
+            "taskID": measures.taskID,
             "title": measures.title,
             "order": measures.order,
             "isDeleted": measures.isDeleted,
+            "created_at": measures.created_at,
             "updated_at": measures.updated_at,
         ]
 
@@ -403,8 +413,13 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: memo.userID, entityID: memo.memoID)
 
         let data: [String: Any] = [
+            "userID": memo.userID,
+            "memoID": memo.memoID,
+            "noteID": memo.noteID,
+            "measuresID": memo.measuresID,
             "detail": memo.detail,
             "isDeleted": memo.isDeleted,
+            "created_at": memo.created_at,
             "updated_at": memo.updated_at,
         ]
 
@@ -420,11 +435,14 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: target.userID, entityID: target.targetID)
 
         let data: [String: Any] = [
+            "userID": target.userID,
+            "targetID": target.targetID,
             "title": target.title,
             "year": target.year,
             "month": target.month,
             "isYearlyTarget": target.isYearlyTarget,
             "isDeleted": target.isDeleted,
+            "created_at": target.created_at,
             "updated_at": target.updated_at,
         ]
 
@@ -440,7 +458,11 @@ final class FirebaseManager {
         let documentID = FirebaseManager.buildDocumentID(userID: note.userID, entityID: note.noteID)
 
         let data: [String: Any] = [
+            "userID": note.userID,
+            "noteID": note.noteID,
+            "noteType": note.noteType,
             "isDeleted": note.isDeleted,
+            "created_at": note.created_at,
             "updated_at": note.updated_at,
             "title": note.title,
             "date": note.date,
