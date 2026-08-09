@@ -292,6 +292,20 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的な次のorder値取得メソッド（新規レコードのorder初期値算出に使用）
+    /// - Parameters:
+    ///   - clazz: 取得するデータ型のクラス（"order"プロパティを持つ必要がある）
+    ///   - predicate: 絞り込み条件（省略時はisDeleted==falseのみで絞り込み）
+    /// - Returns: 次に割り当てるべきorder値（取得に失敗した場合は0）
+    func getNextOrder<T: Object>(clazz: T.Type, predicate: NSPredicate? = nil) -> Int {
+        do {
+            let maxOrder = try getMaxOrder(clazz: clazz, predicate: predicate)
+            return (maxOrder ?? -1) + 1
+        } catch {
+            return 0
+        }
+    }
+
     /// groupIDに合致する完了した課題を取得
     /// - Parameter groupID: groupID
     /// - Returns: 完了した課題のリスト

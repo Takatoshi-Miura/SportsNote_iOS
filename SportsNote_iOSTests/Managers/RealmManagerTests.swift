@@ -214,6 +214,52 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    // MARK: - getNextOrder テスト（issue #50: order初期値算出ロジックの共通ヘルパー）
+
+    @Test("getNextOrder - データが1件もない場合は0を返す")
+    func getNextOrder_returnsZeroWhenNoData() async throws {
+        let nextOrder = manager.getNextOrder(clazz: Group.self)
+        #expect(nextOrder == 0)
+
+        manager.clearAll()
+    }
+
+    @Test("getNextOrder - 既存データがある場合は最大order+1を返す")
+    func getNextOrder_returnsMaxOrderPlusOne() async throws {
+        try manager.saveItem(Group(groupID: "g1", title: "G1", color: 0, order: 2, created_at: Date()))
+        try manager.saveItem(Group(groupID: "g2", title: "G2", color: 0, order: 5, created_at: Date()))
+
+        let nextOrder = manager.getNextOrder(clazz: Group.self)
+        #expect(nextOrder == 6)
+
+        manager.clearAll()
+    }
+
+    @Test("getNextOrder - predicateによるスコープ絞り込みが機能する")
+    func getNextOrder_scopesByPredicate() async throws {
+        let task1 = TaskData()
+        task1.taskID = "t1"
+        task1.groupID = "gA"
+        task1.order = 3
+
+        let task2 = TaskData()
+        task2.taskID = "t2"
+        task2.groupID = "gB"
+        task2.order = 99
+
+        try manager.saveItem(task1)
+        try manager.saveItem(task2)
+
+        // groupID "gA" にスコープした場合、gBの99は無視され3+1=4が返るはず
+        let nextOrderForGroupA = manager.getNextOrder(
+            clazz: TaskData.self,
+            predicate: NSPredicate(format: "groupID == %@", "gA")
+        )
+        #expect(nextOrderForGroupA == 4)
+
+        manager.clearAll()
+    }
+
     // MARK: - 論理削除テスト
 
     @Test("logicalDelete - データを論理削除できる")

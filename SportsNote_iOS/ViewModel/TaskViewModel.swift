@@ -348,16 +348,10 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         } else {
             // 新規作成の場合: 新しいTaskDataを作成
             let newTaskID = UUIDGenerator.generateID()
-            let newOrder: Int
-            do {
-                let maxOrder = try RealmManager.shared.getMaxOrder(
-                    clazz: TaskData.self,
-                    predicate: NSPredicate(format: "groupID == %@", groupID)
-                )
-                newOrder = (maxOrder ?? -1) + 1
-            } catch {
-                newOrder = 0
-            }
+            let newOrder = RealmManager.shared.getNextOrder(
+                clazz: TaskData.self,
+                predicate: NSPredicate(format: "groupID == %@", groupID)
+            )
 
             return TaskData(
                 taskID: newTaskID,
