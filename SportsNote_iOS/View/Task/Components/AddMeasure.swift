@@ -12,7 +12,7 @@ struct AddMeasureView: View {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(.blue)
             }
-            .disabled(newMeasureTitle.isEmpty)
+            .disabled(newMeasureTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 }
