@@ -853,6 +853,61 @@ struct TaskViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - グループ変更時のorder衝突回帰テスト（issue #106）
+
+    @Test("updateTask - グループを変更した場合、移動先グループ内の最大order+1に再採番される")
+    func updateTask_groupChanged_reassignsOrderToAvoidCollision() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // Group1にTask A（order=0）
+        let taskA = TaskData(
+            taskID: "task-a", title: "Task A", cause: "", groupID: "group1", order: 0, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(taskA)
+
+        // Group2にTask X（order=0）・Task Y（order=1）
+        let taskX = TaskData(
+            taskID: "task-x", title: "Task X", cause: "", groupID: "group2", order: 0, isComplete: false,
+            created_at: Date())
+        let taskY = TaskData(
+            taskID: "task-y", title: "Task Y", cause: "", groupID: "group2", order: 1, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(taskX)
+        try? manager.saveItem(taskY)
+
+        // Task AをGroup2に変更して保存
+        _ = await viewModel.updateTask(taskID: "task-a", title: "Task A", cause: "", groupID: "group2")
+
+        let updatedTaskA = try? manager.getObjectById(id: "task-a", type: TaskData.self)
+        #expect(updatedTaskA?.groupID == "group2")
+        // Group2内の既存最大order(1)+1に採番され、Task X・Task Yと衝突しないこと
+        #expect(updatedTaskA?.order == 2)
+
+        manager.clearAll()
+    }
+
+    @Test("updateTask - グループを変更しない場合、orderは維持される")
+    func updateTask_groupUnchanged_preservesOrder() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskData(
+            taskID: "task-a", title: "Task A", cause: "", groupID: "group1", order: 3, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(task)
+
+        // グループを変更せずタイトルのみ更新
+        _ = await viewModel.updateTask(taskID: "task-a", title: "Updated", cause: "", groupID: "group1")
+
+        let updatedTask = try? manager.getObjectById(id: "task-a", type: TaskData.self)
+        #expect(updatedTask?.order == 3)
+
+        manager.clearAll()
+    }
+
     @Test("saveNewTaskWithMeasures - 課題と対策を同時に保存できる")
     func saveNewTaskWithMeasures_savesTaskAndMeasures() async {
         let viewModel = TaskViewModel()
