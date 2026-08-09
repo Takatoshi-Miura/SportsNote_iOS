@@ -32,7 +32,6 @@ struct TaskDetailView: View {
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
     @State private var newMeasureTitle = ""
-    @State private var groups: [Group] = []
     @State private var isReorderingMeasures = false
     @State private var alertType: AlertType?
 
@@ -43,7 +42,11 @@ struct TaskDetailView: View {
             // タイトル
             Section(header: Text(LocalizedStrings.title)) {
                 TextField(LocalizedStrings.title, text: $taskTitle)
-                    .onChange(of: taskTitle) { _ in
+                    .onChange(of: taskTitle) { newValue in
+                        // 全選択して削除→再入力する一連の操作中、空文字になった瞬間の
+                        // バリデーションエラーで入力が割り込まれないよう、空白のみの間は
+                        // 保存をスキップし非空になった時点で保存する（issue #115）
+                        guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                         persistTaskChanges()
                     }
             }
@@ -60,7 +63,7 @@ struct TaskDetailView: View {
             }
             // グループ
             Section(header: Text(LocalizedStrings.group)) {
-                if !groups.isEmpty {
+                if !groupViewModel.groups.isEmpty {
                     GroupSelectorView(
                         selectedGroupIndex: $selectedGroupIndex,
                         viewModel: groupViewModel,
@@ -186,6 +189,7 @@ struct TaskDetailView: View {
     /// タイトル・原因・グループの変更をRealmへ反映し、失敗時はエラーアラートを表示する
     private func persistTaskChanges() {
         Task {
+            let groups = groupViewModel.groups
             guard !groups.isEmpty, groups.indices.contains(selectedGroupIndex) else { return }
             let result = await viewModel.updateTask(
                 taskID: taskData.taskID,
@@ -213,13 +217,13 @@ struct TaskDetailView: View {
                 return
             }
 
-            groups = groupViewModel.groups
+            let groups = groupViewModel.groups
             if groups.isEmpty { return }
 
             // 現在のグループを選択
             if let index = groups.firstIndex(where: { $0.groupID == taskData.groupID }) {
                 selectedGroupIndex = index
-            } else if !groups.isEmpty {
+            } else {
                 // グループIDに一致するものがなければ、最初のグループを選択
                 selectedGroupIndex = 0
             }
