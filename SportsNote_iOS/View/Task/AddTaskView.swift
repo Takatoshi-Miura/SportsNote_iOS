@@ -8,7 +8,6 @@ struct AddTaskView: View {
     @State private var cause: String = ""
     @State private var selectedGroupIndex: Int = 0
     @State private var measuresTitle: String = ""
-    let groups: [Group]
 
     var body: some View {
         NavigationView {
@@ -27,7 +26,7 @@ struct AddTaskView: View {
                 }
                 // グループ
                 Section(header: Text(LocalizedStrings.group)) {
-                    if !groups.isEmpty {
+                    if !groupViewModel.groups.isEmpty {
                         GroupSelectorView(
                             selectedGroupIndex: $selectedGroupIndex,
                             viewModel: groupViewModel
@@ -54,7 +53,7 @@ struct AddTaskView: View {
                             let result = await viewModel.saveNewTaskWithMeasures(
                                 title: taskTitle,
                                 cause: cause,
-                                groupID: groups[selectedGroupIndex].groupID,
+                                groupID: groupViewModel.groups[selectedGroupIndex].groupID,
                                 measuresTitle: measuresTitle.isEmpty ? nil : measuresTitle
                             )
 
@@ -66,7 +65,9 @@ struct AddTaskView: View {
                             }
                         }
                     }
-                    .disabled(taskTitle.isEmpty || groups.isEmpty)
+                    .disabled(
+                        taskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || !groupViewModel.groups.indices.contains(selectedGroupIndex))
                 }
             }
         }

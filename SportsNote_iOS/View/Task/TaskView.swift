@@ -134,7 +134,7 @@ struct TaskView: View {
             AddGroupView(viewModel: viewModel)
         }
         .sheet(isPresented: $isAddTaskPresented) {
-            AddTaskView(viewModel: taskViewModel, groupViewModel: viewModel, groups: viewModel.groups)
+            AddTaskView(viewModel: taskViewModel, groupViewModel: viewModel)
         }
         .onAppear {
             // 画面が表示されるたびに最新データを取得
