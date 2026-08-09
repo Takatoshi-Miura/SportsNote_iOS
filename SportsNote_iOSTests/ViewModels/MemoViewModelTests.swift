@@ -429,6 +429,35 @@ struct MemoViewModelTests {
         manager.clearAll()
     }
 
+    @Test("getMemosByMeasuresID - noteIDが空文字のメモ（旧データのノート未紐付けメモ）も一覧に含まれる")
+    func getMemosByMeasuresID_includesMemosWithEmptyNoteID() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let note = Note(purpose: "Purpose", detail: "Detail")
+        note.noteID = "n1"
+        note.noteType = NoteType.practice.rawValue
+        note.date = Date()
+        try? manager.saveItem(note)
+
+        let linkedMemo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Linked", created_at: Date())
+        let unlinkedMemo = Memo(memoID: "m2", measuresID: "ms1", noteID: "", detail: "Unlinked", created_at: Date())
+        try? manager.saveItem(linkedMemo)
+        try? manager.saveItem(unlinkedMemo)
+
+        let result = viewModel.getMemosByMeasuresID(measuresID: "ms1")
+
+        if case .success(let memos) = result {
+            #expect(memos.count == 2)
+            #expect(memos.contains(where: { $0.memoID == "m2" && $0.noteID.isEmpty }))
+        } else {
+            Issue.record("GetMemosByMeasuresID failed")
+        }
+
+        manager.clearAll()
+    }
+
     @Test("saveMemo - 既存インターフェースでメモを保存できる")
     func saveMemo_savesWithLegacyInterface() async {
         let viewModel = MemoViewModel()
