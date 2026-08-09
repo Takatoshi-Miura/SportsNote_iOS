@@ -137,20 +137,23 @@ final class MigrationManager {
 
     // MARK: - 変換・Realm + Firebase 保存
 
-    /// 未分類グループのIDを取得する。Realmにグループが1件も存在しない場合は新規作成して保存する
+    /// 未分類グループ（タイトルが「未分類」と一致するグループ）のIDを取得する。
+    /// 該当グループがRealmに存在しない場合は新規作成して保存する。
     /// - Note: RealmManager経由のローカルDB操作のみで完結しFirebaseに依存しないため`static func`として定義する。
     ///   Swiftのstatic funcはインスタンスの`init()`（`Firestore.firestore()`呼び出し）を経由しないため、
     ///   Firebase未設定のテスト環境でも`MigrationManager.shared`をインスタンス化せずに直接検証できる（issue #73）。
+    ///   `groups.first`（orderが最小のグループ）で判定すると、グループの並び替え後に
+    ///   意図しない別グループを「未分類」と誤判定してしまうため、タイトル一致で判定する（issue #56）。
     /// - Parameter userID: 新規作成時にGroupへ設定するuserID（呼び出し元で解決済みの値を渡す）
     /// - Returns: 既存または新規作成した未分類グループのgroupID
     /// - Throws: RealmManagerの取得・保存に失敗した場合
     static func resolveUncategorizedGroupID(userID: String) throws -> String {
         let groups = try RealmManager.shared.getDataList(clazz: Group.self)
-        if let existing = groups.first {
+        if let existing = groups.first(where: { $0.title == LocalizedStrings.uncategorized }) {
             return existing.groupID
         }
 
-        // InitializationManager.createUncategorizedGroup() と同等のロジック
+        // InitializationManager.createUncategorizedGroup() と同等のロジック（issue #73）
         let group = Group()
         group.groupID = UUIDGenerator.generateID()
         group.title = LocalizedStrings.uncategorized
@@ -190,7 +193,7 @@ final class MigrationManager {
         task.updated_at = now
 
         // 未分類グループに割り当て（旧データにグループ概念なし）
-        // Group が0件の場合でも空文字にフォールバックせず、その場で未分類グループを作成する（issue #73）
+        // タイトル一致で判定し（issue #56）、Group が0件の場合は空文字にフォールバックせずその場で作成する（issue #73）
         task.groupID = try MigrationManager.resolveUncategorizedGroupID(userID: userID)
 
         try RealmManager.shared.saveItem(task)
