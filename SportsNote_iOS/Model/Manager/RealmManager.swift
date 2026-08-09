@@ -365,9 +365,21 @@ final class RealmManager {
             let realm = try getRealm()
 
             // フリーノートを取得
-            let freeNotes = Array(
-                realm.objects(Note.self)
-                    .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
+            // クエリが空の場合は無条件で取得し、非空の場合は内容が一致する場合のみ取得する
+            // （常に無条件で取得すると、検索結果が0件になるケースが存在しなくなってしまうため）
+            let freeNotes: [Note]
+            if query.isEmpty {
+                freeNotes = Array(
+                    realm.objects(Note.self)
+                        .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
+            } else {
+                freeNotes = Array(
+                    realm.objects(Note.self)
+                        .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue)
+                        .filter(
+                            "condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@",
+                            query, query, query, query, query, query, query))
+            }
 
             // 検索条件に一致するノートを取得（フリーノート以外）
             let queryNotes = Array(

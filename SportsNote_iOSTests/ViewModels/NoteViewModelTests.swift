@@ -431,7 +431,8 @@ struct NoteViewModelTests {
 
         // データ作成
         let note1 = Note(title: "Swift")
-        note1.noteType = NoteType.free.rawValue  // フリーノートは常にヒットする仕様
+        note1.noteType = NoteType.free.rawValue
+        note1.detail = "Swift Testing"  // issue #76: フリーノートも内容が一致する場合のみヒットする仕様
 
         let note2 = Note(purpose: "Coding", detail: "Swift Testing")
         note2.noteType = NoteType.practice.rawValue
@@ -443,7 +444,7 @@ struct NoteViewModelTests {
         try? manager.saveItem(note2)
         try? manager.saveItem(note3)
 
-        // "Testing"で検索 -> note1(Free)とnote2(Practice)がヒット
+        // "Testing"で検索 -> note1(Free、detailに一致)とnote2(Practice)がヒット
         viewModel.searchNotes(query: "Testing")
 
         #expect(viewModel.notes.count == 2)
