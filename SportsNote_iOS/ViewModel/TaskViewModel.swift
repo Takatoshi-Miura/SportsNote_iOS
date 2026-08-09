@@ -497,23 +497,39 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - destination: 移動先のインデックス
     /// - Returns: Result
     func moveTask(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
-        // filteredTaskListData上で移動
+        // filteredTaskListData上で移動（表示上の並び替え）
         var reordered = filteredTaskListData
         reordered.move(fromOffsets: source, toOffset: destination)
         filteredTaskListData = reordered
 
-        // TaskDataの配列に変換してRealmに保存
-        let reorderedTasks = reordered.compactMap { listData in
-            tasks.first { $0.taskID == listData.taskID }
-        }
+        // 表示中（可視）の課題IDと、並び替え後の新しい順序のTaskData配列を作成
+        let visibleTaskIDs = Set(reordered.map { $0.taskID })
+        var visibleTasksInNewOrder =
+            reordered.compactMap { listData in
+                tasks.first { $0.taskID == listData.taskID }
+            }
+            .makeIterator()
+
+        // 現在保持している全課題（完了課題を含む）を既存orderの昇順で並べ、
+        // 可視だった位置だけを新しい順序の課題に差し替える。
+        // 非表示（完了）課題は元の相対順序のまま据え置くことで、
+        // 全件をまとめてupdateTaskOrderに渡してもorderの重複が発生しないようにする。
+        let mergedTasks: [TaskData] = tasks.sorted { $0.order < $1.order }
+            .map { task in
+                if visibleTaskIDs.contains(task.taskID) {
+                    return visibleTasksInNewOrder.next() ?? task
+                } else {
+                    return task
+                }
+            }
 
         do {
-            try RealmManager.shared.updateTaskOrder(tasks: reorderedTasks)
+            try RealmManager.shared.updateTaskOrder(tasks: mergedTasks)
 
             // Firebase同期（バックグラウンド）
             // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
             let syncTask = Task<Void, Never> {
-                for task in reorderedTasks {
+                for task in mergedTasks {
                     _ = await syncEntityToFirebase(task, isUpdate: true)
                 }
             }
