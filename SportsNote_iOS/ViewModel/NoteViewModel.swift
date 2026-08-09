@@ -367,10 +367,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - taskReflections: タスクの振り返り（キー: TaskListData, 値: 振り返りテキスト）
     private func updateTaskReflections(noteID: String, taskReflections: [TaskListData: String]) {
         for (task, reflectionText) in taskReflections {
-            if reflectionText.isEmpty { continue }
-
             let memo = Memo()
             var existingCreatedAt: Date?
+            var isExistingMemo = false
 
             // memoIDの決定ロジック:
             // 1. task.memoIDがあればそれを使用(既存メモ編集)
@@ -379,6 +378,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             // 4. なければ新規ID生成(新規作成)
             if let existingMemoID = task.memoID {
                 memo.memoID = existingMemoID
+                isExistingMemo = true
                 // 既存メモをRealmから取得し、created_atを引き継ぐ
                 existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
             } else {
@@ -387,12 +387,17 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                     $0.measuresID == task.measuresID
                 }) {
                     memo.memoID = existingMemo.memoID  // 既存IDを使用
+                    isExistingMemo = true
                     // 検索でヒットした既存メモのcreated_atを引き継ぐ
                     existingCreatedAt = existingMemo.created_at
                 } else {
                     memo.memoID = UUIDGenerator.generateID()  // 新規生成
                 }
             }
+
+            // 既存メモがない状態で空文字のままの場合は新規メモを作成しない。
+            // 既存メモを空文字に編集するケースは保存対象とする（issue #105）
+            if !isExistingMemo && reflectionText.isEmpty { continue }
 
             memo.measuresID = task.measuresID
             memo.noteID = noteID

@@ -670,6 +670,82 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - updateTaskReflections（課題振り返りメモ）の空文字編集テスト（issue #105）
+
+    @Test("updateTaskReflections - 既存メモを空文字に編集した場合、Realm上のdetailが空文字に更新される")
+    func updateTaskReflections_existingMemo_savesEmptyDetail() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let existingMemo = Memo(
+            memoID: "memo-fixed-3",
+            measuresID: "measures-3",
+            noteID: "note-3",
+            detail: "頑張った",
+            created_at: Date()
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        let task = TaskListData(
+            taskID: "task-3",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-3",
+            measures: "Test Measures",
+            memoID: "memo-fixed-3",
+            order: 0,
+            isComplete: false
+        )
+
+        // 振り返り欄を空文字に編集して保存
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-3",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: ""]
+        )
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-fixed-3", type: Memo.self)
+
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.detail == "")
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - 既存メモがない状態で空文字のまま保存しても新規メモは作成されない")
+    func updateTaskReflections_noExistingMemo_emptyText_doesNotCreateMemo() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let viewModel = NoteViewModel()
+        let task = TaskListData(
+            taskID: "task-4",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-4",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-4",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: ""]
+        )
+
+        let memos = manager.getMemosByNoteID(noteID: "note-4")
+        #expect(memos.isEmpty)
+
+        manager.clearAll()
+    }
+
     // MARK: - updateTaskReflections（課題振り返りメモ）のFirebase同期テスト
 
     @Test("updateTaskReflections - 新規作成時、Memoの同期呼び出しがisUpdate=falseで発生する")
