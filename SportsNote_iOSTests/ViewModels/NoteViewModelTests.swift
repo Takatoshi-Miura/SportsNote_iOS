@@ -635,6 +635,9 @@ struct NoteViewModelTests {
             created_at: fixedCreatedAt
         )
         try? manager.saveItem(existingMemo)
+        try? manager.saveItem(
+            Measures(measuresID: "measures-2", taskID: "task-2", title: "Test Measures", order: 0, created_at: Date())
+        )
 
         let viewModel = NoteViewModel()
         // memoIDを持たないTaskListDataで渡す（noteID+measuresIDでの検索分岐を通す）
@@ -661,6 +664,70 @@ struct NoteViewModelTests {
 
         #expect(updatedMemo != nil)
         #expect(updatedMemo?.detail == "編集後の振り返り(検索経由)")
+        if let updatedCreatedAt = updatedMemo?.created_at {
+            #expect(abs(updatedCreatedAt.timeIntervalSince(fixedCreatedAt)) < 0.5)
+        } else {
+            Issue.record("更新後のMemoのcreated_atが取得できませんでした")
+        }
+
+        manager.clearAll()
+    }
+
+    // MARK: - updateTaskReflections（課題振り返りメモ）の対策並び替え回帰テスト（issue #109）
+
+    @Test("updateTaskReflections - 対策の並び替えでmeasuresIDが変わっても、既存メモが重複作成されず更新される")
+    func updateTaskReflections_existingMemoFoundAfterMeasuresReorder_updatesExistingMemo() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 既存メモは並び替え前の最優先対策(measures-old)に対して作成されたもの
+        let fixedCreatedAt = Date().addingTimeInterval(-3600)
+        let existingMemo = Memo(
+            memoID: "memo-reorder-1",
+            measuresID: "measures-old",
+            noteID: "note-reorder-1",
+            detail: "並び替え前の振り返り",
+            created_at: fixedCreatedAt
+        )
+        try? manager.saveItem(existingMemo)
+
+        // measures-old・measures-newとも同じtask-reorder-1に属する対策
+        // （並び替え後はmeasures-newが最優先=order0になった状態）
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-old", taskID: "task-reorder-1", title: "Old", order: 1, created_at: Date()))
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-new", taskID: "task-reorder-1", title: "New", order: 0, created_at: Date()))
+
+        let viewModel = NoteViewModel()
+        // taskListDataのmeasuresIDは並び替え後の現在の最優先対策(measures-new)を指す
+        let task = TaskListData(
+            taskID: "task-reorder-1",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-new",
+            measures: "New",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-reorder-1",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "並び替え後の振り返り"]
+        )
+
+        // 新規メモが作られず、既存メモが更新されていること（重複作成されないこと）
+        let memos = manager.getMemosByNoteID(noteID: "note-reorder-1")
+        #expect(memos.count == 1)
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-reorder-1", type: Memo.self)
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.detail == "並び替え後の振り返り")
         if let updatedCreatedAt = updatedMemo?.created_at {
             #expect(abs(updatedCreatedAt.timeIntervalSince(fixedCreatedAt)) < 0.5)
         } else {
@@ -832,6 +899,10 @@ struct NoteViewModelTests {
             created_at: Date().addingTimeInterval(-3600)
         )
         try? manager.saveItem(existingMemo)
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-sync-3", taskID: "task-sync-3", title: "Test Measures", order: 0,
+                created_at: Date()))
 
         let viewModel = NoteViewModel()
         // memoIDを持たないTaskListDataで渡す（noteID+measuresIDでの検索分岐を通す）

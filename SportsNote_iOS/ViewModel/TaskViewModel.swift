@@ -449,7 +449,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     func associateTasksWithMemos(memos: [Memo]) -> [(task: TaskListData, memo: Memo)] {
         var result: [String: (task: TaskListData, memo: Memo)] = [:]
         for memo in memos {
-            if let task = taskListData.first(where: { $0.measuresID == memo.measuresID }) {
+            // memo.measuresIDが指す対策のtaskIDを解決してから突合する。
+            // taskListData.measuresIDは常に現在の最優先対策のIDのため、対策の並び替えで
+            // 変わった場合でもtaskIDで突合すれば同一課題として認識できる（issue #109）
+            guard let measures = try? RealmManager.shared.getObjectById(id: memo.measuresID, type: Measures.self)
+            else {
+                continue
+            }
+            if let task = taskListData.first(where: { $0.taskID == measures.taskID }) {
                 result[task.taskID] = (task: task, memo: memo)
             }
         }

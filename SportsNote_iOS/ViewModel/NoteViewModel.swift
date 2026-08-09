@@ -90,6 +90,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: noteID
     func loadNote(id: String) {
         Task {
+            isLoading = true
+            defer { isLoading = false }
+
             let result = await fetchById(id: id)
             switch result {
             case .success(let note):
@@ -383,8 +386,13 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
             } else {
                 let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
+                // task.measuresID（現在の最優先対策のID）だけでなく、taskIDに紐づく
+                // 全対策のmeasuresIDのいずれかで検索する。対策の並び替えで最優先対策が
+                // 変わった後も、既存メモを同一課題のものとして正しく検出するため（issue #109）
+                let taskMeasuresIDs = Set(
+                    realmManager.getMeasuresByTaskID(taskID: task.taskID).map { $0.measuresID })
                 if let existingMemo = existingMemos.first(where: {
-                    $0.measuresID == task.measuresID
+                    taskMeasuresIDs.contains($0.measuresID)
                 }) {
                     memo.memoID = existingMemo.memoID  // 既存IDを使用
                     isExistingMemo = true
