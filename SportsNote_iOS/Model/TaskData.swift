@@ -27,11 +27,7 @@ open class TaskData: Object {
         updated_at = Date()
 
         // UserDefaultsから同期的に値を取得
-        if let userID = UserDefaults.standard.string(forKey: "userID") {
-            self.userID = userID
-        } else {
-            self.userID = ""
-        }
+        self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
     }
 
     convenience init(
