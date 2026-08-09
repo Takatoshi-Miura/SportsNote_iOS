@@ -41,9 +41,15 @@ final class InitializationManager {
         }
 
         // ログイン済みの場合、アプリ起動時にデータ同期を実行
-        if !isFirstLaunch && isUserLoggedIn() && Network.isOnline() {
-            await migrateOldData()
-            await syncAllData()
+        // NWPathMonitorの初回コールバックが未到達のままNetwork.isOnline()を判定すると
+        // 実際はオンラインでもデフォルト値falseが返り同期がスキップされてしまうため、
+        // 判定前に初回パス確定を待ち合わせる
+        if !isFirstLaunch && isUserLoggedIn() {
+            await Network.waitForInitialPath()
+            if Network.isOnline() {
+                await migrateOldData()
+                await syncAllData()
+            }
         }
     }
 
