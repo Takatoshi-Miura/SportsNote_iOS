@@ -264,6 +264,15 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate,
+                let existingTask = try RealmManager.shared.getObjectById(id: entity.taskID, type: TaskData.self)
+            {
+                entity.userID = existingTask.userID
+            }
+
             // 1. Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
@@ -348,16 +357,10 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         } else {
             // 新規作成の場合: 新しいTaskDataを作成
             let newTaskID = UUIDGenerator.generateID()
-            let newOrder: Int
-            do {
-                let maxOrder = try RealmManager.shared.getMaxOrder(
-                    clazz: TaskData.self,
-                    predicate: NSPredicate(format: "groupID == %@", groupID)
-                )
-                newOrder = (maxOrder ?? -1) + 1
-            } catch {
-                newOrder = 0
-            }
+            let newOrder = RealmManager.shared.getNextOrder(
+                clazz: TaskData.self,
+                predicate: NSPredicate(format: "groupID == %@", groupID)
+            )
 
             return TaskData(
                 taskID: newTaskID,
@@ -426,6 +429,19 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 && !taskListItem.measuresID.isEmpty
                 && !excludingTaskIds.contains(taskListItem.taskID)
         }
+    }
+
+    /// メモをmeasuresID経由で課題（TaskListData）に関連付ける
+    /// - Parameter memos: 対象のメモ一覧（呼び出し側でnoteID・isDeletedによるフィルタ済みを渡すこと）
+    /// - Returns: taskIDで重複排除した(task: TaskListData, memo: Memo)のペア配列
+    func associateTasksWithMemos(memos: [Memo]) -> [(task: TaskListData, memo: Memo)] {
+        var result: [String: (task: TaskListData, memo: Memo)] = [:]
+        for memo in memos {
+            if let task = taskListData.first(where: { $0.measuresID == memo.measuresID }) {
+                result[task.taskID] = (task: task, memo: memo)
+            }
+        }
+        return Array(result.values)
     }
 
     /// 未追加のタスクを取得（taskReflectionsから直接算出）
@@ -511,11 +527,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             try RealmManager.shared.updateTaskOrder(tasks: mergedTasks)
 
             // Firebase同期（バックグラウンド）
-            Task {
+            // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+            let syncTask = Task<Void, Never> {
                 for task in mergedTasks {
                     _ = await syncEntityToFirebase(task, isUpdate: true)
                 }
             }
+            BackgroundSyncTracker.shared.track(syncTask)
 
             return .success(())
         } catch {
@@ -545,7 +563,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "TaskViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "TaskViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

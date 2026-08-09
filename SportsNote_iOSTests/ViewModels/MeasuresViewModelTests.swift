@@ -479,6 +479,23 @@ struct MeasuresViewModelTests {
 
         manager.clearAll()
     }
+
+    // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
+
+    @Test(
+        "convertFirebaseSyncError - 既にSportsNoteErrorの場合は再変換せずそのまま返す",
+        arguments: [
+            SportsNoteError.firebasePermissionDenied,
+            SportsNoteError.firebaseDocumentNotFound,
+            SportsNoteError.networkTimeout,
+        ])
+    func convertFirebaseSyncError_doesNotReconvertExistingSportsNoteError(original: SportsNoteError) async {
+        let viewModel = MeasuresViewModel()
+
+        let converted = viewModel.convertFirebaseSyncError(original, context: "MeasuresViewModel-syncEntityToFirebase")
+
+        #expect(converted.errorDescription == original.errorDescription)
+    }
 }
 
 // MARK: - テストヘルパー拡張

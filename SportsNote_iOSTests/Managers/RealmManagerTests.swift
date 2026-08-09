@@ -214,6 +214,52 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    // MARK: - getNextOrder テスト（issue #50: order初期値算出ロジックの共通ヘルパー）
+
+    @Test("getNextOrder - データが1件もない場合は0を返す")
+    func getNextOrder_returnsZeroWhenNoData() async throws {
+        let nextOrder = manager.getNextOrder(clazz: Group.self)
+        #expect(nextOrder == 0)
+
+        manager.clearAll()
+    }
+
+    @Test("getNextOrder - 既存データがある場合は最大order+1を返す")
+    func getNextOrder_returnsMaxOrderPlusOne() async throws {
+        try manager.saveItem(Group(groupID: "g1", title: "G1", color: 0, order: 2, created_at: Date()))
+        try manager.saveItem(Group(groupID: "g2", title: "G2", color: 0, order: 5, created_at: Date()))
+
+        let nextOrder = manager.getNextOrder(clazz: Group.self)
+        #expect(nextOrder == 6)
+
+        manager.clearAll()
+    }
+
+    @Test("getNextOrder - predicateによるスコープ絞り込みが機能する")
+    func getNextOrder_scopesByPredicate() async throws {
+        let task1 = TaskData()
+        task1.taskID = "t1"
+        task1.groupID = "gA"
+        task1.order = 3
+
+        let task2 = TaskData()
+        task2.taskID = "t2"
+        task2.groupID = "gB"
+        task2.order = 99
+
+        try manager.saveItem(task1)
+        try manager.saveItem(task2)
+
+        // groupID "gA" にスコープした場合、gBの99は無視され3+1=4が返るはず
+        let nextOrderForGroupA = manager.getNextOrder(
+            clazz: TaskData.self,
+            predicate: NSPredicate(format: "groupID == %@", "gA")
+        )
+        #expect(nextOrderForGroupA == 4)
+
+        manager.clearAll()
+    }
+
     // MARK: - 論理削除テスト
 
     @Test("logicalDelete - データを論理削除できる")
@@ -336,17 +382,60 @@ struct RealmManagerTests {
         try manager.saveItem(note2)
         try manager.saveItem(note3)
 
-        // "test"で検索 -> note1 (Free) がヒット
+        // "test"で検索 -> note1 (Free、purposeに"testing"を含む) がヒット
         let results1 = manager.searchNotesByQuery(query: "test")
         #expect(results1.count == 1)
         #expect(results1.first?.noteID == "n-1")
 
-        // "Data"で検索 -> note1 (Free) と note2 (Practice) がヒット
-        // searchNotesByQueryは常に全てのフリーノートを返す仕様のため
+        // "Data"で検索 -> note1 (Free) はpurposeに"Data"を含まないため除外され、note2 (Practice) のみヒット
+        // issue #76: フリーノートも内容が一致する場合のみ検索結果に含める
         let results2 = manager.searchNotesByQuery(query: "Data")
-        #expect(results2.count == 2)
-        #expect(results2.contains(where: { $0.noteID == "n-1" }))
+        #expect(results2.count == 1)
         #expect(results2.contains(where: { $0.noteID == "n-2" }))
+        #expect(!results2.contains(where: { $0.noteID == "n-1" }))
+
+        manager.clearAll()
+    }
+
+    @Test("searchNotesByQuery - issue #76: クエリが非空でフリーノートの内容にも一致しない場合は検索結果が0件になる")
+    func searchNotesByQuery_returnsEmptyWhenNothingMatches() async throws {
+        // let manager = RealmManager.shared
+
+        let freeNote = Note(title: "Free Note")
+        freeNote.noteID = "n-free"
+        freeNote.detail = "今日の振り返り"
+        // freeNoteはデフォルトでfree
+
+        let practiceNote = Note(purpose: "パス練習", detail: "シュート練習")
+        practiceNote.noteID = "n-practice"
+
+        try manager.saveItem(freeNote)
+        try manager.saveItem(practiceNote)
+
+        // どのノートの内容にも一致しないクエリで検索 -> 0件（「ノートが見つかりません」表示に到達できる）
+        let results = manager.searchNotesByQuery(query: "存在しないキーワード")
+        #expect(results.isEmpty)
+
+        manager.clearAll()
+    }
+
+    @Test("searchNotesByQuery - issue #76: クエリが空の場合は従来通りフリーノートを含む全ノートが表示される")
+    func searchNotesByQuery_emptyQueryIncludesFreeNoteUnconditionally() async throws {
+        // let manager = RealmManager.shared
+
+        let freeNote = Note(title: "Free Note")
+        freeNote.noteID = "n-free-empty"
+        // detailは未入力のまま（空文字）
+
+        let practiceNote = Note(purpose: "パス練習", detail: "シュート練習")
+        practiceNote.noteID = "n-practice-empty"
+
+        try manager.saveItem(freeNote)
+        try manager.saveItem(practiceNote)
+
+        // クエリが空文字の場合、フリーノートは内容に関わらず無条件で結果に含まれる
+        let results = manager.searchNotesByQuery(query: "")
+        #expect(results.contains(where: { $0.noteID == "n-free-empty" }))
 
         manager.clearAll()
     }
@@ -658,6 +747,9 @@ struct RealmManagerTests {
         let note = Note(title: "Swift Testing")
         note.noteID = "n-param"
         note.purpose = "Learn testing"
+        // issue #76: フリーノートも内容が一致する場合のみ検索結果に含まれるため、
+        // 各パラメータ（"Swift"/"Testing"/"Learn"）がすべてdetailに一致するようにしておく
+        note.detail = "Swift Testing Learn"
 
         try manager.saveItem(note)
 

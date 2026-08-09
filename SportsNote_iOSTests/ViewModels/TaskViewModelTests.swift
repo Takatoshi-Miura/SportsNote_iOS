@@ -392,6 +392,157 @@ struct TaskViewModelTests {
         #expect(taskListData.measures == "Measure 1, Measure 2")
     }
 
+    // MARK: - associateTasksWithMemosテスト（issue #65）
+
+    @Test("associateTasksWithMemos - measuresIDが一致する課題とメモがペアになる")
+    func associateTasksWithMemos_matchesTaskByMeasuresID() async {
+        let viewModel = TaskViewModel()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [task]
+
+        let memo = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "振り返り内容",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo])
+
+        #expect(pairs.count == 1)
+        #expect(pairs.first?.task.taskID == "task-1")
+        #expect(pairs.first?.memo.memoID == "memo-1")
+        #expect(pairs.first?.memo.detail == "振り返り内容")
+    }
+
+    @Test("associateTasksWithMemos - measuresIDが一致しない場合はペアに含まれない")
+    func associateTasksWithMemos_noMatchIsExcluded() async {
+        let viewModel = TaskViewModel()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [task]
+
+        let memo = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-unmatched",
+            noteID: "note-1",
+            detail: "振り返り内容",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo])
+
+        #expect(pairs.isEmpty)
+    }
+
+    @Test("associateTasksWithMemos - 同一課題に複数メモが一致する場合はtaskIDで重複排除される")
+    func associateTasksWithMemos_dedupesBySameTaskID() async {
+        let viewModel = TaskViewModel()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [task]
+
+        let memo1 = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "1件目",
+            created_at: Date()
+        )
+        let memo2 = Memo(
+            memoID: "memo-2",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "2件目",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo1, memo2])
+
+        #expect(pairs.count == 1)
+        #expect(pairs.first?.task.taskID == "task-1")
+        // 重複排除は後勝ち（辞書の上書き）であることを固定化する（クロスレビュー指摘反映）
+        #expect(pairs.first?.memo.memoID == "memo-2")
+        #expect(pairs.first?.memo.detail == "2件目")
+    }
+
+    @Test("associateTasksWithMemos - 複数課題・複数メモで正しくペアが構築される")
+    func associateTasksWithMemos_multipleTasksAndMemos() async {
+        let viewModel = TaskViewModel()
+        let task1 = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Task 1",
+            measuresID: "measures-1",
+            measures: "Measures 1",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        let task2 = TaskListData(
+            taskID: "task-2",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Task 2",
+            measuresID: "measures-2",
+            measures: "Measures 2",
+            memoID: nil,
+            order: 1,
+            isComplete: false
+        )
+        viewModel.taskListData = [task1, task2]
+
+        let memo1 = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "課題1の振り返り",
+            created_at: Date()
+        )
+        let memo2 = Memo(
+            memoID: "memo-2",
+            measuresID: "measures-2",
+            noteID: "note-1",
+            detail: "課題2の振り返り",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo1, memo2])
+
+        #expect(pairs.count == 2)
+        #expect(Set(pairs.map { $0.task.taskID }) == Set(["task-1", "task-2"]))
+    }
+
     // MARK: - エラーハンドリングテスト
 
     @Test("エラーハンドリング - isLoadingの初期状態")
@@ -928,6 +1079,23 @@ struct TaskViewModelTests {
         #expect(orderB == 0 && orderA == 1)
 
         manager.clearAll()
+    }
+
+    // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
+
+    @Test(
+        "convertFirebaseSyncError - 既にSportsNoteErrorの場合は再変換せずそのまま返す",
+        arguments: [
+            SportsNoteError.firebasePermissionDenied,
+            SportsNoteError.firebaseDocumentNotFound,
+            SportsNoteError.networkTimeout,
+        ])
+    func convertFirebaseSyncError_doesNotReconvertExistingSportsNoteError(original: SportsNoteError) async {
+        let viewModel = TaskViewModel()
+
+        let converted = viewModel.convertFirebaseSyncError(original, context: "TaskViewModel-syncEntityToFirebase")
+
+        #expect(converted.errorDescription == original.errorDescription)
     }
 }
 

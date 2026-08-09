@@ -168,35 +168,15 @@ struct ErrorMapper {
     ///   - context: エラーが発生したコンテキスト情報
     /// - Returns: 変換されたSportsNoteError
     static func mapFirebaseError(_ error: Error, context: String = "") -> SportsNoteError {
-        // FirebaseのNSError処理
-        if let nsError = error as NSError? {
-            // Firestore エラーコード
-            switch nsError.code {
-            case 7:  // PERMISSION_DENIED
-                return .firebasePermissionDenied
-            case 5:  // NOT_FOUND
-                return .firebaseDocumentNotFound
-            case 14:  // UNAVAILABLE
-                return .firebaseNetworkError
-            case 8:  // RESOURCE_EXHAUSTED
-                return .firebaseQuotaExceeded
-            case 16:  // UNAUTHENTICATED
-                return .firebaseAuthenticationFailed
-            case 13:  // INTERNAL
-                return .firebaseServerError
-            case 4:  // DEADLINE_EXCEEDED
-                return .networkTimeout
-            default:
-                // 予期しないFirebaseエラー
-                if nsError.code >= 1000 {
-                    return .criticalError(error, context: "Firebase-\(context)")
-                }
-                return .unexpectedError(error)
-            }
+        guard let nsError = error as NSError? else {
+            // 完全に不明なエラー
+            return .unknownError("Firebase Error: \(error.localizedDescription)")
         }
 
-        // ネットワーク関連のエラーチェック
-        if let nsError = error as NSError?, nsError.domain == NSURLErrorDomain {
+        // ネットワーク関連のエラーチェック（Firestore固有コードより先に判定する。
+        // NSURLErrorDomainのコード（-1000番台）とFirestoreのコード（0〜16程度）は
+        // 値域が重ならないため、判定順序を入れ替えても既存のFirestore分類には影響しない）
+        if nsError.domain == NSURLErrorDomain {
             switch nsError.code {
             case NSURLErrorNotConnectedToInternet:
                 return .networkUnavailable
@@ -207,8 +187,29 @@ struct ErrorMapper {
             }
         }
 
-        // 完全に不明なエラー
-        return .unknownError("Firebase Error: \(error.localizedDescription)")
+        // Firestore エラーコード
+        switch nsError.code {
+        case 7:  // PERMISSION_DENIED
+            return .firebasePermissionDenied
+        case 5:  // NOT_FOUND
+            return .firebaseDocumentNotFound
+        case 14:  // UNAVAILABLE
+            return .firebaseNetworkError
+        case 8:  // RESOURCE_EXHAUSTED
+            return .firebaseQuotaExceeded
+        case 16:  // UNAUTHENTICATED
+            return .firebaseAuthenticationFailed
+        case 13:  // INTERNAL
+            return .firebaseServerError
+        case 4:  // DEADLINE_EXCEEDED
+            return .networkTimeout
+        default:
+            // 予期しないFirebaseエラー
+            if nsError.code >= 1000 {
+                return .criticalError(error, context: "Firebase-\(context)")
+            }
+            return .unexpectedError(error)
+        }
     }
 
     /// システムエラーを統一的にマッピング
