@@ -95,42 +95,29 @@ struct CalendarView: View {
 
             // 当月のノートがある日付を取得
             updateDatesWithNotes()
-
-            // 「今日」ボタンの通知を受け取る
-            NotificationCenter.default.addObserver(
-                forName: .moveToToday,
-                object: nil,
-                queue: .main
-            ) { _ in
-                Task { @MainActor in
-                    // 現在の月が今日の月と異なる場合は月を切り替える
-                    let today = Date()
-                    let calendar = Calendar.current
-                    let currentMonthValue = self.currentMonth.get(.month)
-                    let currentYearValue = self.currentMonth.get(.year)
-                    let todayMonthValue = today.get(.month)
-                    let todayYearValue = today.get(.year)
-
-                    if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
-                        // アニメーションなしで今日の月に直接移動
-                        self.currentMonth =
-                            calendar.date(from: DateComponents(year: todayYearValue, month: todayMonthValue, day: 1))
-                            ?? today
-                        self.onMonthChanged(self.currentMonth)
-
-                        // ノートの更新
-                        self.updateDatesWithNotes()
-                    }
-                }
-            }
         }
-        .onDisappear {
-            // 通知の登録解除
-            NotificationCenter.default.removeObserver(
-                self,
-                name: .moveToToday,
-                object: nil
-            )
+        // 「今日」ボタンの通知を受け取る（Combineの.onReceiveはViewの生存期間に紐づいて
+        // 自動的に購読解除されるため、ブロック型NotificationCenter APIのような
+        // 手動でのトークン管理・解除（addObserver/removeObserver）が不要になる）
+        .onReceive(NotificationCenter.default.publisher(for: .moveToToday)) { _ in
+            // 現在の月が今日の月と異なる場合は月を切り替える
+            let today = Date()
+            let calendar = Calendar.current
+            let currentMonthValue = currentMonth.get(.month)
+            let currentYearValue = currentMonth.get(.year)
+            let todayMonthValue = today.get(.month)
+            let todayYearValue = today.get(.year)
+
+            if currentMonthValue != todayMonthValue || currentYearValue != todayYearValue {
+                // アニメーションなしで今日の月に直接移動
+                currentMonth =
+                    calendar.date(from: DateComponents(year: todayYearValue, month: todayMonthValue, day: 1))
+                    ?? today
+                onMonthChanged(currentMonth)
+
+                // ノートの更新
+                updateDatesWithNotes()
+            }
         }
     }
 

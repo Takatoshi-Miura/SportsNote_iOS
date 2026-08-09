@@ -110,7 +110,12 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
         created_at: Date? = nil
     ) async -> Result<Void, SportsNoteError> {
         let newMeasuresID = measuresID ?? UUIDGenerator.generateID()
-        let newOrder = order ?? getDefaultOrderForTask(taskID: taskID)
+        let newOrder =
+            order
+            ?? RealmManager.shared.getNextOrder(
+                clazz: Measures.self,
+                predicate: NSPredicate(format: "taskID == %@", taskID)
+            )
         let newCreatedAt = created_at ?? Date()
         let isUpdate = measuresID != nil
 
@@ -134,21 +139,6 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
             ?? false
     }
 
-    /// 指定課題のデフォルトの並び順を取得する
-    /// - Parameter taskID: 課題ID
-    /// - Returns: 並び順
-    private func getDefaultOrderForTask(taskID: String) -> Int {
-        do {
-            let maxOrder = try RealmManager.shared.getMaxOrder(
-                clazz: Measures.self,
-                predicate: NSPredicate(format: "taskID == %@", taskID)
-            )
-            return (maxOrder ?? -1) + 1
-        } catch {
-            return 0
-        }
-    }
-
     /// 対策保存処理（プロトコル準拠）
     /// - Parameters:
     ///   - entity: 保存するMeasures
@@ -159,6 +149,15 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
         defer { isLoading = false }
 
         do {
+            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
+            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
+            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
+            if isUpdate,
+                let existingMeasures = try RealmManager.shared.getObjectById(id: entity.measuresID, type: Measures.self)
+            {
+                entity.userID = existingMeasures.userID
+            }
+
             // 1. Realm操作はMainActorで実行
             try RealmManager.shared.saveItem(entity)
 
@@ -253,7 +252,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
             }
             return .success(())
         } catch {
-            let sportsNoteError = ErrorMapper.mapFirebaseError(error, context: "MeasuresViewModel-syncEntityToFirebase")
+            let sportsNoteError = convertFirebaseSyncError(error, context: "MeasuresViewModel-syncEntityToFirebase")
             return .failure(sportsNoteError)
         }
     }

@@ -35,6 +35,23 @@ extension FirebaseSyncable {
         #endif
         return Network.isOnline() && UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
     }
+
+    /// Firebase同期処理で発生したエラーをSportsNoteErrorに変換する共通処理
+    /// FirebaseManager内部（saveDocument等）で既にErrorMapper.mapFirebaseErrorにより
+    /// 変換済みのSportsNoteErrorが伝播してきた場合は再変換せずそのまま返す。
+    /// SportsNoteErrorはCustomNSErrorに準拠していないため、NSErrorへブリッジされる際に
+    /// codeへenum宣言順のオーディナルが入り、再度mapFirebaseErrorにかけると
+    /// 全く異なるエラー種別に化けてしまう問題を防ぐ（issue #36）。
+    /// - Parameters:
+    ///   - error: 発生したエラー
+    ///   - context: エラーが発生したコンテキスト（メソッド名など）
+    /// - Returns: 変換されたSportsNoteError
+    func convertFirebaseSyncError(_ error: Error, context: String) -> SportsNoteError {
+        if let existingSportsNoteError = error as? SportsNoteError {
+            return existingSportsNoteError
+        }
+        return ErrorMapper.mapFirebaseError(error, context: context)
+    }
 }
 
 extension FirebaseSyncable where Self: BaseViewModelProtocol {
@@ -44,11 +61,13 @@ extension FirebaseSyncable where Self: BaseViewModelProtocol {
     ///   - entity: 同期するエンティティ
     ///   - isUpdate: 更新かどうか（デフォルトはfalse）
     func performBackgroundSync(_ entity: EntityType, isUpdate: Bool = false) {
-        Task {
+        let task = Task {
             let result = await syncEntityToFirebase(entity, isUpdate: isUpdate)
             if case .failure(let error) = result, currentError == nil {
                 showErrorAlert(error)
             }
         }
+        // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
+        BackgroundSyncTracker.shared.track(task)
     }
 }

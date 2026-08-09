@@ -6,6 +6,21 @@ struct RealmConstants {
     static let schemaVersion: UInt64 = 0
 }
 
+/// 論理削除フラグ(isDeleted)を持つRealmモデルの共通インターフェース
+/// issue #38でmarkAsDeleted用にSoftDeletableプロトコルが新設された場合は、
+/// 本プロトコルとの重複を解消し統合すること
+protocol SoftDeletable {
+    var isDeleted: Bool { get }
+}
+
+// Realmモデルに対してSoftDeletableプロトコルを適用する拡張
+extension Note: SoftDeletable {}
+extension Group: SoftDeletable {}
+extension TaskData: SoftDeletable {}
+extension Measures: SoftDeletable {}
+extension Memo: SoftDeletable {}
+extension Target: SoftDeletable {}
+
 /// Realmデータベースを管理するクラス
 @MainActor
 final class RealmManager {
@@ -194,18 +209,8 @@ final class RealmManager {
 
             // 削除されていないオブジェクトのみを返す
             if let object = realm.object(ofType: type, forPrimaryKey: id) {
-                // オブジェクトがisDeletedプロパティを持っているか確認
-                if let noteObj = object as? Note, noteObj.isDeleted {
-                    return nil
-                } else if let groupObj = object as? Group, groupObj.isDeleted {
-                    return nil
-                } else if let taskObj = object as? TaskData, taskObj.isDeleted {
-                    return nil
-                } else if let measuresObj = object as? Measures, measuresObj.isDeleted {
-                    return nil
-                } else if let memoObj = object as? Memo, memoObj.isDeleted {
-                    return nil
-                } else if let targetObj = object as? Target, targetObj.isDeleted {
+                // SoftDeletableに適合し、かつisDeleted == trueなら論理削除済みとみなす
+                if (object as? SoftDeletable)?.isDeleted == true {
                     return nil
                 }
                 return object
@@ -311,6 +316,20 @@ final class RealmManager {
         }
     }
 
+    /// 汎用的な次のorder値取得メソッド（新規レコードのorder初期値算出に使用）
+    /// - Parameters:
+    ///   - clazz: 取得するデータ型のクラス（"order"プロパティを持つ必要がある）
+    ///   - predicate: 絞り込み条件（省略時はisDeleted==falseのみで絞り込み）
+    /// - Returns: 次に割り当てるべきorder値（取得に失敗した場合は0）
+    func getNextOrder<T: Object>(clazz: T.Type, predicate: NSPredicate? = nil) -> Int {
+        do {
+            let maxOrder = try getMaxOrder(clazz: clazz, predicate: predicate)
+            return (maxOrder ?? -1) + 1
+        } catch {
+            return 0
+        }
+    }
+
     /// groupIDに合致する完了した課題を取得
     /// - Parameter groupID: groupID
     /// - Returns: 完了した課題のリスト
@@ -365,9 +384,21 @@ final class RealmManager {
             let realm = try getRealm()
 
             // フリーノートを取得
-            let freeNotes = Array(
-                realm.objects(Note.self)
-                    .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
+            // クエリが空の場合は無条件で取得し、非空の場合は内容が一致する場合のみ取得する
+            // （常に無条件で取得すると、検索結果が0件になるケースが存在しなくなってしまうため）
+            let freeNotes: [Note]
+            if query.isEmpty {
+                freeNotes = Array(
+                    realm.objects(Note.self)
+                        .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue))
+            } else {
+                freeNotes = Array(
+                    realm.objects(Note.self)
+                        .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue)
+                        .filter(
+                            "condition CONTAINS[c] %@ OR reflection CONTAINS[c] %@ OR purpose CONTAINS[c] %@ OR detail CONTAINS[c] %@ OR target CONTAINS[c] %@ OR consciousness CONTAINS[c] %@ OR result CONTAINS[c] %@",
+                            query, query, query, query, query, query, query))
+            }
 
             // 検索条件に一致するノートを取得（フリーノート以外）
             let queryNotes = Array(

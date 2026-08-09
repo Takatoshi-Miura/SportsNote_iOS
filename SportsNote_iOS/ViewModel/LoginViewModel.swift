@@ -235,9 +235,17 @@ class LoginViewModel: ObservableObject {
                 }
 
                 self.isLoggedIn = true
-                self.alertMessage = LocalizedStrings.accountCreated
-                self.showingAlert = true
-                onSuccess()
+
+                // アプリ全体を再初期化
+                Task {
+                    NotificationCenter.default.post(name: .shouldReinitializeApp, object: nil)
+
+                    // MainTabViewの再初期化完了を待ってから成功コールバック
+                    try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+                    self.alertMessage = LocalizedStrings.accountCreated
+                    self.showingAlert = true
+                    onSuccess()
+                }
             } else {
                 self.alertMessage = LocalizedStrings.createAccountFailed
                 self.showingAlert = true
