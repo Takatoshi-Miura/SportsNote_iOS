@@ -16,8 +16,9 @@ struct MenuView: View {
     init(isMenuOpen: Binding<Bool>, onDismiss: @escaping () -> Void) {
         self._isMenuOpen = isMenuOpen
         self.onDismiss = onDismiss
-        self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "不明"
-        self.appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? "不明"
+        self.appVersion =
+            Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? LocalizedStrings.unknown
+        self.appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? LocalizedStrings.unknown
     }
 
     /// メーラーを表示する処理

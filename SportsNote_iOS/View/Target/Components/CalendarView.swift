@@ -15,7 +15,15 @@ struct CalendarView: View {
     @State private var datesWithTournament: Set<Date> = []  // 大会ノートがある日付のセット
 
     // 曜日の配列（日曜始まり）
-    private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    private let weekdays = [
+        LocalizedStrings.weekdaySun,
+        LocalizedStrings.weekdayMon,
+        LocalizedStrings.weekdayTue,
+        LocalizedStrings.weekdayWed,
+        LocalizedStrings.weekdayThu,
+        LocalizedStrings.weekdayFri,
+        LocalizedStrings.weekdaySat,
+    ]
 
     init(
         selectedDate: Binding<Date?>, initialDate: Date = Date(), onDateSelected: @escaping (Date) -> Void,

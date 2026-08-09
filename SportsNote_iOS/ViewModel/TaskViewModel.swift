@@ -172,7 +172,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Returns: Result
     func addMeasureToTask(taskID: String, title: String) async -> Result<Void, SportsNoteError> {
         guard !title.isEmpty else {
-            let error = SportsNoteError.systemError("対策タイトルは必須項目です")
+            let error = SportsNoteError.systemError(LocalizedStrings.measuresTitleRequiredError)
             return .failure(error)
         }
 
@@ -201,7 +201,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ) async -> Result<Void, SportsNoteError> {
         // バリデーション
         guard !title.isEmpty else {
-            let error = SportsNoteError.systemError("タイトルは必須項目です")
+            let error = SportsNoteError.systemError(LocalizedStrings.taskTitleRequiredError)
             return .failure(error)
         }
 
@@ -209,7 +209,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         switch taskResult {
         case .success(let existingTask):
             guard let existingTask = existingTask else {
-                let error = SportsNoteError.systemError("Task not found: \(taskID)")
+                let error = SportsNoteError.systemError(String(format: LocalizedStrings.taskNotFoundError, taskID))
                 return .failure(error)
             }
 
@@ -236,7 +236,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         switch taskResult {
         case .success(let taskToUpdate):
             guard let taskToUpdate = taskToUpdate else {
-                let error = SportsNoteError.systemError("Task not found: \(taskID)")
+                let error = SportsNoteError.systemError(String(format: LocalizedStrings.taskNotFoundError, taskID))
                 return .failure(error)
             }
 

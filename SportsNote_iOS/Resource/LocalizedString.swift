@@ -109,6 +109,9 @@ struct LocalizedStrings {
     static let noTasksWorkedOn = "noTasksWorkedOn".localized
     static let addTask = "addTask".localized
     static let deleteTask = "deleteTask".localized
+    static let taskTitleRequiredError = "taskTitleRequiredError".localized
+    static let taskNotFoundError = "taskNotFoundError".localized
+    static let taskNotFoundLabel = "taskNotFoundLabel".localized
 
     // MARK: Measures
     static let measures = "measures".localized
@@ -117,6 +120,7 @@ struct LocalizedStrings {
     static let noNotesYet = "noNotesYet".localized
     static let noMeasures = "noMeasures".localized
     static let deleteMeasures = "deleteMeasures".localized
+    static let measuresTitleRequiredError = "measuresTitleRequiredError".localized
 
     // MARK: Note
     static let note = "note".localized
@@ -145,6 +149,9 @@ struct LocalizedStrings {
     static let deleteTaskFromNote = "deleteTaskFromNote".localized
     static let added = "added".localized
     static let defaltFreeNoteDetail = "defaltFreeNoteDetail".localized
+    static let cannotDeleteFreeNote = "cannotDeleteFreeNote".localized
+    static let noNotesInDay = "noNotesInDay".localized
+    static let unknownNoteType = "unknownNoteType".localized
 
     // MARK: Target
     static let target = "target".localized
@@ -155,6 +162,13 @@ struct LocalizedStrings {
     static let month = "month".localized
     static let notSet = "notSet".localized
     static let today = "today".localized
+    static let weekdaySun = "weekdaySun".localized
+    static let weekdayMon = "weekdayMon".localized
+    static let weekdayTue = "weekdayTue".localized
+    static let weekdayWed = "weekdayWed".localized
+    static let weekdayThu = "weekdayThu".localized
+    static let weekdayFri = "weekdayFri".localized
+    static let weekdaySat = "weekdaySat".localized
 
     // MARK: Setting
     static let data = "data".localized
@@ -170,6 +184,7 @@ struct LocalizedStrings {
     static let termsOfServiceMessage = "TermsOfServiceMessage".localized
     static let checkTermsOfService = "checkTermsOfService".localized
     static let agree = "agree".localized
+    static let unknown = "unknown".localized
 
     // MARK: Debug
     static let debugSectionTitle = "debugSectionTitle".localized
