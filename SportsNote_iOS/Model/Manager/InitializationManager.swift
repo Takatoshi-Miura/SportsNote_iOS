@@ -13,6 +13,10 @@ final class InitializationManager {
     /// - Parameter isLogin: ログイン済みかどうか
     func initializeApp(isLogin: Bool = false) async {
         let isFirstLaunch = UserDefaultsManager.get(key: UserDefaultsManager.Keys.firstLaunch, defaultValue: true)
+        // 旧アプリのaddress/passwordは、直後のclearAll()で削除されてしまう前に退避しておく
+        let legacyAddress = UserDefaults.standard.string(forKey: UserDefaultsManager.Keys.address)
+        let legacyPassword = UserDefaults.standard.string(forKey: UserDefaultsManager.Keys.password)
+
         if isFirstLaunch {
             UserDefaultsManager.clearAll()
             UserDefaultsManager.resetUserInfo()
@@ -23,7 +27,7 @@ final class InitializationManager {
         }
 
         // 旧アプリからのアップデート時にisLoginフラグを補完
-        migrateLoginStateIfNeeded()
+        migrateLoginStateIfNeeded(address: legacyAddress, password: legacyPassword)
 
         // CrashlyticsにuserID情報を付加
         if let userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: nil) as String? {
@@ -131,11 +135,18 @@ final class InitializationManager {
     /// 旧アプリからのアップデート時にisLoginフラグを補完
     /// 旧アプリは address + password の存在でログイン判定していたため、
     /// これらが存在する場合は isLogin = true をセットする
-    private func migrateLoginStateIfNeeded() {
+    /// - Note: `clearAll()`実行後は`UserDefaults.standard`から旧address/passwordを読み取れなくなるため、
+    ///   呼び出し側（`initializeApp()`）で`clearAll()`実行前に退避した値を引数で受け取る（テスト容易性のためinternal）
+    /// - Parameters:
+    ///   - address: `clearAll()`実行前に退避した旧アプリのaddress
+    ///   - password: `clearAll()`実行前に退避した旧アプリのpassword
+    func migrateLoginStateIfNeeded(address: String?, password: String?) {
         let isLogin = UserDefaultsManager.get(key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
-        let address = UserDefaultsManager.get(key: UserDefaultsManager.Keys.address, defaultValue: "")
-        let password = UserDefaultsManager.get(key: UserDefaultsManager.Keys.password, defaultValue: "")
-        if !isLogin, !address.isEmpty, !password.isEmpty {
+        if !isLogin,
+            let address = address,
+            let password = password,
+            !address.isEmpty, !password.isEmpty
+        {
             UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
         }
     }
