@@ -394,8 +394,11 @@ struct TaskViewModelTests {
 
     // MARK: - associateTasksWithMemosテスト（issue #65）
 
-    @Test("associateTasksWithMemos - measuresIDが一致する課題とメモがペアになる")
+    @Test("associateTasksWithMemos - measuresIDが指す対策のtaskIDで課題とメモがペアになる")
     func associateTasksWithMemos_matchesTaskByMeasuresID() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         let task = TaskListData(
             taskID: "task-1",
@@ -409,6 +412,10 @@ struct TaskViewModelTests {
             isComplete: false
         )
         viewModel.taskListData = [task]
+
+        try? manager.saveItem(
+            Measures(measuresID: "measures-1", taskID: "task-1", title: "Test Measures", order: 0, created_at: Date())
+        )
 
         let memo = Memo(
             memoID: "memo-1",
@@ -424,10 +431,15 @@ struct TaskViewModelTests {
         #expect(pairs.first?.task.taskID == "task-1")
         #expect(pairs.first?.memo.memoID == "memo-1")
         #expect(pairs.first?.memo.detail == "振り返り内容")
+
+        manager.clearAll()
     }
 
-    @Test("associateTasksWithMemos - measuresIDが一致しない場合はペアに含まれない")
+    @Test("associateTasksWithMemos - measuresIDが指す対策のtaskIDがtaskListDataに存在しない場合はペアに含まれない")
     func associateTasksWithMemos_noMatchIsExcluded() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         let task = TaskListData(
             taskID: "task-1",
@@ -441,6 +453,12 @@ struct TaskViewModelTests {
             isComplete: false
         )
         viewModel.taskListData = [task]
+
+        // "measures-unmatched"はtask-1ではなく別課題(task-999)に属する対策
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-unmatched", taskID: "task-999", title: "Other", order: 0, created_at: Date())
+        )
 
         let memo = Memo(
             memoID: "memo-1",
@@ -453,10 +471,59 @@ struct TaskViewModelTests {
         let pairs = viewModel.associateTasksWithMemos(memos: [memo])
 
         #expect(pairs.isEmpty)
+
+        manager.clearAll()
+    }
+
+    @Test("associateTasksWithMemos - 対策の並び替えでmeasuresIDが変わっても、taskIDで同一課題として突合される")
+    func associateTasksWithMemos_matchesAfterMeasuresReorder() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let viewModel = TaskViewModel()
+        // taskListData.measuresIDは並び替え後の現在の最優先対策(measures-B)を指す
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-b",
+            measures: "Measures B",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [task]
+
+        // Measures A・Bともtask-1に属する（並び替え後の優先度はB=0, A=1）
+        try? manager.saveItem(
+            Measures(measuresID: "measures-a", taskID: "task-1", title: "Measures A", order: 1, created_at: Date()))
+        try? manager.saveItem(
+            Measures(measuresID: "measures-b", taskID: "task-1", title: "Measures B", order: 0, created_at: Date()))
+
+        // Memoは並び替え前の最優先対策(measures-a)に対して作成されたもの
+        let memo = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-a",
+            noteID: "note-1",
+            detail: "並び替え前の振り返り",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo])
+
+        #expect(pairs.count == 1)
+        #expect(pairs.first?.task.taskID == "task-1")
+        #expect(pairs.first?.memo.memoID == "memo-1")
+
+        manager.clearAll()
     }
 
     @Test("associateTasksWithMemos - 同一課題に複数メモが一致する場合はtaskIDで重複排除される")
     func associateTasksWithMemos_dedupesBySameTaskID() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         let task = TaskListData(
             taskID: "task-1",
@@ -470,6 +537,10 @@ struct TaskViewModelTests {
             isComplete: false
         )
         viewModel.taskListData = [task]
+
+        try? manager.saveItem(
+            Measures(measuresID: "measures-1", taskID: "task-1", title: "Test Measures", order: 0, created_at: Date())
+        )
 
         let memo1 = Memo(
             memoID: "memo-1",
@@ -493,10 +564,15 @@ struct TaskViewModelTests {
         // 重複排除は後勝ち（辞書の上書き）であることを固定化する（クロスレビュー指摘反映）
         #expect(pairs.first?.memo.memoID == "memo-2")
         #expect(pairs.first?.memo.detail == "2件目")
+
+        manager.clearAll()
     }
 
     @Test("associateTasksWithMemos - 複数課題・複数メモで正しくペアが構築される")
     func associateTasksWithMemos_multipleTasksAndMemos() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         let task1 = TaskListData(
             taskID: "task-1",
@@ -522,6 +598,11 @@ struct TaskViewModelTests {
         )
         viewModel.taskListData = [task1, task2]
 
+        try? manager.saveItem(
+            Measures(measuresID: "measures-1", taskID: "task-1", title: "Measures 1", order: 0, created_at: Date()))
+        try? manager.saveItem(
+            Measures(measuresID: "measures-2", taskID: "task-2", title: "Measures 2", order: 0, created_at: Date()))
+
         let memo1 = Memo(
             memoID: "memo-1",
             measuresID: "measures-1",
@@ -541,6 +622,8 @@ struct TaskViewModelTests {
 
         #expect(pairs.count == 2)
         #expect(Set(pairs.map { $0.task.taskID }) == Set(["task-1", "task-2"]))
+
+        manager.clearAll()
     }
 
     // MARK: - エラーハンドリングテスト
@@ -849,6 +932,61 @@ struct TaskViewModelTests {
         let updatedTask = try? manager.getObjectById(id: "t1", type: TaskData.self)
         #expect(updatedTask?.title == "Updated")
         #expect(updatedTask?.cause == "Updated Cause")
+
+        manager.clearAll()
+    }
+
+    // MARK: - グループ変更時のorder衝突回帰テスト（issue #106）
+
+    @Test("updateTask - グループを変更した場合、移動先グループ内の最大order+1に再採番される")
+    func updateTask_groupChanged_reassignsOrderToAvoidCollision() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // Group1にTask A（order=0）
+        let taskA = TaskData(
+            taskID: "task-a", title: "Task A", cause: "", groupID: "group1", order: 0, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(taskA)
+
+        // Group2にTask X（order=0）・Task Y（order=1）
+        let taskX = TaskData(
+            taskID: "task-x", title: "Task X", cause: "", groupID: "group2", order: 0, isComplete: false,
+            created_at: Date())
+        let taskY = TaskData(
+            taskID: "task-y", title: "Task Y", cause: "", groupID: "group2", order: 1, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(taskX)
+        try? manager.saveItem(taskY)
+
+        // Task AをGroup2に変更して保存
+        _ = await viewModel.updateTask(taskID: "task-a", title: "Task A", cause: "", groupID: "group2")
+
+        let updatedTaskA = try? manager.getObjectById(id: "task-a", type: TaskData.self)
+        #expect(updatedTaskA?.groupID == "group2")
+        // Group2内の既存最大order(1)+1に採番され、Task X・Task Yと衝突しないこと
+        #expect(updatedTaskA?.order == 2)
+
+        manager.clearAll()
+    }
+
+    @Test("updateTask - グループを変更しない場合、orderは維持される")
+    func updateTask_groupUnchanged_preservesOrder() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskData(
+            taskID: "task-a", title: "Task A", cause: "", groupID: "group1", order: 3, isComplete: false,
+            created_at: Date())
+        try? manager.saveItem(task)
+
+        // グループを変更せずタイトルのみ更新
+        _ = await viewModel.updateTask(taskID: "task-a", title: "Updated", cause: "", groupID: "group1")
+
+        let updatedTask = try? manager.getObjectById(id: "task-a", type: TaskData.self)
+        #expect(updatedTask?.order == 3)
 
         manager.clearAll()
     }

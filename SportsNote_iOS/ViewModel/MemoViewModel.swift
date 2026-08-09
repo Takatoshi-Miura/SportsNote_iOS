@@ -190,6 +190,20 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         var measuresMemoList = [MeasuresMemo]()
 
         for memo in memos {
+            // noteIDが空文字の場合（旧アプリでノート未紐付けだったメモ）は
+            // Noteに依存せず、created_atをフォールバック日付として一覧に含める
+            guard !memo.noteID.isEmpty else {
+                let measuresMemo = MeasuresMemo(
+                    memoID: memo.memoID,
+                    measuresID: memo.measuresID,
+                    noteID: memo.noteID,
+                    detail: memo.detail,
+                    date: memo.created_at
+                )
+                measuresMemoList.append(measuresMemo)
+                continue
+            }
+
             do {
                 // Noteデータを取得
                 if let note = try RealmManager.shared.getObjectById(id: memo.noteID, type: Note.self) {

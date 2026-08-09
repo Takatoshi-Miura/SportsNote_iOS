@@ -345,12 +345,24 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ) -> TaskData {
         if let existingTask = existingTask {
             // 更新の場合: 既存データをベースに新しいTaskDataを作成
+            // groupIDが変更された場合は移動先グループ内の最大order+1を採番し、
+            // 既存課題とのorder衝突を防ぐ（groupIDが変わらない通常の更新ではorderを維持する）
+            let order: Int
+            if groupID != existingTask.groupID {
+                order = RealmManager.shared.getNextOrder(
+                    clazz: TaskData.self,
+                    predicate: NSPredicate(format: "groupID == %@", groupID)
+                )
+            } else {
+                order = existingTask.order
+            }
+
             return TaskData(
                 taskID: existingTask.taskID,
                 title: title,
                 cause: cause,
                 groupID: groupID,
-                order: existingTask.order,
+                order: order,
                 isComplete: overrideIsComplete ?? existingTask.isComplete,
                 created_at: existingTask.created_at
             )
@@ -437,7 +449,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     func associateTasksWithMemos(memos: [Memo]) -> [(task: TaskListData, memo: Memo)] {
         var result: [String: (task: TaskListData, memo: Memo)] = [:]
         for memo in memos {
-            if let task = taskListData.first(where: { $0.measuresID == memo.measuresID }) {
+            // memo.measuresIDが指す対策のtaskIDを解決してから突合する。
+            // taskListData.measuresIDは常に現在の最優先対策のIDのため、対策の並び替えで
+            // 変わった場合でもtaskIDで突合すれば同一課題として認識できる（issue #109）
+            guard let measures = try? RealmManager.shared.getObjectById(id: memo.measuresID, type: Measures.self)
+            else {
+                continue
+            }
+            if let task = taskListData.first(where: { $0.taskID == measures.taskID }) {
                 result[task.taskID] = (task: task, memo: memo)
             }
         }

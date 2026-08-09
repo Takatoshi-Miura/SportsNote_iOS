@@ -40,7 +40,7 @@ struct AddGroupView: View {
                                 }
                             }
                         }
-                        .disabled(title.isEmpty)
+                        .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
         }

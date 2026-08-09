@@ -90,6 +90,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: noteID
     func loadNote(id: String) {
         Task {
+            isLoading = true
+            defer { isLoading = false }
+
             let result = await fetchById(id: id)
             switch result {
             case .success(let note):
@@ -367,10 +370,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - taskReflections: タスクの振り返り（キー: TaskListData, 値: 振り返りテキスト）
     private func updateTaskReflections(noteID: String, taskReflections: [TaskListData: String]) {
         for (task, reflectionText) in taskReflections {
-            if reflectionText.isEmpty { continue }
-
             let memo = Memo()
             var existingCreatedAt: Date?
+            var isExistingMemo = false
 
             // memoIDの決定ロジック:
             // 1. task.memoIDがあればそれを使用(既存メモ編集)
@@ -379,15 +381,31 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             // 4. なければ新規ID生成(新規作成)
             if let existingMemoID = task.memoID {
                 memo.memoID = existingMemoID
+                isExistingMemo = true
                 // 既存メモをRealmから取得し、created_atを引き継ぐ
                 existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
-            } else if let existingMemo = realmManager.findMemo(noteID: noteID, measuresID: task.measuresID) {
-                memo.memoID = existingMemo.memoID  // 既存IDを使用
-                // 検索でヒットした既存メモのcreated_atを引き継ぐ
-                existingCreatedAt = existingMemo.created_at
             } else {
-                memo.memoID = UUIDGenerator.generateID()  // 新規生成
+                let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
+                // task.measuresID（現在の最優先対策のID）だけでなく、taskIDに紐づく
+                // 全対策のmeasuresIDのいずれかで検索する。対策の並び替えで最優先対策が
+                // 変わった後も、既存メモを同一課題のものとして正しく検出するため（issue #109）
+                let taskMeasuresIDs = Set(
+                    realmManager.getMeasuresByTaskID(taskID: task.taskID).map { $0.measuresID })
+                if let existingMemo = existingMemos.first(where: {
+                    taskMeasuresIDs.contains($0.measuresID)
+                }) {
+                    memo.memoID = existingMemo.memoID  // 既存IDを使用
+                    isExistingMemo = true
+                    // 検索でヒットした既存メモのcreated_atを引き継ぐ
+                    existingCreatedAt = existingMemo.created_at
+                } else {
+                    memo.memoID = UUIDGenerator.generateID()  // 新規生成
+                }
             }
+
+            // 既存メモがない状態で空文字のままの場合は新規メモを作成しない。
+            // 既存メモを空文字に編集するケースは保存対象とする（issue #105）
+            if !isExistingMemo && reflectionText.isEmpty { continue }
 
             memo.measuresID = task.measuresID
             memo.noteID = noteID
