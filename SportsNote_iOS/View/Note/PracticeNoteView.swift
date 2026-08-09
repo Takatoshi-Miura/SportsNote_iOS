@@ -64,7 +64,8 @@ struct PracticeNoteView: View {
                     Section(header: Text(LocalizedStrings.taskReflection)) {
                         TaskListSection(
                             taskReflections: $taskReflections,
-                            unaddedTasks: taskViewModel.getUnaddedTasks(taskReflections: taskReflections)
+                            unaddedTasks: taskViewModel.getUnaddedTasks(taskReflections: taskReflections),
+                            noteID: noteID
                         )
                         .onChange(of: taskReflections) { _ in
                             updateNote()

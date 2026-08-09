@@ -381,17 +381,12 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 memo.memoID = existingMemoID
                 // 既存メモをRealmから取得し、created_atを引き継ぐ
                 existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
+            } else if let existingMemo = realmManager.findMemo(noteID: noteID, measuresID: task.measuresID) {
+                memo.memoID = existingMemo.memoID  // 既存IDを使用
+                // 検索でヒットした既存メモのcreated_atを引き継ぐ
+                existingCreatedAt = existingMemo.created_at
             } else {
-                let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
-                if let existingMemo = existingMemos.first(where: {
-                    $0.measuresID == task.measuresID
-                }) {
-                    memo.memoID = existingMemo.memoID  // 既存IDを使用
-                    // 検索でヒットした既存メモのcreated_atを引き継ぐ
-                    existingCreatedAt = existingMemo.created_at
-                } else {
-                    memo.memoID = UUIDGenerator.generateID()  // 新規生成
-                }
+                memo.memoID = UUIDGenerator.generateID()  // 新規生成
             }
 
             memo.measuresID = task.measuresID
