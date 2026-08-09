@@ -178,8 +178,17 @@ final class MigrationManager {
         // measuresData から Measures + Memo を生成
         guard let measuresData = data["measuresData"] as? [String: [[String: Int]]] else { return }
 
-        var measuresOrder = 0
-        for (measuresTitle, effectivenessArray) in measuresData {
+        // measuresPriority（旧データの最優先対策タイトル）を order=0 に固定し、
+        // 残りは決定的な順序（sorted）で採番する（Dictionary列挙順の不定性に依存しないため。issue #71）
+        let measuresPriority = data["measuresPriority"] as? String
+        let orderedTitles = MeasuresOrderResolver.resolveOrder(
+            measuresTitles: Array(measuresData.keys),
+            measuresPriority: measuresPriority
+        )
+
+        for (measuresOrder, measuresTitle) in orderedTitles.enumerated() {
+            guard let effectivenessArray = measuresData[measuresTitle] else { continue }
+
             let measures = Measures()
             measures.measuresID = UUIDGenerator.generateID()
             measures.userID = userID
@@ -192,7 +201,6 @@ final class MigrationManager {
 
             try RealmManager.shared.saveItem(measures)
             try await FirebaseManager.shared.saveMeasures(measures: measures)
-            measuresOrder += 1
 
             // 有効性コメントを Memo に変換
             // effectivenessArray: [ ["コメント文字列": ノートID(Int)], ... ]
