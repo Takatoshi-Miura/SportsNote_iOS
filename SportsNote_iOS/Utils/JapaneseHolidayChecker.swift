@@ -11,7 +11,7 @@ class JapaneseHolidayChecker {
         let day = jpCalendar.component(.day, from: date)
 
         // 固定の祝日をチェック
-        if isFixedHoliday(month: month, day: day) {
+        if isFixedHoliday(year: year, month: month, day: day) {
             return true
         }
 
@@ -38,15 +38,15 @@ class JapaneseHolidayChecker {
         return false
     }
 
-    // 固定祝日（毎年同じ月日の祝日）
-    private static func isFixedHoliday(month: Int, day: Int) -> Bool {
+    // 固定祝日（毎年同じ月日の祝日、制定年を考慮する）
+    private static func isFixedHoliday(year: Int, month: Int, day: Int) -> Bool {
         switch (month, day) {
         case (1, 1):  // 元日
             return true
         case (2, 11):  // 建国記念の日
             return true
-        case (2, 23):  // 天皇誕生日
-            return true
+        case (2, 23):  // 天皇誕生日（今上天皇即位の2020年以降）
+            return year >= 2020
         case (4, 29):  // 昭和の日
             return true
         case (5, 3):  // 憲法記念日
@@ -55,12 +55,14 @@ class JapaneseHolidayChecker {
             return true
         case (5, 5):  // こどもの日
             return true
-        case (8, 11):  // 山の日
-            return true
+        case (8, 11):  // 山の日（2016年制定）
+            return year >= 2016
         case (11, 3):  // 文化の日
             return true
         case (11, 23):  // 勤労感謝の日
             return true
+        case (12, 23):  // 天皇誕生日（平成期、1989年〜2018年）
+            return year >= 1989 && year <= 2018
         default:
             return false
         }
@@ -133,6 +135,7 @@ class JapaneseHolidayChecker {
         if let yesterday = jpCalendar.date(byAdding: .day, value: -1, to: date) {
             let isYesterdayHoliday =
                 isFixedHoliday(
+                    year: jpCalendar.component(.year, from: yesterday),
                     month: jpCalendar.component(.month, from: yesterday),
                     day: jpCalendar.component(.day, from: yesterday)
                 )
@@ -175,7 +178,7 @@ class JapaneseHolidayChecker {
         let month = jpCalendar.component(.month, from: date)
         let day = jpCalendar.component(.day, from: date)
 
-        return isFixedHoliday(month: month, day: day)
+        return isFixedHoliday(year: year, month: month, day: day)
             || isHappyMondayHoliday(year: year, month: month, day: day)
             || isEquinoxDay(year: year, month: month, day: day)
     }
