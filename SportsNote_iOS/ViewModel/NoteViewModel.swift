@@ -522,7 +522,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             if let note = notes.first(where: { $0.noteID == id }),
                 note.noteType == NoteType.free.rawValue
             {
-                return .failure(.systemError("フリーノートは削除できません"))
+                return .failure(.systemError(LocalizedStrings.cannotDeleteFreeNote))
             }
 
             // 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
