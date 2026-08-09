@@ -48,7 +48,7 @@ struct SportsNote_iOSApp: App {
                         isInitialized = false
                         Task {
                             // LoginViewModelの処理完了を待ってからRealmを再初期化
-                            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+                            try? await Task.sleep(nanoseconds: 300_000_000)  // 0.3秒
                             do {
                                 try RealmManager.shared.initRealm()
                             } catch {
@@ -72,7 +72,7 @@ struct SportsNote_iOSApp: App {
     /// 利用規約の同意状態をチェックし、未同意の場合はダイアログを表示
     private func checkAndShowTermsDialog() {
         if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
-            TermsManager.showDialog()
+            TermsViewModel.showDialog()
         }
     }
 
