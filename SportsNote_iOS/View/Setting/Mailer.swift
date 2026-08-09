@@ -127,10 +127,9 @@ class Mailer: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
     }
 
     /// mailto: URLスキーム文字列を作成
-    private func createMailtoURLString(email: String, subject: String, body: String) -> String? {
+    func createMailtoURLString(email: String, subject: String, body: String) -> String? {
         return
             "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
     }
 
     /// メーラーが見つからない場合のアラートを表示
