@@ -737,6 +737,141 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - updateTaskReflections（課題振り返りメモ）の対策付け替え回帰テスト（issue #160）
+
+    @Test("updateTaskReflections - 対策の並び替え後、既存メモのmeasuresIDが現在の最優先対策IDに上書きされず維持される（noteID+measuresID検索経由）")
+    func updateTaskReflections_existingMemoFoundAfterMeasuresReorder_preservesOriginalMeasuresID() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 既存メモは並び替え前の最優先対策(measures-old)に対して作成されたもの
+        let existingMemo = Memo(
+            memoID: "memo-reorder-2",
+            measuresID: "measures-old-2",
+            noteID: "note-reorder-2",
+            detail: "並び替え前の振り返り",
+            created_at: Date().addingTimeInterval(-3600)
+        )
+        try? manager.saveItem(existingMemo)
+
+        // measures-old-2・measures-new-2とも同じtask-reorder-2に属する対策
+        // （並び替え後はmeasures-new-2が最優先=order0になった状態）
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-old-2", taskID: "task-reorder-2", title: "Old", order: 1,
+                created_at: Date()))
+        try? manager.saveItem(
+            Measures(
+                measuresID: "measures-new-2", taskID: "task-reorder-2", title: "New", order: 0,
+                created_at: Date()))
+
+        let viewModel = NoteViewModel()
+        // taskListDataのmeasuresIDは並び替え後の現在の最優先対策(measures-new-2)を指す
+        let task = TaskListData(
+            taskID: "task-reorder-2",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-new-2",
+            measures: "New",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-reorder-2",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "並び替え後の振り返り"]
+        )
+
+        // 既存メモのmeasuresIDが並び替え後の最優先対策(measures-new-2)に上書きされず、
+        // 元々紐づいていた対策(measures-old-2)のまま維持されていること
+        let updatedMemo = try? manager.getObjectById(id: "memo-reorder-2", type: Memo.self)
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.measuresID == "measures-old-2")
+        #expect(updatedMemo?.detail == "並び替え後の振り返り")
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - task.memoIDによる既存メモ編集時も、対策の並び替え後にmeasuresIDが上書きされず維持される")
+    func updateTaskReflections_existingMemoWithMemoID_preservesOriginalMeasuresIDAfterReorder() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 既存メモは並び替え前の最優先対策(measures-old-3)に対して作成されたもの
+        let existingMemo = Memo(
+            memoID: "memo-reorder-3",
+            measuresID: "measures-old-3",
+            noteID: "note-reorder-3",
+            detail: "並び替え前の振り返り",
+            created_at: Date().addingTimeInterval(-3600)
+        )
+        try? manager.saveItem(existingMemo)
+
+        let viewModel = NoteViewModel()
+        // task.memoIDを直接指定するケース（並び替え後の最優先対策はmeasures-new-3）
+        let task = TaskListData(
+            taskID: "task-reorder-3",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-new-3",
+            measures: "New",
+            memoID: "memo-reorder-3",
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-reorder-3",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "並び替え後の振り返り"]
+        )
+
+        let updatedMemo = try? manager.getObjectById(id: "memo-reorder-3", type: Memo.self)
+        #expect(updatedMemo != nil)
+        #expect(updatedMemo?.measuresID == "measures-old-3")
+        #expect(updatedMemo?.detail == "並び替え後の振り返り")
+
+        manager.clearAll()
+    }
+
+    @Test("updateTaskReflections - 新規メモ作成時は引き続き現在の最優先対策IDが正しく設定される（回帰確認）")
+    func updateTaskReflections_newMemo_usesCurrentMostPriorityMeasuresID() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let viewModel = NoteViewModel()
+        let task = TaskListData(
+            taskID: "task-reorder-4",
+            groupID: "group-1",
+            groupColor: .blue,
+            title: "Test Task",
+            measuresID: "measures-new-4",
+            measures: "New",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+
+        viewModel.savePracticeNoteWithReflections(
+            noteID: "note-reorder-4",
+            purpose: "Practice Purpose",
+            detail: "Practice Detail",
+            taskReflections: [task: "新規の振り返り"]
+        )
+
+        let memos = manager.getMemosByNoteID(noteID: "note-reorder-4")
+        #expect(memos.count == 1)
+        #expect(memos.first?.measuresID == "measures-new-4")
+
+        manager.clearAll()
+    }
+
     // MARK: - updateTaskReflections（課題振り返りメモ）の空文字編集テスト（issue #105）
 
     @Test("updateTaskReflections - 既存メモを空文字に編集した場合、Realm上のdetailが空文字に更新される")

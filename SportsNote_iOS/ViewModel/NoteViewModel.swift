@@ -354,6 +354,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         for (task, reflectionText) in taskReflections {
             let memo = Memo()
             var existingCreatedAt: Date?
+            // 既存メモが元々紐づいていた対策ID。対策の優先度変更後にノートを保存しても、
+            // 既存メモの紐付け対策を上書きしないため（issue #160）
+            var existingMeasuresID: String?
             var isExistingMemo = false
 
             // memoIDの決定ロジック:
@@ -364,8 +367,10 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             if let existingMemoID = task.memoID {
                 memo.memoID = existingMemoID
                 isExistingMemo = true
-                // 既存メモをRealmから取得し、created_atを引き継ぐ
-                existingCreatedAt = (try? realmManager.getObjectById(id: existingMemoID, type: Memo.self))?.created_at
+                // 既存メモをRealmから取得し、created_at・measuresIDを引き継ぐ
+                let existingMemo = try? realmManager.getObjectById(id: existingMemoID, type: Memo.self)
+                existingCreatedAt = existingMemo?.created_at
+                existingMeasuresID = existingMemo?.measuresID
             } else {
                 let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
                 // task.measuresID（現在の最優先対策のID）だけでなく、taskIDに紐づく
@@ -378,8 +383,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 }) {
                     memo.memoID = existingMemo.memoID  // 既存IDを使用
                     isExistingMemo = true
-                    // 検索でヒットした既存メモのcreated_atを引き継ぐ
+                    // 検索でヒットした既存メモのcreated_at・measuresIDを引き継ぐ
                     existingCreatedAt = existingMemo.created_at
+                    existingMeasuresID = existingMemo.measuresID
                 } else {
                     memo.memoID = UUIDGenerator.generateID()  // 新規生成
                 }
@@ -389,7 +395,9 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             // 既存メモを空文字に編集するケースは保存対象とする（issue #105）
             if !isExistingMemo && reflectionText.isEmpty { continue }
 
-            memo.measuresID = task.measuresID
+            // 既存メモを更新する場合は元々紐づいていた対策IDを維持し、
+            // 新規作成時のみ現在の最優先対策IDを採用する（issue #160）
+            memo.measuresID = existingMeasuresID ?? task.measuresID
             memo.noteID = noteID
             memo.detail = reflectionText
             // 既存メモを更新する場合はcreated_atを維持し、新規作成時のみ現在時刻とする
