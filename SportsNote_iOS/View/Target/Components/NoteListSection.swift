@@ -49,9 +49,8 @@ struct NoteListSection: View {
 
     @ViewBuilder
     private func noteDestination(for note: Note) -> some View {
-        switch NoteType(rawValue: note.noteType) {
-        case .free:
-            FreeNoteView(noteID: note.noteID)
+        if let noteType = NoteType(rawValue: note.noteType) {
+            noteDestinationView(noteType: noteType, noteID: note.noteID)
                 .onDisappear {
                     // 詳細画面から戻ったときに日付で再フィルタリング
                     NotificationCenter.default.post(
@@ -60,27 +59,7 @@ struct NoteListSection: View {
                         userInfo: ["date": date]
                     )
                 }
-        case .practice:
-            PracticeNoteView(noteID: note.noteID)
-                .onDisappear {
-                    // 詳細画面から戻ったときに日付で再フィルタリング
-                    NotificationCenter.default.post(
-                        name: .refreshSelectedDateNotes,
-                        object: nil,
-                        userInfo: ["date": date]
-                    )
-                }
-        case .tournament:
-            TournamentNoteView(noteID: note.noteID)
-                .onDisappear {
-                    // 詳細画面から戻ったときに日付で再フィルタリング
-                    NotificationCenter.default.post(
-                        name: .refreshSelectedDateNotes,
-                        object: nil,
-                        userInfo: ["date": date]
-                    )
-                }
-        case .none:
+        } else {
             Text(LocalizedStrings.unknownNoteType)
         }
     }

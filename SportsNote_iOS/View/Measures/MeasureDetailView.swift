@@ -76,23 +76,14 @@ struct MeasureDetailView: View {
                         .foregroundColor(.red)
                 }
         )
-        .alert(isPresented: $showDeleteConfirmation) {
-            Alert(
-                title: Text(LocalizedStrings.delete),
-                message: Text(String(format: LocalizedStrings.deleteMeasures)),
-                primaryButton: .destructive(Text(LocalizedStrings.delete)) {
-                    Task {
-                        let result = await measuresViewModel.delete(id: measure.measuresID)
-                        if case .failure(let error) = result {
-                            measuresViewModel.showErrorAlert(error)
-                        } else {
-                            dismiss()
-                        }
-                    }
-                },
-                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
-            )
-        }
+        .deleteConfirmationAlert(
+            isPresented: $showDeleteConfirmation,
+            title: LocalizedStrings.delete,
+            message: String(format: LocalizedStrings.deleteMeasures),
+            onDelete: { await measuresViewModel.delete(id: measure.measuresID) },
+            onFailure: { measuresViewModel.showErrorAlert($0) },
+            onSuccess: { dismiss() }
+        )
         .errorAlert(
             currentError: $measuresViewModel.currentError,
             showingAlert: $measuresViewModel.showingErrorAlert
@@ -108,14 +99,7 @@ struct MeasureDetailView: View {
     @ViewBuilder
     private func destinationView(for noteID: String) -> some View {
         if let noteType = noteViewModel.getNoteType(noteID: noteID) {
-            switch noteType {
-            case .free:
-                FreeNoteView(noteID: noteID)
-            case .practice:
-                PracticeNoteView(noteID: noteID)
-            case .tournament:
-                TournamentNoteView(noteID: noteID)
-            }
+            noteDestinationView(noteType: noteType, noteID: noteID)
         } else {
             Text(LocalizedStrings.noteNotFound)
         }

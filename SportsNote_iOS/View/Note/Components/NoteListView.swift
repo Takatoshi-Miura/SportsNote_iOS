@@ -40,21 +40,8 @@ struct NoteListView: View {
             // noteIDから該当するNoteを検索して適切な画面を表示
             if let note = viewModel.notes.first(where: { $0.noteID == noteID }) {
                 let noteType = NoteType(rawValue: note.noteType) ?? .free
-                destinationView(noteType: noteType, noteID: noteID)
+                noteDestinationView(noteType: noteType, noteID: noteID)
             }
-        }
-    }
-
-    /// ノート種別に応じた遷移先Viewを返す
-    @ViewBuilder
-    private func destinationView(noteType: NoteType, noteID: String) -> some View {
-        switch noteType {
-        case .free:
-            FreeNoteView(noteID: noteID)
-        case .practice:
-            PracticeNoteView(noteID: noteID)
-        case .tournament:
-            TournamentNoteView(noteID: noteID)
         }
     }
 }

@@ -95,25 +95,17 @@ struct PracticeNoteView: View {
                 }
             }
         }
-        .alert(isPresented: $showingDeleteConfirmation) {
-            Alert(
-                title: Text(LocalizedStrings.deleteNote),
-                message: Text(LocalizedStrings.deleteNoteConfirmation),
-                primaryButton: .destructive(Text(LocalizedStrings.delete)) {
-                    if let note = viewModel.selectedNote {
-                        Task {
-                            let result = await viewModel.delete(id: note.noteID)
-                            if case .failure(let error) = result {
-                                viewModel.showErrorAlert(error)
-                            } else {
-                                dismiss()
-                            }
-                        }
-                    }
-                },
-                secondaryButton: .cancel(Text(LocalizedStrings.cancel))
-            )
-        }
+        .deleteConfirmationAlert(
+            isPresented: $showingDeleteConfirmation,
+            title: LocalizedStrings.deleteNote,
+            message: LocalizedStrings.deleteNoteConfirmation,
+            onDelete: {
+                guard let note = viewModel.selectedNote else { return nil }
+                return await viewModel.delete(id: note.noteID)
+            },
+            onFailure: { viewModel.showErrorAlert($0) },
+            onSuccess: { dismiss() }
+        )
         .onAppear {
             loadData()
         }
