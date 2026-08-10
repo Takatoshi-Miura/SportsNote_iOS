@@ -397,6 +397,34 @@ struct MemoViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - performBackgroundSyncが直接呼ばれ、戻り値を返す前にBackgroundSyncTrackerへ登録される（issue #164回帰）"
+    )
+    func delete_registersBackgroundSyncTaskBeforeReturning() async {
+        let viewModel = MemoViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        let memo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail", created_at: Date())
+        try? manager.saveItem(memo)
+        _ = await viewModel.fetchData()
+
+        _ = await viewModel.delete(id: "m1")
+
+        // delete(id:)から戻った直後（追加のawait/yieldを挟まない）時点でperformBackgroundSyncが
+        // 直接（同期的に）呼ばれていればtrack()は既に完了している。外側Task{}でラップされていると
+        // この時点ではまだ登録されておらず0のままになる（issue #164のシナリオを再現する回帰テスト）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 1)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     @Test("getMemosByMeasuresID - 対策IDに紐づくメモを取得できる")
     func getMemosByMeasuresID_retrievesMemos() async {
         let viewModel = MemoViewModel()

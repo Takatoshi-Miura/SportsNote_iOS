@@ -344,6 +344,34 @@ struct MeasuresViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - performBackgroundSyncが直接呼ばれ、戻り値を返す前にBackgroundSyncTrackerへ登録される（issue #164回帰）"
+    )
+    func delete_registersBackgroundSyncTaskBeforeReturning() async {
+        let viewModel = MeasuresViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        let measures = Measures(measuresID: "ms1", taskID: "t1", title: "Measures", order: 0, created_at: Date())
+        try? manager.saveItem(measures)
+        _ = await viewModel.fetchData()
+
+        _ = await viewModel.delete(id: "ms1")
+
+        // delete(id:)から戻った直後（追加のawait/yieldを挟まない）時点でperformBackgroundSyncが
+        // 直接（同期的に）呼ばれていればtrack()は既に完了している。外側Task{}でラップされていると
+        // この時点ではまだ登録されておらず0のままになる（issue #164のシナリオを再現する回帰テスト）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 1)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     @Test("getMeasuresByTaskID - 課題IDに紐づく対策を取得できる")
     func getMeasuresByTaskID_retrievesMeasures() async {
         let viewModel = MeasuresViewModel()

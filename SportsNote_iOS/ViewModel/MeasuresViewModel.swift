@@ -172,9 +172,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
 
             // 3. Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             if let measuresToDelete = measuresToDelete {
-                Task {
-                    performBackgroundSync(measuresToDelete, isUpdate: true)
-                }
+                performBackgroundSync(measuresToDelete, isUpdate: true)
             }
 
             // 4. UI更新

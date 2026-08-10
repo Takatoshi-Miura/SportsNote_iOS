@@ -523,9 +523,7 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
             // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             if isOnlineAndLoggedIn, let noteToDelete = noteToDelete {
-                Task {
-                    performBackgroundSync(noteToDelete, isUpdate: true)
-                }
+                performBackgroundSync(noteToDelete, isUpdate: true)
             }
 
             // UI更新

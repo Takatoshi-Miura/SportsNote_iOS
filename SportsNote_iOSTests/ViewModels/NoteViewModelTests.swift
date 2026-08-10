@@ -391,6 +391,17 @@ struct NoteViewModelTests {
         manager.clearAll()
     }
 
+    // NOTE(issue #164): NoteViewModel.delete(id:)は他5ViewModelと異なり
+    // `if isOnlineAndLoggedIn, let noteToDelete = noteToDelete { performBackgroundSync(...) }`と
+    // 呼び出しサイトにオンライン/ログイン判定を持つ。テスト環境ではRealmManager.testConfiguration
+    // が設定されておりisOnlineAndLoggedInは常にfalseを返すため、performBackgroundSync自体が
+    // 呼ばれずBackgroundSyncTracker.shared.trackedCountForTestingで直接呼び出しを検証できない
+    // （修正の有無にかかわらず常に0のまま）。そのため他5ViewModel
+    // （Group/Measures/Memo/Task/Target）で追加した
+    // delete_registersBackgroundSyncTaskBeforeReturningと同型の回帰テストはここには追加せず、
+    // 上記delete_deletesNoteの成功と、実装が他5ViewModelと機械的に同一パターン
+    // （外側Task{}を除去しperformBackgroundSyncを直接呼び出す）であることのコードレビューで担保する。
+
     @Test("delete - フリーノートは削除できない")
     func delete_cannotDeleteFreeNote() async {
         let viewModel = NoteViewModel()
