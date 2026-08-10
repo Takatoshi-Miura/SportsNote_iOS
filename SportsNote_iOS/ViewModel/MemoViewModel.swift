@@ -29,17 +29,11 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// データを取得（プロトコル準拠）
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
+        await fetchDataDefault(context: "MemoViewModel-fetchData") {
             // Realm操作はMainActorで実行
-            memoList = try RealmManager.shared.getDataList(clazz: Memo.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-fetchData")
-            return .failure(sportsNoteError)
+            self.memoList = try RealmManager.shared.getDataList(clazz: Memo.self)
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -56,30 +50,13 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - isUpdate: 更新かどうか
     /// - Returns: Result
     func save(_ entity: Memo, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate, let existingMemo = try RealmManager.shared.getObjectById(id: entity.memoID, type: Memo.self) {
-                entity.userID = existingMemo.userID
-            }
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
+        await saveDefault(entity, isUpdate: isUpdate, context: "MemoViewModel-save") {
             // Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
             // UI更新
-            memoList = try RealmManager.shared.getDataList(clazz: Memo.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-save")
-            return .failure(sportsNoteError)
+            self.memoList = try RealmManager.shared.getDataList(clazz: Memo.self)
+            self.hideErrorAlert()
         }
     }
 

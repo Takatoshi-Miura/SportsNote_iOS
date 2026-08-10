@@ -29,16 +29,10 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     /// データを取得（プロトコル準拠）
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            measuresList = try RealmManager.shared.getDataList(clazz: Measures.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MeasuresViewModel-fetchData")
-            return .failure(sportsNoteError)
+        await fetchDataDefault(context: "MeasuresViewModel-fetchData") {
+            self.measuresList = try RealmManager.shared.getDataList(clazz: Measures.self)
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -127,32 +121,13 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     ///   - isUpdate: 更新かどうか
     /// - Returns: Result
     func save(_ entity: Measures, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
+        await saveDefault(entity, isUpdate: isUpdate, context: "MeasuresViewModel-save") {
+            // Firebase同期はバックグラウンドで実行
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate,
-                let existingMeasures = try RealmManager.shared.getObjectById(id: entity.measuresID, type: Measures.self)
-            {
-                entity.userID = existingMeasures.userID
-            }
-
-            // 1. Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
-            // 2. Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
-
-            // 3. UI更新
-            measuresList = try RealmManager.shared.getDataList(clazz: Measures.self)
-
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MeasuresViewModel-save")
-            return .failure(sportsNoteError)
+            // UI更新
+            self.measuresList = try RealmManager.shared.getDataList(clazz: Measures.self)
+            // 元実装通りhideErrorAlert()は呼ばない
         }
     }
 

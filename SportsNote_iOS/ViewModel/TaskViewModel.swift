@@ -44,18 +44,12 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// データを取得（プロトコル準拠）
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
+        await fetchDataDefault(context: "TaskViewModel-fetchData") {
             // Realm操作はMainActorで実行
-            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            convertToTaskListData()
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchData")
-            return .failure(sportsNoteError)
+            self.tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            self.convertToTaskListData()
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -242,36 +236,17 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - isUpdate: 更新かどうか
     /// - Returns: Result
     func save(_ entity: TaskData, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
+        await saveDefault(entity, isUpdate: isUpdate, context: "TaskViewModel-save") {
+            // Firebase同期はバックグラウンドで実行
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate,
-                let existingTask = try RealmManager.shared.getObjectById(id: entity.taskID, type: TaskData.self)
-            {
-                entity.userID = existingTask.userID
-            }
-
-            // 1. Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
-            // 2. Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
-
-            // 3. UI更新
-            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            convertToTaskListData()
+            // UI更新
+            self.tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            self.convertToTaskListData()
 
             // タスク更新通知を送信
-            taskUpdatedPublisher.send()
-
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-save")
-            return .failure(sportsNoteError)
+            self.taskUpdatedPublisher.send()
+            // 元実装通りhideErrorAlert()は呼ばない
         }
     }
 
