@@ -66,7 +66,7 @@ struct AddTaskView: View {
                         }
                     }
                     .disabled(
-                        taskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        taskTitle.isBlank
                             || !groupViewModel.groups.indices.contains(selectedGroupIndex))
                 }
             }

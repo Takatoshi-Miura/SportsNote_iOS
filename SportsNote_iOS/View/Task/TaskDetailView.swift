@@ -46,7 +46,7 @@ struct TaskDetailView: View {
                         // 全選択して削除→再入力する一連の操作中、空文字になった瞬間の
                         // バリデーションエラーで入力が割り込まれないよう、空白のみの間は
                         // 保存をスキップし非空になった時点で保存する（issue #115）
-                        guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                        guard !newValue.isBlank else { return }
                         persistTaskChanges()
                     }
             }
@@ -238,7 +238,7 @@ struct TaskDetailView: View {
 
     /// 対策追加処理
     private func addMeasure() {
-        guard !newMeasureTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard !newMeasureTitle.isBlank else { return }
 
         // 対策の保存は非同期のため、タイトルをコピーしておかないと保存前にクリアされてしまう
         let titleToSave = newMeasureTitle
