@@ -472,10 +472,25 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return measuresList.min { $0.order < $1.order }
     }
 
-    /// 対策の並び順を更新（MeasuresViewModelへの委譲メソッド）
-    /// - Parameter measures: 並び替え後の対策リスト
+    /// 対策表示上の並び替えを同期的に即時反映する（Realm永続化・Firebase同期は含まない）
+    /// MeasuresListView.onMoveハンドラから非同期Taskでラップせず直接呼ぶことで、ドラッグを離した瞬間に
+    /// 並び順が確定するようにするため分離した（issue #165、issue #161のreorderTaskListDataと同パターン）
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Realm永続化用の並び替え後の対策配列（`persistMeasuresOrder`に渡す）。taskDetail未取得時はnil
+    func reorderMeasuresListData(from source: IndexSet, to destination: Int) -> [Measures]? {
+        guard var detail = taskDetail else { return nil }
+        detail.measuresList.move(fromOffsets: source, toOffset: destination)
+        taskDetail = detail
+        return detail.measuresList
+    }
+
+    /// 並び替え後の対策配列をRealmへ永続化し、課題詳細を再取得して整合させる
+    /// （Realm保存・Firebase同期自体はMeasuresViewModel.updateMeasuresOrderに委譲、ロジックは変更しない）
+    /// - Parameter measures: `reorderMeasuresListData`が返す並び替え後の対策配列
     /// - Returns: Result
-    func updateMeasuresOrder(measures: [Measures]) async -> Result<Void, SportsNoteError> {
+    func persistMeasuresOrder(_ measures: [Measures]) async -> Result<Void, SportsNoteError> {
         guard !measures.isEmpty else {
             return .success(())
         }
@@ -495,6 +510,18 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
 
         return .success(())
+    }
+
+    /// 対策の並び替え（表示反映＋永続化を一括で行う）。moveTaskと対になる統合テスト用の便利メソッド
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Result
+    func moveMeasures(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        guard let reordered = reorderMeasuresListData(from: source, to: destination) else {
+            return .success(())
+        }
+        return await persistMeasuresOrder(reordered)
     }
 
     // MARK: - 並び替え処理

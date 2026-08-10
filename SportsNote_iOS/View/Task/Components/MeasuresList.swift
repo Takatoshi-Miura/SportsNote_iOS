@@ -15,17 +15,17 @@ struct MeasuresListView: View {
                     .foregroundColor(.gray)
                     .italic()
             } else {
-                ForEach(detail.measuresList.indices, id: \.self) { index in
+                ForEach(detail.measuresList, id: \.measuresID) { measure in
                     NavigationLink(
                         destination: MeasureDetailView(
-                            measure: detail.measuresList[index],
+                            measure: measure,
                             measuresViewModel: measuresViewModel,
                             memoViewModel: memoViewModel,
                             noteViewModel: noteViewModel
                         )
                     ) {
                         HStack {
-                            Text(detail.measuresList[index].title)
+                            Text(measure.title)
                                 .font(.body)
                                 .lineLimit(2)
                                 .padding(.vertical, 4)
@@ -35,10 +35,16 @@ struct MeasuresListView: View {
                 }
                 .onMove { source, destination in
                     if isReorderingMeasures {
-                        var updatedMeasures = detail.measuresList
-                        updatedMeasures.move(fromOffsets: source, toOffset: destination)
+                        // 表示上の並び替えは同期的に即座に反映する（issue #165、issue #161と同パターン）。
+                        // Task{}でラップすると一瞬元の位置に戻る視覚的不整合が発生するため直接呼ぶ
+                        guard let reordered = viewModel.reorderMeasuresListData(from: source, to: destination) else {
+                            return
+                        }
                         Task {
-                            _ = await viewModel.updateMeasuresOrder(measures: updatedMeasures)
+                            let result = await viewModel.persistMeasuresOrder(reordered)
+                            if case .failure(let error) = result {
+                                viewModel.showErrorAlert(error)
+                            }
                         }
                     }
                 }
