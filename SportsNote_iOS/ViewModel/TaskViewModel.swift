@@ -499,12 +499,14 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     // MARK: - 並び替え処理
 
-    /// 課題の並び替え
+    /// 表示上の並び替えを同期的に即時反映する（Realm永続化・Firebase同期は含まない）
+    /// List.onMoveハンドラから非同期Taskでラップせず直接呼ぶことで、ドラッグを離した瞬間に
+    /// 並び順が確定するようにするため分離した（issue #161）
     /// - Parameters:
     ///   - source: 移動元のインデックス
     ///   - destination: 移動先のインデックス
-    /// - Returns: Result
-    func moveTask(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+    /// - Returns: Realm永続化用のマージ済み課題配列（完了課題を含む全件、`persistTaskOrder`に渡す）
+    func reorderTaskListData(from source: IndexSet, to destination: Int) -> [TaskData] {
         // filteredTaskListData上で移動（表示上の並び替え）
         var reordered = filteredTaskListData
         reordered.move(fromOffsets: source, toOffset: destination)
@@ -530,7 +532,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                     return task
                 }
             }
+        return mergedTasks
+    }
 
+    /// 並び替え後の課題配列をRealmへ永続化し、Firebaseへバックグラウンド同期する
+    /// - Parameter mergedTasks: `reorderTaskListData`が返す並び替え後の全課題配列
+    /// - Returns: Result
+    func persistTaskOrder(_ mergedTasks: [TaskData]) async -> Result<Void, SportsNoteError> {
         do {
             try RealmManager.shared.updateTaskOrder(tasks: mergedTasks)
 
@@ -549,6 +557,16 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 error, context: "TaskViewModel-moveTask")
             return .failure(sportsNoteError)
         }
+    }
+
+    /// 課題の並び替え（表示反映＋永続化を一括で行う）
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Result
+    func moveTask(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        let mergedTasks = reorderTaskListData(from: source, to: destination)
+        return await persistTaskOrder(mergedTasks)
     }
 
     // MARK: - Firebase同期処理

@@ -79,9 +79,14 @@ struct TaskView: View {
                             }
                         },
                         onMoveTask: { source, destination in
+                            // 表示上の並び替えは同期的に即座に反映する(issue #161)。
+                            // List.onMoveのタイミングでfilteredTaskListDataが即時更新されないと
+                            // 一瞬元の位置に戻る視覚的な不整合が発生するため、Task{}でラップしない
+                            let mergedTasks = taskViewModel.reorderTaskListData(
+                                from: source, to: destination)
+                            // Realmへの永続化・Firebase同期は非同期で実行
                             Task {
-                                let result = await taskViewModel.moveTask(
-                                    from: source, to: destination)
+                                let result = await taskViewModel.persistTaskOrder(mergedTasks)
                                 if case .failure(let error) = result {
                                     taskViewModel.showErrorAlert(error)
                                 }
