@@ -186,33 +186,18 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
     /// - Parameter id: 削除するエンティティのID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 削除対象の目標を取得（Firebase同期用）
-            let targetToDelete = try RealmManager.shared.getObjectById(id: id, type: Target.self)
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: Target.self)
-
-            // Firebase同期はバックグラウンドで実行（論理削除なので更新として扱う）
-            if let target = targetToDelete {
-                Task {
-                    performBackgroundSync(target, isUpdate: true)
-                }
+        await deleteDefault(
+            id: id,
+            context: "TargetViewModel-delete",
+            removeFromLocalCache: {
+                // UI更新 - 配列から削除
+                self.yearlyTargets.removeAll(where: { $0.targetID == id })
+                self.monthlyTargets.removeAll(where: { $0.targetID == id })
+            },
+            onSuccess: {
+                self.hideErrorAlert()
             }
-
-            // UI更新 - 配列から削除
-            yearlyTargets.removeAll(where: { $0.targetID == id })
-            monthlyTargets.removeAll(where: { $0.targetID == id })
-
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TargetViewModel-delete")
-            return .failure(sportsNoteError)
-        }
+        )
     }
 
     /// 指定されたIDのエンティティを取得する（プロトコル準拠）

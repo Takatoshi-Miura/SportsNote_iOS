@@ -504,37 +504,22 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: 削除するエンティティのID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // フリーノートの削除を防ぐ
-            if let note = notes.first(where: { $0.noteID == id }),
-                note.noteType == NoteType.free.rawValue
-            {
-                return .failure(.systemError(LocalizedStrings.cannotDeleteFreeNote))
-            }
-
-            // 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
-            let noteToDelete = try realmManager.getObjectById(id: id, type: Note.self)
-
-            // Realm操作はMainActorで実行
-            try realmManager.logicalDelete(id: id, type: Note.self)
-
-            // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
-            if isOnlineAndLoggedIn, let noteToDelete = noteToDelete {
-                Task {
-                    performBackgroundSync(noteToDelete, isUpdate: true)
-                }
-            }
-
-            // UI更新
-            notes.removeAll(where: { $0.noteID == id })
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "NoteViewModel-delete")
-            return .failure(sportsNoteError)
+        // フリーノートの削除を防ぐ（共通処理呼び出し前に判定）
+        if let note = notes.first(where: { $0.noteID == id }),
+            note.noteType == NoteType.free.rawValue
+        {
+            return .failure(.systemError(LocalizedStrings.cannotDeleteFreeNote))
         }
+
+        return await deleteDefault(
+            id: id,
+            context: "NoteViewModel-delete",
+            removeFromLocalCache: {
+                // UI更新
+                self.notes.removeAll(where: { $0.noteID == id })
+            }
+            // 元実装通りhideErrorAlert()は呼ばない
+        )
     }
 
     /// エンティティをFirebaseに同期

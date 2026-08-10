@@ -279,35 +279,18 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: 削除する課題ID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 1. 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
-            let taskToDelete = try RealmManager.shared.getObjectById(id: id, type: TaskData.self)
-
-            // 2. Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: TaskData.self)
-
-            // 3. Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
-            if let taskToDelete = taskToDelete {
-                Task {
-                    performBackgroundSync(taskToDelete, isUpdate: true)
-                }
+        await deleteDefault(
+            id: id,
+            context: "TaskViewModel-delete",
+            removeFromLocalCache: {
+                self.tasks.removeAll(where: { $0.taskID == id })
+                self.taskListData.removeAll(where: { $0.taskID == id })
+            },
+            onSuccess: {
+                // タスク更新通知を送信（元実装通りhideErrorAlert()は呼ばない）
+                self.taskUpdatedPublisher.send()
             }
-
-            // 4. UI更新
-            tasks.removeAll(where: { $0.taskID == id })
-            taskListData.removeAll(where: { $0.taskID == id })
-
-            // タスク更新通知を送信
-            taskUpdatedPublisher.send()
-
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-delete")
-            return .failure(sportsNoteError)
-        }
+        )
     }
 
     /// TaskDataオブジェクトを作成（新規・更新両対応）

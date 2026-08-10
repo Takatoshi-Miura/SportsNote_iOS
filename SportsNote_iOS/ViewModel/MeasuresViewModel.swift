@@ -160,31 +160,14 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     /// - Parameter id: 削除する対策ID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 1. 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
-            let measuresToDelete = try RealmManager.shared.getObjectById(id: id, type: Measures.self)
-
-            // 2. Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: Measures.self)
-
-            // 3. Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
-            if let measuresToDelete = measuresToDelete {
-                Task {
-                    performBackgroundSync(measuresToDelete, isUpdate: true)
-                }
+        await deleteDefault(
+            id: id,
+            context: "MeasuresViewModel-delete",
+            removeFromLocalCache: {
+                self.measuresList.removeAll(where: { $0.measuresID == id })
             }
-
-            // 4. UI更新
-            measuresList.removeAll(where: { $0.measuresID == id })
-
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MeasuresViewModel-delete")
-            return .failure(sportsNoteError)
-        }
+            // 元実装通りhideErrorAlert()は呼ばない
+        )
     }
 
     /// 対策の並び順を更新
