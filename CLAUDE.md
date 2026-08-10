@@ -97,6 +97,8 @@ SportsNote_iOS/
 - 命名規則: `[Entity]ViewModel.swift`（例: `TaskViewModel.swift`）
 - リアクティブプログラミングにCombineを使用
 - CRUD操作を持つViewModel（Group/Measures/Memo/Note/Target/Task）は`SportsNote_iOS/ViewModel/Protocols/`配下の`BaseViewModelProtocol`（fetchData/エラー状態管理）・`CRUDViewModelProtocol`（save/delete/fetchById）・`FirebaseSyncable`（Firebase同期）に準拠する
+- `BaseViewModelProtocol`はデフォルト実装として、エラークリア＋`fetchData()`再取得＋失敗時のエラー再表示を1つにまとめた`refresh()`を提供する。View側は個別に`fetchData()`＋エラー表示を実装せず、`onAppear`やPull to Refresh等から`viewModel.refresh()`を呼び出す形に統一する（該当ViewModel: Group/Measures/Memo/Note/Target/Task）
+- `BaseViewModelProtocol`は`observeClearAllData(cancellables:)`も提供し、`didClearAllData`通知（ログアウト/アカウント削除時のRealm全削除）を購読して`clearRealmReferences()`（invalidate済みRealmオブジェクト参照のクリア）を呼び出す処理を共通化している
 
 **View層**: 機能別に整理されたSwiftUIビュー
 - 場所: `SportsNote_iOS/View/`
