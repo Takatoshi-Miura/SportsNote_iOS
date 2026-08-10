@@ -211,6 +211,9 @@ struct TaskDetailView: View {
         // グループとタスクデータを非同期で取得
         Task {
             // グループデータの読み込み
+            // groupViewModelはTaskView/GroupView等と共有されるインスタンスのため、
+            // refresh()のhideErrorAlert()で他画面の未確認エラーを消してしまわないよう、
+            // fetchData()を直接呼びこの画面固有のエラー転送のみ行う
             let result = await groupViewModel.fetchData()
             if case .failure(let error) = result {
                 viewModel.showErrorAlert(error)

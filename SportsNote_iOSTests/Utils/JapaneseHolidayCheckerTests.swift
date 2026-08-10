@@ -87,6 +87,56 @@ struct JapaneseHolidayCheckerTests {
         #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
     }
 
+    // MARK: - 固定祝日テスト（制定年境界）
+
+    @Test("固定祝日 - 天皇誕生日（2月23日）は制定前の2019年は祝日ではない")
+    func fixedHoliday_emperorsBirthday_before2020NotHoliday() {
+        let date = createDate(year: 2019, month: 2, day: 23)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 天皇誕生日（2月23日）は制定年の2020年から祝日")
+    func fixedHoliday_emperorsBirthday_from2020IsHoliday() {
+        let date = createDate(year: 2020, month: 2, day: 23)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 山の日（8月11日）は制定前の2015年は祝日ではない")
+    func fixedHoliday_mountainDay_before2016NotHoliday() {
+        let date = createDate(year: 2015, month: 8, day: 11)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 山の日（8月11日）は制定年の2016年から祝日")
+    func fixedHoliday_mountainDay_from2016IsHoliday() {
+        let date = createDate(year: 2016, month: 8, day: 11)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 天皇誕生日（12月23日、平成期）は1988年は祝日ではない")
+    func fixedHoliday_emperorsBirthdayHeisei_1988NotHoliday() {
+        let date = createDate(year: 1988, month: 12, day: 23)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 天皇誕生日（12月23日、平成期）は開始年の1989年から祝日")
+    func fixedHoliday_emperorsBirthdayHeisei_from1989IsHoliday() {
+        let date = createDate(year: 1989, month: 12, day: 23)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 天皇誕生日（12月23日、平成期）は終了年の2018年も祝日")
+    func fixedHoliday_emperorsBirthdayHeisei_2018IsHoliday() {
+        let date = createDate(year: 2018, month: 12, day: 23)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("固定祝日 - 天皇誕生日（12月23日、平成期）は2019年以降は祝日ではない（今上天皇即位後）")
+    func fixedHoliday_emperorsBirthdayHeisei_from2019NotHoliday() {
+        let date = createDate(year: 2019, month: 12, day: 23)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
     // MARK: - ハッピーマンデー祝日テスト
 
     @Test("ハッピーマンデー - 成人の日（1月第2月曜日）2025年")
@@ -189,6 +239,22 @@ struct JapaneseHolidayCheckerTests {
         // 2024年11月4日（月曜日）が振替休日
         let date = createDate(year: 2024, month: 11, day: 4)
         #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("振替休日 - 2018年12月24日（平成期最後の天皇誕生日の振替）")
+    func substituteHoliday_emperorsBirthdayHeisei_2018() {
+        // 2018年12月23日（天皇誕生日、平成期）は日曜日
+        // 2018年12月24日（月曜日）が振替休日
+        let date = createDate(year: 2018, month: 12, day: 24)
+        #expect(JapaneseHolidayChecker.isJapaneseHoliday(date))
+    }
+
+    @Test("振替休日 - 2019年12月24日は制定終了後のため振替休日にならない")
+    func substituteHoliday_emperorsBirthdayHeisei_2019NotHoliday() {
+        // 2019年12月23日（月曜日）は今上天皇即位後のため祝日ではなく、
+        // 翌24日（火曜日）も振替休日の対象にならない
+        let date = createDate(year: 2019, month: 12, day: 24)
+        #expect(!JapaneseHolidayChecker.isJapaneseHoliday(date))
     }
 
     // MARK: - 国民の休日テスト

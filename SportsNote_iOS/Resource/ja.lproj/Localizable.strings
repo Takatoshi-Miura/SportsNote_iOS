@@ -100,6 +100,9 @@
 "noTasksWorkedOn" = "取り組んだ課題はありません。";
 "addTask" = "課題を追加";
 "deleteTask" = "課題を削除しますか？\n課題を削除すると復元できません。";
+"taskTitleRequiredError" = "タイトルは必須項目です";
+"taskNotFoundError" = "課題が見つかりません: %@";
+"taskNotFoundLabel" = "課題が見つかりません";
 
 // MARK: Measures
 "measures" = "対策";
@@ -108,6 +111,7 @@
 "noNotesYet" = "ノートがありません";
 "noMeasures" = "対策がありません";
 "deleteMeasures" = "対策を削除しますか？\n対策を削除するとノートに記入した本課題に関する記載も全て削除されます。一度削除した対策は復元できません。";
+"measuresTitleRequiredError" = "対策タイトルは必須項目です";
 
 // MARK: Note
 "note" = "ノート";
@@ -136,6 +140,9 @@
 "deleteTaskFromNote" = "ノートから課題を削除しますか？";
 "added" = "追加済み";
 "defaltFreeNoteDetail" = "常に最上位に表示されるノートです。";
+"cannotDeleteFreeNote" = "フリーノートは削除できません";
+"noNotesInDay" = "ノートがありません";
+"unknownNoteType" = "なし";
 
 // MARK: Target
 "target" = "目標";
@@ -146,6 +153,13 @@
 "month" = "月";
 "notSet" = "未設定";
 "today" = "今日";
+"weekdaySun" = "日";
+"weekdayMon" = "月";
+"weekdayTue" = "火";
+"weekdayWed" = "水";
+"weekdayThu" = "木";
+"weekdayFri" = "金";
+"weekdaySat" = "土";
 
 // MARK: Mail
 "pleaseEnterInquiry" = "お問い合わせ内容をご記入ください。";
@@ -165,6 +179,7 @@
 "termsOfService" = "利用規約";
 "privacyPolicy" = "プライバシーポリシー";
 "appVersion" = "アプリバージョン";
+"unknown" = "不明";
 "TermsOfServiceTitle" = "利用規約に同意しますか？";
 "TermsOfServiceMessage" = "このアプリを使用するには、利用規約に同意する必要があります。";
 "checkTermsOfService" = "利用規約を確認";

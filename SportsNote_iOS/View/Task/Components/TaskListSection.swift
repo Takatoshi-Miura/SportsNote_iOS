@@ -101,7 +101,7 @@ struct MainTaskList: View {
             )
             .eraseToAnyView()
         } else {
-            return Text("Task not found").eraseToAnyView()
+            return Text(LocalizedStrings.taskNotFoundLabel).eraseToAnyView()
         }
     }
 }

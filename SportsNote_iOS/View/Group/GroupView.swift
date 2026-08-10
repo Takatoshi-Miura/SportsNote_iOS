@@ -80,10 +80,7 @@ struct GroupView: View {
             showingAlert: $viewModel.showingErrorAlert,
             onRetry: {
                 Task {
-                    let result = await viewModel.fetchData()
-                    if case .failure(let error) = result {
-                        viewModel.showErrorAlert(error)
-                    }
+                    await viewModel.refresh()
                 }
             }
         )

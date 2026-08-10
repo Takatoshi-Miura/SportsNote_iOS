@@ -16,7 +16,7 @@ struct NoteListSection: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if notes.isEmpty {
-                Text("ノートがありません")
+                Text(LocalizedStrings.noNotesInDay)
                     .foregroundColor(.gray)
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -60,7 +60,7 @@ struct NoteListSection: View {
                     )
                 }
         } else {
-            Text("なし")
+            Text(LocalizedStrings.unknownNoteType)
         }
     }
 }

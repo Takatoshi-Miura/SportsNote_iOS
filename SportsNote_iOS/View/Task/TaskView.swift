@@ -89,10 +89,7 @@ struct TaskView: View {
                         },
                         refreshAction: {
                             Task {
-                                let result = await viewModel.fetchData()
-                                if case .failure(let error) = result {
-                                    viewModel.showErrorAlert(error)
-                                }
+                                await viewModel.refresh()
 
                                 let taskResult: Result<Void, SportsNoteError>
                                 if let id = selectedGroupID {
@@ -139,10 +136,7 @@ struct TaskView: View {
         .onAppear {
             // 画面が表示されるたびに最新データを取得
             Task {
-                let result = await viewModel.fetchData()
-                if case .failure(let error) = result {
-                    viewModel.showErrorAlert(error)
-                }
+                await viewModel.refresh()
 
                 let taskResult: Result<Void, SportsNoteError>
                 if let id = selectedGroupID {

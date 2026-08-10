@@ -15,23 +15,11 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
 
     init() {
         // 初期化のみ実行、データ取得はView側で明示的に実行
-        setupNotifications()
-    }
-
-
-    /// 通知の設定
-    private func setupNotifications() {
-        NotificationCenter.default.publisher(for: .didClearAllData)
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.clearRealmReferences()
-                }
-            }
-            .store(in: &cancellables)
+        observeClearAllData(cancellables: &cancellables)
     }
 
     /// Realmオブジェクトの参照をクリア
-    private func clearRealmReferences() {
+    func clearRealmReferences() {
         measuresList = []
         memos = []
     }
@@ -60,13 +48,7 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     /// - Parameter id: 対策ID
     /// - Returns: Result
     func fetchById(id: String) async -> Result<Measures?, SportsNoteError> {
-        do {
-            let measures = try RealmManager.shared.getObjectById(id: id, type: Measures.self)
-            return .success(measures)
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MeasuresViewModel-fetchById")
-            return .failure(sportsNoteError)
-        }
+        await fetchByIdDefault(id: id, context: "MeasuresViewModel-fetchById")
     }
 
     /// 対策に紐づくメモを取得
@@ -240,42 +222,17 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     ///   - isUpdate: 更新かどうか
     /// - Returns: 同期処理の結果
     func syncEntityToFirebase(_ entity: Measures, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else {
-            return .success(())
-        }
-
-        do {
-            if isUpdate {
-                try await FirebaseManager.shared.updateMeasures(measures: entity)
-            } else {
-                try await FirebaseManager.shared.saveMeasures(measures: entity)
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertFirebaseSyncError(error, context: "MeasuresViewModel-syncEntityToFirebase")
-            return .failure(sportsNoteError)
-        }
+        await syncEntityToFirebaseDefault(
+            isUpdate: isUpdate,
+            context: "MeasuresViewModel-syncEntityToFirebase",
+            updateAction: { try await FirebaseManager.shared.updateMeasures(measures: entity) },
+            saveAction: { try await FirebaseManager.shared.saveMeasures(measures: entity) }
+        )
     }
 
     /// 全ての対策をFirebaseに同期する
     /// - Returns: 同期処理の結果
     func syncToFirebase() async -> Result<Void, SportsNoteError> {
-        guard isOnlineAndLoggedIn else {
-            return .success(())
-        }
-
-        do {
-            let allMeasures = try RealmManager.shared.getDataList(clazz: Measures.self)
-            for measures in allMeasures {
-                let result = await syncEntityToFirebase(measures)
-                if case .failure(let error) = result {
-                    return .failure(error)
-                }
-            }
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MeasuresViewModel-syncToFirebase")
-            return .failure(sportsNoteError)
-        }
+        await syncToFirebaseDefault(context: "MeasuresViewModel-syncToFirebase")
     }
 }

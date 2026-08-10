@@ -2,8 +2,8 @@ import Foundation
 import UIKit
 
 @MainActor
-class TermsManager: ObservableObject {
-    static let shared = TermsManager()
+class TermsViewModel: ObservableObject {
+    static let shared = TermsViewModel()
     @Published var termsDialogShown = false
 
     /// 利用規約・プライバシーポリシーのURL

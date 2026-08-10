@@ -100,6 +100,9 @@
 "noTasksWorkedOn" = "No tasks worked on.";
 "addTask" = "Add Task";
 "deleteTask" = "Do you want to delete the task? \nOnce you delete an task, it cannot be restored.";
+"taskTitleRequiredError" = "Title is required";
+"taskNotFoundError" = "Task not found: %@";
+"taskNotFoundLabel" = "Task not found";
 
 // MARK: Measures
 "measures" = "Measures";
@@ -108,6 +111,7 @@
 "noNotesYet" = "No notes yet";
 "noMeasures" = "No measures";
 "deleteMeasures" = "Do you want to delete the measure? \nIf you delete a measure, all notes about this assignment that you have written in your notebook will also be deleted. Once deleted, the measure cannot be restored.";
+"measuresTitleRequiredError" = "Measures title is required";
 
 // MARK: Note
 "note" = "Note";
@@ -136,6 +140,9 @@
 "deleteTaskFromNote" = "Delete this task from note?";
 "added" = "Added";
 "defaltFreeNoteDetail" = "This note is always displayed at the top.";
+"cannotDeleteFreeNote" = "Cannot delete free note";
+"noNotesInDay" = "No notes";
+"unknownNoteType" = "None";
 
 // MARK: Target
 "target" = "Target";
@@ -146,6 +153,13 @@
 "month" = "Month";
 "notSet" = "Not Set";
 "today" = "Today";
+"weekdaySun" = "Sun";
+"weekdayMon" = "Mon";
+"weekdayTue" = "Tue";
+"weekdayWed" = "Wed";
+"weekdayThu" = "Thu";
+"weekdayFri" = "Fri";
+"weekdaySat" = "Sat";
 
 // MARK: Mail
 "pleaseEnterInquiry" = "Please enter your inquiry below.";
@@ -165,6 +179,7 @@
 "termsOfService" = "Terms of Service";
 "privacyPolicy" = "Privacy Policy";
 "appVersion" = "App Version";
+"unknown" = "Unknown";
 "TermsOfServiceTitle" = "Do you agree to the Terms of Service?";
 "TermsOfServiceMessage" = "You must agree to the Terms of Service to use this app.";
 "checkTermsOfService" = "Check Terms of Service";
