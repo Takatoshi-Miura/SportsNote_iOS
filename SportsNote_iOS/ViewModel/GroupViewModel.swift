@@ -77,18 +77,26 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
         return await save(group, isUpdate: isUpdate)
     }
 
-    /// グループの並び順を変更し Realm に保存
+    /// グループ表示上の並び替えを同期的に即時反映する（Realm永続化・Firebase同期は含まない）
+    /// GroupForm.onMoveハンドラから非同期Taskでラップせず直接呼ぶことで、ドラッグを離した瞬間に
+    /// 並び順が確定するようにするため分離した（issue #169、issue #161のreorderTaskListDataと同パターン）
     /// - Parameters:
     ///   - source: 移動元インデックス集合（ForEach .onMove の引数）
     ///   - destination: 移動先インデックス
-    /// - Returns: Result
-    func moveGroup(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+    /// - Returns: Realm永続化用の並び替え後のグループ配列（`persistGroupOrder`に渡す）
+    func reorderGroups(from source: IndexSet, to destination: Int) -> [Group] {
         var reorderedGroups = groups
         reorderedGroups.move(fromOffsets: source, toOffset: destination)
+        groups = reorderedGroups
+        return reorderedGroups
+    }
 
+    /// 並び替え後のグループ配列をRealmへ永続化し、Firebaseへ同期する
+    /// - Parameter reorderedGroups: `reorderGroups`が返す並び替え後のグループ配列
+    /// - Returns: Result
+    func persistGroupOrder(_ reorderedGroups: [Group]) async -> Result<Void, SportsNoteError> {
         do {
             try RealmManager.shared.updateGroupOrder(groups: reorderedGroups)
-            groups = reorderedGroups
             // Firebase 同期（各グループを order 更新で同期）
             // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
             let syncTask = Task<Void, Never> {
@@ -102,6 +110,16 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
             let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-moveGroup")
             return .failure(sportsNoteError)
         }
+    }
+
+    /// グループの並び順を変更し Realm に保存（表示反映＋永続化を一括で行う、後方互換用ラッパー）
+    /// - Parameters:
+    ///   - source: 移動元インデックス集合（ForEach .onMove の引数）
+    ///   - destination: 移動先インデックス
+    /// - Returns: Result
+    func moveGroup(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        let reorderedGroups = reorderGroups(from: source, to: destination)
+        return await persistGroupOrder(reorderedGroups)
     }
 
     /// エンティティを保存（新規作成・更新）

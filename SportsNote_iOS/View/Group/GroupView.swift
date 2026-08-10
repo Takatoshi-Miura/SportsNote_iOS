@@ -30,8 +30,11 @@ struct GroupView: View {
                 selectedColor = group.groupColor
             },
             onMoveGroup: { source, destination in
+                // 表示上の並び替えは同期的に即座に反映する（issue #169、issue #161と同パターン）。
+                // Task{}でラップすると一瞬元の位置に戻る視覚的不整合が発生するため直接呼ぶ
+                let reorderedGroups = viewModel.reorderGroups(from: source, to: destination)
                 Task {
-                    let result = await viewModel.moveGroup(from: source, to: destination)
+                    let result = await viewModel.persistGroupOrder(reorderedGroups)
                     if case .failure(let error) = result {
                         viewModel.showErrorAlert(error)
                     }

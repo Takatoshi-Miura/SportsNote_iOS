@@ -516,6 +516,108 @@ struct GroupViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - reorderGroups / persistGroupOrder（グループ並び替えの同期性）テスト（issue #169）
+
+    @Test("reorderGroups - Realmへの永続化を待たずに同期的にgroups配列へ反映される")
+    func reorderGroups_synchronouslyUpdatesGroups() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        let groupC = GroupViewModelTests.createTestGroup(id: "g-C", title: "C", order: 2)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+        try? manager.saveItem(groupC)
+
+        _ = await viewModel.fetchData()
+        #expect(viewModel.groups.map { $0.groupID } == ["g-A", "g-B", "g-C"])
+
+        // CをAより前に移動（index2->0）。awaitを挟まず、同期呼び出し直後にgroupsが
+        // 更新済みであることを確認する（GroupForm.onMoveから非同期Taskでラップせず
+        // 直接呼べることの検証、issue #169）
+        let reordered = viewModel.reorderGroups(from: IndexSet(integer: 2), to: 0)
+
+        #expect(viewModel.groups.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+        #expect(reordered.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+
+        // この時点ではRealmへの永続化（persistGroupOrder）はまだ行われていないため、
+        // Realm上のorderは変化していないはず
+        let groupsBeforePersist = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderABeforePersist = groupsBeforePersist.first { $0.groupID == "g-A" }?.order
+        #expect(orderABeforePersist == 0)
+
+        manager.clearAll()
+    }
+
+    @Test("persistGroupOrder - Realmのorderへ反映後、fetchDataで再取得しても同じ並び順を維持する")
+    func persistGroupOrder_updatesRealmOrderAndRefetchesGroups() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        let groupC = GroupViewModelTests.createTestGroup(id: "g-C", title: "C", order: 2)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+        try? manager.saveItem(groupC)
+
+        _ = await viewModel.fetchData()
+        let reordered = viewModel.reorderGroups(from: IndexSet(integer: 2), to: 0)
+
+        let result = await viewModel.persistGroupOrder(reordered)
+        guard case .success = result else {
+            Issue.record("persistGroupOrder failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedGroups = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderC = updatedGroups.first { $0.groupID == "g-C" }?.order
+        let orderA = updatedGroups.first { $0.groupID == "g-A" }?.order
+        let orderB = updatedGroups.first { $0.groupID == "g-B" }?.order
+        #expect(orderC == 0 && orderA == 1 && orderB == 2)
+
+        // fetchDataによる再取得後も、ドラッグ確定時に反映した並び順から変化しない
+        // （＝一旦元の位置に戻ってから正しい位置に変わるスナップバックが発生しない）ことを確認
+        _ = await viewModel.fetchData()
+        #expect(viewModel.groups.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+
+        manager.clearAll()
+    }
+
+    @Test("moveGroup - 表示反映と永続化を一括で行いRealmへ反映される（後方互換ラッパーの回帰確認）")
+    func moveGroup_reordersAndPersists() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+
+        _ = await viewModel.fetchData()
+
+        let result = await viewModel.moveGroup(from: IndexSet(integer: 1), to: 0)
+        guard case .success = result else {
+            Issue.record("moveGroup failed")
+            manager.clearAll()
+            return
+        }
+
+        #expect(viewModel.groups.map { $0.groupID } == ["g-B", "g-A"])
+
+        let updatedGroups = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderA = updatedGroups.first { $0.groupID == "g-A" }?.order
+        let orderB = updatedGroups.first { $0.groupID == "g-B" }?.order
+        #expect(orderB == 0 && orderA == 1)
+
+        manager.clearAll()
+    }
+
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
 
     @Test(
