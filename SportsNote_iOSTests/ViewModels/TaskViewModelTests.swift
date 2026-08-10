@@ -1312,6 +1312,57 @@ struct TaskViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - reorderTaskListData（表示反映の同期性）テスト（issue #161）
+
+    @Test(
+        "reorderTaskListData - Realmへの永続化を待たずに同期的にfilteredTaskListDataへ反映される"
+    )
+    func reorderTaskListData_synchronouslyUpdatesFilteredTaskListData() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: false)
+        let taskC = TaskViewModelTests.createTestTask(id: "C", groupID: "g1", order: 2, isComplete: false)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+        try? manager.saveItem(taskC)
+
+        _ = await viewModel.fetchData()
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["A", "B", "C"])
+
+        // CをAより前に移動（index2->0）。awaitを挟まず、同期呼び出し直後に
+        // filteredTaskListDataが更新済みであることを確認する
+        // (List.onMoveハンドラから非同期Taskでラップせず直接呼べることの検証、issue #161)
+        let mergedTasks = viewModel.reorderTaskListData(from: IndexSet(integer: 2), to: 0)
+
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["C", "A", "B"])
+        #expect(mergedTasks.map { $0.taskID } == ["C", "A", "B"])
+
+        // この時点ではRealmへの永続化（persistTaskOrder）はまだ行われていないため、
+        // Realm上のorderは変化していないはず
+        let tasksBeforePersist = (try? manager.getDataList(clazz: TaskData.self)) ?? []
+        let orderABeforePersist = tasksBeforePersist.first { $0.taskID == "A" }?.order
+        #expect(orderABeforePersist == 0)
+
+        // persistTaskOrderを実行して初めてRealmに反映される
+        let result = await viewModel.persistTaskOrder(mergedTasks)
+        guard case .success = result else {
+            Issue.record("persistTaskOrder failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedTasks = (try? manager.getDataList(clazz: TaskData.self)) ?? []
+        let orderC = updatedTasks.first { $0.taskID == "C" }?.order
+        let orderA = updatedTasks.first { $0.taskID == "A" }?.order
+        let orderB = updatedTasks.first { $0.taskID == "B" }?.order
+        #expect(orderC == 0 && orderA == 1 && orderB == 2)
+
+        manager.clearAll()
+    }
+
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
 
     @Test(
