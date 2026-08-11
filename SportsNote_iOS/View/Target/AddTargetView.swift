@@ -77,7 +77,7 @@ struct AddTargetView: View {
                             }
                         }
                     }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(title.isBlank)
                 }
             }
         }

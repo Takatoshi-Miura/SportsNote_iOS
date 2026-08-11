@@ -414,6 +414,34 @@ struct TargetViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - performBackgroundSyncが直接呼ばれ、戻り値を返す前にBackgroundSyncTrackerへ登録される（issue #164回帰）"
+    )
+    func delete_registersBackgroundSyncTaskBeforeReturning() async {
+        let viewModel = TargetViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        let target = Target(title: "Target", year: 2024, month: 11, isYearlyTarget: false)
+        try? manager.saveItem(target)
+        _ = await viewModel.fetchTargetsByYearMonth(year: 2024, month: 11)
+
+        _ = await viewModel.delete(id: target.targetID)
+
+        // delete(id:)から戻った直後（追加のawait/yieldを挟まない）時点でperformBackgroundSyncが
+        // 直接（同期的に）呼ばれていればtrack()は既に完了している。外側Task{}でラップされていると
+        // この時点ではまだ登録されておらず0のままになる（issue #164のシナリオを再現する回帰テスト）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 1)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
 
     @Test(

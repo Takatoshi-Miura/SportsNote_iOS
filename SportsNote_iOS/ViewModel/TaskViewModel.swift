@@ -44,18 +44,12 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// データを取得（プロトコル準拠）
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
+        await fetchDataDefault(context: "TaskViewModel-fetchData") {
             // Realm操作はMainActorで実行
-            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            convertToTaskListData()
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-fetchData")
-            return .failure(sportsNoteError)
+            self.tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            self.convertToTaskListData()
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -242,36 +236,17 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - isUpdate: 更新かどうか
     /// - Returns: Result
     func save(_ entity: TaskData, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
+        await saveDefault(entity, isUpdate: isUpdate, context: "TaskViewModel-save") {
+            // Firebase同期はバックグラウンドで実行
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate,
-                let existingTask = try RealmManager.shared.getObjectById(id: entity.taskID, type: TaskData.self)
-            {
-                entity.userID = existingTask.userID
-            }
-
-            // 1. Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
-            // 2. Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
-
-            // 3. UI更新
-            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            convertToTaskListData()
+            // UI更新
+            self.tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            self.convertToTaskListData()
 
             // タスク更新通知を送信
-            taskUpdatedPublisher.send()
-
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TaskViewModel-save")
-            return .failure(sportsNoteError)
+            self.taskUpdatedPublisher.send()
+            // 元実装通りhideErrorAlert()は呼ばない
         }
     }
 
@@ -353,6 +328,12 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     /// TaskDataをTaskListDataに変換する
     private func convertToTaskListData() {
+        taskListData = buildTaskListData()
+        updateFilteredTaskListData()
+    }
+
+    /// tasksからTaskListData配列を構築する（taskListData/filteredTaskListDataへの反映は呼び出し側の責務）
+    private func buildTaskListData() -> [TaskListData] {
         var taskList = [TaskListData]()
 
         for task in tasks {
@@ -377,8 +358,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             taskList.append(taskListItem)
         }
 
-        taskListData = taskList
-        updateFilteredTaskListData()
+        return taskList
     }
 
     /// フィルタリングされたタスクリストを更新
@@ -455,10 +435,25 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         return measuresList.min { $0.order < $1.order }
     }
 
-    /// 対策の並び順を更新（MeasuresViewModelへの委譲メソッド）
-    /// - Parameter measures: 並び替え後の対策リスト
+    /// 対策表示上の並び替えを同期的に即時反映する（Realm永続化・Firebase同期は含まない）
+    /// MeasuresListView.onMoveハンドラから非同期Taskでラップせず直接呼ぶことで、ドラッグを離した瞬間に
+    /// 並び順が確定するようにするため分離した（issue #165、issue #161のreorderTaskListDataと同パターン）
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Realm永続化用の並び替え後の対策配列（`persistMeasuresOrder`に渡す）。taskDetail未取得時はnil
+    func reorderMeasuresListData(from source: IndexSet, to destination: Int) -> [Measures]? {
+        guard var detail = taskDetail else { return nil }
+        detail.measuresList.move(fromOffsets: source, toOffset: destination)
+        taskDetail = detail
+        return detail.measuresList
+    }
+
+    /// 並び替え後の対策配列をRealmへ永続化し、課題詳細を再取得して整合させる
+    /// （Realm保存・Firebase同期自体はMeasuresViewModel.updateMeasuresOrderに委譲、ロジックは変更しない）
+    /// - Parameter measures: `reorderMeasuresListData`が返す並び替え後の対策配列
     /// - Returns: Result
-    func updateMeasuresOrder(measures: [Measures]) async -> Result<Void, SportsNoteError> {
+    func persistMeasuresOrder(_ measures: [Measures]) async -> Result<Void, SportsNoteError> {
         guard !measures.isEmpty else {
             return .success(())
         }
@@ -478,6 +473,18 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         }
 
         return .success(())
+    }
+
+    /// 対策の並び替え（表示反映＋永続化を一括で行う）。moveTaskと対になる統合テスト用の便利メソッド
+    /// - Parameters:
+    ///   - source: 移動元のインデックス
+    ///   - destination: 移動先のインデックス
+    /// - Returns: Result
+    func moveMeasures(from source: IndexSet, to destination: Int) async -> Result<Void, SportsNoteError> {
+        guard let reordered = reorderMeasuresListData(from: source, to: destination) else {
+            return .success(())
+        }
+        return await persistMeasuresOrder(reordered)
     }
 
     // MARK: - 並び替え処理
@@ -524,6 +531,16 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     func persistTaskOrder(_ mergedTasks: [TaskData]) async -> Result<Void, SportsNoteError> {
         do {
             try RealmManager.shared.updateTaskOrder(tasks: mergedTasks)
+
+            // tasks/taskListDataを最新のorderで再取得する。これを怠ると、showCompletedTasksの
+            // didSetが並び替え前のtaskListDataからfilteredTaskListDataを再構築してしまい、
+            // 完了課題表示のON/OFF切替時に並び替え結果が失われる（issue #177）。
+            // ただしfilteredTaskListData自体はreorderTaskListDataが呼び出し側で既に同期的に
+            // 反映済みのため、ここでconvertToTaskListData()経由で再代入すると、List.onMoveの
+            // 移動アニメーションと非同期タイミングで衝突し、ドラッグ終了直後に一瞬ゴースト表示
+            // される（issue #179）。taskListDataのみ最新化しfilteredTaskListDataは触らない
+            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            taskListData = buildTaskListData()
 
             // Firebase同期（バックグラウンド）
             // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）

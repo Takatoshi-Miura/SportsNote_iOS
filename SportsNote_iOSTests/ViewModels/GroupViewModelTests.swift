@@ -425,6 +425,38 @@ struct GroupViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - performBackgroundSyncが直接呼ばれ、戻り値を返す前にBackgroundSyncTrackerへ登録される（issue #164回帰）"
+    )
+    func delete_registersBackgroundSyncTaskBeforeReturning() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        let group1 = Group(
+            groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        let group2 = Group(
+            groupID: "g2", title: "Group 2", color: GroupColor.blue.rawValue, order: 1, created_at: Date())
+        try? manager.saveItem(group1)
+        try? manager.saveItem(group2)
+        _ = await viewModel.fetchData()
+
+        _ = await viewModel.delete(id: "g1")
+
+        // delete(id:)から戻った直後（追加のawait/yieldを挟まない）時点でperformBackgroundSyncが
+        // 直接（同期的に）呼ばれていればtrack()は既に完了している。外側Task{}でラップされていると
+        // この時点ではまだ登録されておらず0のままになる（issue #164のシナリオを再現する回帰テスト）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 1)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     @Test("saveGroup - 既存インターフェースでグループを保存できる")
     func saveGroup_savesWithLegacyInterface() async {
         let viewModel = GroupViewModel()
@@ -512,6 +544,108 @@ struct GroupViewModelTests {
         // 最大order+1ベースなら4になり、末尾（最新）に表示される
         let newGroup = viewModel.groups.first(where: { $0.title == "New Group" })
         #expect(newGroup?.order == 4)
+
+        manager.clearAll()
+    }
+
+    // MARK: - reorderGroups / persistGroupOrder（グループ並び替えの同期性）テスト（issue #169）
+
+    @Test("reorderGroups - Realmへの永続化を待たずに同期的にgroups配列へ反映される")
+    func reorderGroups_synchronouslyUpdatesGroups() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        let groupC = GroupViewModelTests.createTestGroup(id: "g-C", title: "C", order: 2)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+        try? manager.saveItem(groupC)
+
+        _ = await viewModel.fetchData()
+        #expect(viewModel.groups.map { $0.groupID } == ["g-A", "g-B", "g-C"])
+
+        // CをAより前に移動（index2->0）。awaitを挟まず、同期呼び出し直後にgroupsが
+        // 更新済みであることを確認する（GroupForm.onMoveから非同期Taskでラップせず
+        // 直接呼べることの検証、issue #169）
+        let reordered = viewModel.reorderGroups(from: IndexSet(integer: 2), to: 0)
+
+        #expect(viewModel.groups.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+        #expect(reordered.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+
+        // この時点ではRealmへの永続化（persistGroupOrder）はまだ行われていないため、
+        // Realm上のorderは変化していないはず
+        let groupsBeforePersist = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderABeforePersist = groupsBeforePersist.first { $0.groupID == "g-A" }?.order
+        #expect(orderABeforePersist == 0)
+
+        manager.clearAll()
+    }
+
+    @Test("persistGroupOrder - Realmのorderへ反映後、fetchDataで再取得しても同じ並び順を維持する")
+    func persistGroupOrder_updatesRealmOrderAndRefetchesGroups() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        let groupC = GroupViewModelTests.createTestGroup(id: "g-C", title: "C", order: 2)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+        try? manager.saveItem(groupC)
+
+        _ = await viewModel.fetchData()
+        let reordered = viewModel.reorderGroups(from: IndexSet(integer: 2), to: 0)
+
+        let result = await viewModel.persistGroupOrder(reordered)
+        guard case .success = result else {
+            Issue.record("persistGroupOrder failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedGroups = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderC = updatedGroups.first { $0.groupID == "g-C" }?.order
+        let orderA = updatedGroups.first { $0.groupID == "g-A" }?.order
+        let orderB = updatedGroups.first { $0.groupID == "g-B" }?.order
+        #expect(orderC == 0 && orderA == 1 && orderB == 2)
+
+        // fetchDataによる再取得後も、ドラッグ確定時に反映した並び順から変化しない
+        // （＝一旦元の位置に戻ってから正しい位置に変わるスナップバックが発生しない）ことを確認
+        _ = await viewModel.fetchData()
+        #expect(viewModel.groups.map { $0.groupID } == ["g-C", "g-A", "g-B"])
+
+        manager.clearAll()
+    }
+
+    @Test("moveGroup - 表示反映と永続化を一括で行いRealmへ反映される（後方互換ラッパーの回帰確認）")
+    func moveGroup_reordersAndPersists() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
+        let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
+        try? manager.saveItem(groupA)
+        try? manager.saveItem(groupB)
+
+        _ = await viewModel.fetchData()
+
+        let result = await viewModel.moveGroup(from: IndexSet(integer: 1), to: 0)
+        guard case .success = result else {
+            Issue.record("moveGroup failed")
+            manager.clearAll()
+            return
+        }
+
+        #expect(viewModel.groups.map { $0.groupID } == ["g-B", "g-A"])
+
+        let updatedGroups = (try? manager.getDataList(clazz: Group.self)) ?? []
+        let orderA = updatedGroups.first { $0.groupID == "g-A" }?.order
+        let orderB = updatedGroups.first { $0.groupID == "g-B" }?.order
+        #expect(orderB == 0 && orderA == 1)
 
         manager.clearAll()
     }
