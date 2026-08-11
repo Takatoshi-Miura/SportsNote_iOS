@@ -343,6 +343,12 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     /// TaskDataをTaskListDataに変換する
     private func convertToTaskListData() {
+        taskListData = buildTaskListData()
+        updateFilteredTaskListData()
+    }
+
+    /// tasksからTaskListData配列を構築する（taskListData/filteredTaskListDataへの反映は呼び出し側の責務）
+    private func buildTaskListData() -> [TaskListData] {
         var taskList = [TaskListData]()
 
         for task in tasks {
@@ -367,8 +373,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
             taskList.append(taskListItem)
         }
 
-        taskListData = taskList
-        updateFilteredTaskListData()
+        return taskList
     }
 
     /// フィルタリングされたタスクリストを更新
@@ -544,9 +549,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
             // tasks/taskListDataを最新のorderで再取得する。これを怠ると、showCompletedTasksの
             // didSetが並び替え前のtaskListDataからfilteredTaskListDataを再構築してしまい、
-            // 完了課題表示のON/OFF切替時に並び替え結果が失われる（issue #177）
+            // 完了課題表示のON/OFF切替時に並び替え結果が失われる（issue #177）。
+            // ただしfilteredTaskListData自体はreorderTaskListDataが呼び出し側で既に同期的に
+            // 反映済みのため、ここでconvertToTaskListData()経由で再代入すると、List.onMoveの
+            // 移動アニメーションと非同期タイミングで衝突し、ドラッグ終了直後に一瞬ゴースト表示
+            // される（issue #179）。taskListDataのみ最新化しfilteredTaskListDataは触らない
             tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
-            convertToTaskListData()
+            taskListData = buildTaskListData()
 
             // Firebase同期（バックグラウンド）
             // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
