@@ -150,29 +150,17 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// - Parameter id: ID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 削除前にオブジェクトを取得（論理削除後はisDeleted=trueで取得できなくなるため）
-            let groupToDelete = try RealmManager.shared.getObjectById(id: id, type: Group.self)
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: Group.self)
-
-            // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
-            if let groupToDelete = groupToDelete {
-                performBackgroundSync(groupToDelete, isUpdate: true)
+        await deleteDefault(
+            id: id,
+            context: "GroupViewModel-delete",
+            removeFromLocalCache: {
+                // UI更新（他VMのremoveAllとは異なり配列全体を再フェッチする既存挙動を維持）
+                self.groups = try RealmManager.shared.getDataList(clazz: Group.self)
+            },
+            onSuccess: {
+                self.hideErrorAlert()
             }
-
-            // UI更新
-            groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-delete")
-            return .failure(sportsNoteError)
-        }
+        )
     }
 
     /// 指定されたIDのエンティティを取得

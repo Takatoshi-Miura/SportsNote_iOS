@@ -64,29 +64,16 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter id: 削除するエンティティのID
     /// - Returns: Result
     func delete(id: String) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 削除対象のメモを取得（Firebase同期用）
-            let memoToDelete = try RealmManager.shared.getObjectById(id: id, type: Memo.self)
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: Memo.self)
-
-            // Firebase同期はバックグラウンドで実行（論理削除なので更新として扱う）
-            if let memo = memoToDelete {
-                performBackgroundSync(memo, isUpdate: true)
+        await deleteDefault(
+            id: id,
+            context: "MemoViewModel-delete",
+            removeFromLocalCache: {
+                self.memoList.removeAll(where: { $0.memoID == id })
+            },
+            onSuccess: {
+                self.hideErrorAlert()
             }
-
-            // UI更新 - 配列から削除
-            memoList.removeAll(where: { $0.memoID == id })
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "MemoViewModel-delete")
-            return .failure(sportsNoteError)
-        }
+        )
     }
 
     /// 指定されたIDのエンティティを取得する（プロトコル準拠）
