@@ -1418,6 +1418,42 @@ struct TaskViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "persistTaskOrder - 完了課題表示ON中に並び替えた後OFFに切り替えても順序が保持される"
+    )
+    func persistTaskOrder_thenToggleShowCompletedTasksOff_orderIsPreserved() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // A(order0,未完了) B(order1,完了) C(order2,未完了)
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: true)
+        let taskC = TaskViewModelTests.createTestTask(id: "C", groupID: "g1", order: 2, isComplete: false)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+        try? manager.saveItem(taskC)
+
+        _ = await viewModel.fetchData()
+
+        // 完了課題を表示した状態でCをAより前に移動（index2->0）
+        viewModel.showCompletedTasks = true
+        let mergedTasks = viewModel.reorderTaskListData(from: IndexSet(integer: 2), to: 0)
+        let result = await viewModel.persistTaskOrder(mergedTasks)
+        guard case .success = result else {
+            Issue.record("persistTaskOrder failed")
+            manager.clearAll()
+            return
+        }
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["C", "A", "B"])
+
+        // 完了課題表示をOFFに戻しても、並び替え後の順序（未完了課題のみ）が保持されているべき（issue #177）
+        viewModel.showCompletedTasks = false
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["C", "A"])
+
+        manager.clearAll()
+    }
+
     // MARK: - reorderMeasuresListData / persistMeasuresOrder（対策並び替えの同期性）テスト（issue #165）
 
     @Test(
