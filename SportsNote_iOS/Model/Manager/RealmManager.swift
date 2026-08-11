@@ -20,6 +20,23 @@ extension Measures: SoftDeletable {}
 extension Memo: SoftDeletable {}
 extension Target: SoftDeletable {}
 
+/// RealmManager.logicalDeleteがカスケードで論理削除した子エンティティの集合
+///
+/// Group/TaskData/Measures/Noteの削除時、RealmManager.logicalDeleteは関連する子エンティティ
+/// （TaskData→Measures→Memo等）も同一トランザクション内で再帰的に論理削除するが、
+/// 削除対象本体しかFirebaseに同期されないとカスケード分がクラウド側に反映されない（issue #181）。
+/// 呼び出し元（CRUDViewModelProtocol.deleteDefault）がこのカスケード対象をFirebaseに同期できるように、
+/// logicalDeleteの戻り値として返す。
+struct CascadeDeletedEntities {
+    var tasks: [TaskData] = []
+    var measures: [Measures] = []
+    var memos: [Memo] = []
+
+    var isEmpty: Bool {
+        tasks.isEmpty && measures.isEmpty && memos.isEmpty
+    }
+}
+
 /// userIDを保持するRealmモデルの共通インターフェース
 ///
 /// 保存時のuserID巻き戻し処理（アカウント作成直後のuserID切替タイミングでも
@@ -616,8 +633,12 @@ final class RealmManager {
     /// - Parameters:
     ///   - T: RealmObject を継承したデータ型
     ///   - id: 削除するデータの ID
+    /// - Returns: カスケードで論理削除された子エンティティ（TaskData/Measures/Memo）
+    ///   呼び出し元がFirebaseへの同期対象として利用する（issue #181対応）
     /// - Throws: SportsNoteError削除に失敗した場合
-    internal func logicalDelete<T: Object>(id: String, type: T.Type) throws {
+    @discardableResult
+    internal func logicalDelete<T: Object>(id: String, type: T.Type) throws -> CascadeDeletedEntities {
+        var cascade = CascadeDeletedEntities()
         do {
             let realm = try getRealm()
 
@@ -629,19 +650,25 @@ final class RealmManager {
 
                     // T 型に基づく関連エンティティの削除処理
                     if let note = item as? Note {
-                        deleteRelatedNoteMemos(noteID: note.noteID, realm: realm)
+                        cascade.memos = deleteRelatedNoteMemos(noteID: note.noteID, realm: realm)
                     } else if let group = item as? Group {
-                        deleteRelatedTasks(groupID: group.groupID, realm: realm)
+                        let related = deleteRelatedTasks(groupID: group.groupID, realm: realm)
+                        cascade.tasks = related.tasks
+                        cascade.measures = related.measures
+                        cascade.memos = related.memos
                     } else if let taskData = item as? TaskData {
-                        deleteRelatedMeasures(taskID: taskData.taskID, realm: realm)
+                        let related = deleteRelatedMeasures(taskID: taskData.taskID, realm: realm)
+                        cascade.measures = related.measures
+                        cascade.memos = related.memos
                     } else if let measures = item as? Measures {
-                        deleteRelatedMeasuresMemos(measuresID: measures.measuresID, realm: realm)
+                        cascade.memos = deleteRelatedMeasuresMemos(measuresID: measures.measuresID, realm: realm)
                     }
                 }
             }
         } catch let error {
             throw ErrorMapper.mapRealmError(error, context: "logicalDelete-\(String(describing: T.self))-\(id)")
         }
+        return cascade
     }
 
     /// 任意のオブジェクトを論理削除
@@ -664,46 +691,73 @@ final class RealmManager {
     /// - Parameters:
     ///   - noteID: ノートID
     ///   - realm: Realm トランザクション
-    private func deleteRelatedNoteMemos(noteID: String, realm: Realm) {
+    /// - Returns: 論理削除したMemoの一覧（Firebase同期用）
+    @discardableResult
+    private func deleteRelatedNoteMemos(noteID: String, realm: Realm) -> [Memo] {
         let memos = realm.objects(Memo.self).filter("noteID == %@", noteID)
+        var deletedMemos: [Memo] = []
         for memo in memos {
             markAsDeleted(memo, realm: realm)
+            deletedMemos.append(memo)
         }
+        return deletedMemos
     }
 
     /// Group に関連する TaskData, Measures, Memo を削除
     /// - Parameters:
     ///   - groupID: グループID
     ///   - realm: Realm トランザクション
-    private func deleteRelatedTasks(groupID: String, realm: Realm) {
+    /// - Returns: 論理削除したTaskData/Measures/Memoの一覧（Firebase同期用）
+    private func deleteRelatedTasks(
+        groupID: String, realm: Realm
+    ) -> (
+        tasks: [TaskData], measures: [Measures], memos: [Memo]
+    ) {
         let tasks = realm.objects(TaskData.self).filter("groupID == %@", groupID)
+        var deletedTasks: [TaskData] = []
+        var deletedMeasures: [Measures] = []
+        var deletedMemos: [Memo] = []
         for task in tasks {
             markAsDeleted(task, realm: realm)
-            deleteRelatedMeasures(taskID: task.taskID, realm: realm)
+            deletedTasks.append(task)
+            let related = deleteRelatedMeasures(taskID: task.taskID, realm: realm)
+            deletedMeasures.append(contentsOf: related.measures)
+            deletedMemos.append(contentsOf: related.memos)
         }
+        return (deletedTasks, deletedMeasures, deletedMemos)
     }
 
     /// TaskData に関連する Measures, Memo を削除
     /// - Parameters:
     ///   - taskID: 課題ID
     ///   - realm: Realm トランザクション
-    private func deleteRelatedMeasures(taskID: String, realm: Realm) {
+    /// - Returns: 論理削除したMeasures/Memoの一覧（Firebase同期用）
+    private func deleteRelatedMeasures(taskID: String, realm: Realm) -> (measures: [Measures], memos: [Memo]) {
         let measures = realm.objects(Measures.self).filter("taskID == %@", taskID)
+        var deletedMeasures: [Measures] = []
+        var deletedMemos: [Memo] = []
         for measure in measures {
             markAsDeleted(measure, realm: realm)
-            deleteRelatedMeasuresMemos(measuresID: measure.measuresID, realm: realm)
+            deletedMeasures.append(measure)
+            deletedMemos.append(contentsOf: deleteRelatedMeasuresMemos(measuresID: measure.measuresID, realm: realm))
         }
+        return (deletedMeasures, deletedMemos)
     }
 
     /// Measures に関連する Memo を削除
     /// - Parameters:
     ///   - measuresID: 対策ID
     ///   - realm: Realm トランザクション
-    private func deleteRelatedMeasuresMemos(measuresID: String, realm: Realm) {
+    /// - Returns: 論理削除したMemoの一覧（Firebase同期用）
+    @discardableResult
+    private func deleteRelatedMeasuresMemos(measuresID: String, realm: Realm) -> [Memo] {
         let memos = realm.objects(Memo.self).filter("measuresID == %@", measuresID)
+        var deletedMemos: [Memo] = []
         for memo in memos {
             markAsDeleted(memo, realm: realm)
+            deletedMemos.append(memo)
         }
+        return deletedMemos
     }
 
     /// Realmの全データを削除

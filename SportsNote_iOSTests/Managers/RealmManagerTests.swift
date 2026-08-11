@@ -376,6 +376,56 @@ struct RealmManagerTests {
         manager.clearAll()
     }
 
+    @Test(
+        "logicalDelete - カスケード削除された子エンティティ（TaskData/Measures/Memo）が戻り値として返る（issue #181回帰）"
+    )
+    func logicalDelete_returnsCascadeDeletedEntities() async throws {
+        let group = Group(groupID: "g-cascade-return", title: "Group", color: 0, order: 0, created_at: Date())
+
+        let task = TaskData()
+        task.taskID = "t-cascade-return"
+        task.groupID = "g-cascade-return"
+
+        let measures = Measures()
+        measures.measuresID = "m-cascade-return"
+        measures.taskID = "t-cascade-return"
+
+        let memo = Memo()
+        memo.memoID = "memo-cascade-return"
+        memo.measuresID = "m-cascade-return"
+
+        try manager.saveItem(group)
+        try manager.saveItem(task)
+        try manager.saveItem(measures)
+        try manager.saveItem(memo)
+
+        // Groupを削除すると、カスケードで論理削除されたTaskData/Measures/Memoが
+        // 戻り値として返り、呼び出し元（CRUDViewModelProtocol.deleteDefault）が
+        // それらをFirebaseに同期できるようになっている必要がある
+        let cascade = try manager.logicalDelete(id: "g-cascade-return", type: Group.self)
+
+        #expect(cascade.tasks.map { $0.taskID } == ["t-cascade-return"])
+        #expect(cascade.measures.map { $0.measuresID } == ["m-cascade-return"])
+        #expect(cascade.memos.map { $0.memoID } == ["memo-cascade-return"])
+        #expect(cascade.isEmpty == false)
+
+        manager.clearAll()
+    }
+
+    @Test("logicalDelete - 子エンティティを持たない削除では空のCascadeDeletedEntitiesが返る")
+    func logicalDelete_returnsEmptyCascadeWhenNoChildren() async throws {
+        let measures = Measures()
+        measures.measuresID = "m-no-children"
+        measures.taskID = "t-no-children"
+        try manager.saveItem(measures)
+
+        let cascade = try manager.logicalDelete(id: "m-no-children", type: Measures.self)
+
+        #expect(cascade.isEmpty == true)
+
+        manager.clearAll()
+    }
+
     // MARK: - 検索機能テスト
 
     @Test("searchNotesByQuery - クエリでノートを検索できる")

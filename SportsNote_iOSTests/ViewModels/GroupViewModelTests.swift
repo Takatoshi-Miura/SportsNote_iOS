@@ -457,6 +457,55 @@ struct GroupViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - カスケードで論理削除された子エンティティ（TaskData/Measures/Memo）もバックグラウンドFirebase同期が追跡登録される（issue #181回帰）"
+    )
+    func delete_tracksCascadeBackgroundSyncForChildEntities() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        // 他グループを1つ用意しcanDeleteをtrueにした上で、g1配下にTaskData/Measures/Memoを作成する
+        let group1 = Group(
+            groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        let group2 = Group(
+            groupID: "g2", title: "Group 2", color: GroupColor.blue.rawValue, order: 1, created_at: Date())
+        try? manager.saveItem(group1)
+        try? manager.saveItem(group2)
+
+        let task = TaskData()
+        task.taskID = "t-cascade-sync"
+        task.groupID = "g1"
+        try? manager.saveItem(task)
+
+        let measures = Measures()
+        measures.measuresID = "m-cascade-sync"
+        measures.taskID = "t-cascade-sync"
+        try? manager.saveItem(measures)
+
+        let memo = Memo()
+        memo.memoID = "memo-cascade-sync"
+        memo.measuresID = "m-cascade-sync"
+        try? manager.saveItem(memo)
+
+        _ = await viewModel.fetchData()
+
+        _ = await viewModel.delete(id: "g1")
+
+        // 削除対象本体（Group）分のTaskに加え、カスケードで論理削除された
+        // TaskData/Measures/Memoをまとめて同期するTaskが1件、delete(id:)から戻った
+        // 時点（追加のawait/yieldを挟まない）で既に追跡登録されている必要がある（issue #181対応）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 2)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     @Test("saveGroup - 既存インターフェースでグループを保存できる")
     func saveGroup_savesWithLegacyInterface() async {
         let viewModel = GroupViewModel()
