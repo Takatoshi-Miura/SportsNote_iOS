@@ -628,6 +628,9 @@ struct TaskViewModelTests {
 
     @Test("associateTasksWithMemos - 戻り値がtask.order昇順にソートされる（issue #137: Dictionary列挙順への依存を排除）")
     func associateTasksWithMemos_sortsResultByTaskOrder() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         // orderが降順になるように課題を用意し、Dictionary経由でも意図した順序に
         // 並び替えられることを確認する
@@ -666,6 +669,15 @@ struct TaskViewModelTests {
         )
         viewModel.taskListData = [task1, task2, task3]
 
+        // associateTasksWithMemosはmemo.measuresIDに対応するMeasuresの実在確認を行うため、
+        // Realmに保存しておく必要がある（issue #162: 未保存のため常に空配列になっていた不備の修正）
+        try? manager.saveItem(
+            Measures(measuresID: "measures-1", taskID: "task-1", title: "Measures 1", order: 2, created_at: Date()))
+        try? manager.saveItem(
+            Measures(measuresID: "measures-2", taskID: "task-2", title: "Measures 2", order: 0, created_at: Date()))
+        try? manager.saveItem(
+            Measures(measuresID: "measures-3", taskID: "task-3", title: "Measures 3", order: 1, created_at: Date()))
+
         let memo1 = Memo(
             memoID: "memo-1", measuresID: "measures-1", noteID: "note-1", detail: "1", created_at: Date())
         let memo2 = Memo(
@@ -676,12 +688,17 @@ struct TaskViewModelTests {
         let pairs = viewModel.associateTasksWithMemos(memos: [memo1, memo2, memo3])
 
         #expect(pairs.map { $0.task.taskID } == ["task-2", "task-3", "task-1"])
+
+        manager.clearAll()
     }
 
     @Test(
         "associateTasksWithMemos - orderが同値の課題はtaskID昇順でタイブレークされる（異なるグループの課題がorder同値になるケース）"
     )
     func associateTasksWithMemos_sameOrderTiesBreakByTaskID() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
         let viewModel = TaskViewModel()
         // 異なるグループの課題はグループ内スコープでorderが採番されるため、
         // order=0同士が複数存在しうる
@@ -709,6 +726,13 @@ struct TaskViewModelTests {
         )
         viewModel.taskListData = [taskB, taskA]
 
+        // associateTasksWithMemosはmemo.measuresIDに対応するMeasuresの実在確認を行うため、
+        // Realmに保存しておく必要がある（issue #162: 未保存のため常に空配列になっていた不備の修正）
+        try? manager.saveItem(
+            Measures(measuresID: "measures-b", taskID: "task-b", title: "Measures B", order: 0, created_at: Date()))
+        try? manager.saveItem(
+            Measures(measuresID: "measures-a", taskID: "task-a", title: "Measures A", order: 0, created_at: Date()))
+
         let memoB = Memo(
             memoID: "memo-b", measuresID: "measures-b", noteID: "note-1", detail: "B", created_at: Date())
         let memoA = Memo(
@@ -717,6 +741,8 @@ struct TaskViewModelTests {
         let pairs = viewModel.associateTasksWithMemos(memos: [memoB, memoA])
 
         #expect(pairs.map { $0.task.taskID } == ["task-a", "task-b"])
+
+        manager.clearAll()
     }
 
     // MARK: - エラーハンドリングテスト
