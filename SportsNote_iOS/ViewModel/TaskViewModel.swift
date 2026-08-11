@@ -542,6 +542,12 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         do {
             try RealmManager.shared.updateTaskOrder(tasks: mergedTasks)
 
+            // tasks/taskListDataを最新のorderで再取得する。これを怠ると、showCompletedTasksの
+            // didSetが並び替え前のtaskListDataからfilteredTaskListDataを再構築してしまい、
+            // 完了課題表示のON/OFF切替時に並び替え結果が失われる（issue #177）
+            tasks = try RealmManager.shared.getDataList(clazz: TaskData.self)
+            convertToTaskListData()
+
             // Firebase同期（バックグラウンド）
             // ログアウト/アカウント削除等でのRealm全削除前に完了を待機できるよう追跡登録する（Issue #84対応）
             let syncTask = Task<Void, Never> {
