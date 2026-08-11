@@ -81,9 +81,15 @@ struct TaskView: View {
                         onMoveTask: { source, destination in
                             // 表示上の並び替えは同期的に即座に反映する(issue #161)。
                             // List.onMoveのタイミングでfilteredTaskListDataが即時更新されないと
-                            // 一瞬元の位置に戻る視覚的な不整合が発生するため、Task{}でラップしない
-                            let mergedTasks = taskViewModel.reorderTaskListData(
-                                from: source, to: destination)
+                            // 一瞬元の位置に戻る視覚的な不整合が発生するため、Task{}でラップしない。
+                            // また、List.onMoveが完了時に行う暗黙のトランジションとこの同期更新が
+                            // 重なると、隣接する行が一瞬ゴースト表示されることがあるため、
+                            // アニメーションを明示的に無効化したトランザクション内で反映する（issue #179）
+                            var transaction = Transaction()
+                            transaction.disablesAnimations = true
+                            let mergedTasks = withTransaction(transaction) {
+                                taskViewModel.reorderTaskListData(from: source, to: destination)
+                            }
                             // Realmへの永続化・Firebase同期は非同期で実行
                             Task {
                                 let result = await taskViewModel.persistTaskOrder(mergedTasks)
