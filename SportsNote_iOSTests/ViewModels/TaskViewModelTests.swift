@@ -1418,6 +1418,149 @@ struct TaskViewModelTests {
         manager.clearAll()
     }
 
+    // MARK: - reorderMeasuresListData / persistMeasuresOrder（対策並び替えの同期性）テスト（issue #165）
+
+    @Test(
+        "reorderMeasuresListData - Realmへの永続化を待たずに同期的にtaskDetail.measuresListへ反映される"
+    )
+    func reorderMeasuresListData_synchronouslyUpdatesTaskDetailMeasuresList() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskViewModelTests.createTestTask(id: "task-1", groupID: "g1", order: 0)
+        try? manager.saveItem(task)
+        let measuresA = TaskViewModelTests.createTestMeasures(
+            id: "m-A", taskID: "task-1", title: "A", order: 0)
+        let measuresB = TaskViewModelTests.createTestMeasures(
+            id: "m-B", taskID: "task-1", title: "B", order: 1)
+        let measuresC = TaskViewModelTests.createTestMeasures(
+            id: "m-C", taskID: "task-1", title: "C", order: 2)
+        try? manager.saveItem(measuresA)
+        try? manager.saveItem(measuresB)
+        try? manager.saveItem(measuresC)
+
+        _ = await viewModel.fetchTaskDetail(taskID: "task-1")
+        #expect(viewModel.taskDetail?.measuresList.map { $0.measuresID } == ["m-A", "m-B", "m-C"])
+
+        // CをAより前に移動（index2->0）。awaitを挟まず、同期呼び出し直後に
+        // taskDetail.measuresListが更新済みであることを確認する
+        // (MeasuresListView.onMoveハンドラから非同期Taskでラップせず直接呼べることの検証、issue #165)
+        let reordered = viewModel.reorderMeasuresListData(from: IndexSet(integer: 2), to: 0)
+
+        #expect(viewModel.taskDetail?.measuresList.map { $0.measuresID } == ["m-C", "m-A", "m-B"])
+        #expect(reordered?.map { $0.measuresID } == ["m-C", "m-A", "m-B"])
+
+        // この時点ではRealmへの永続化（persistMeasuresOrder）はまだ行われていないため、
+        // Realm上のorderは変化していないはず
+        let measuresBeforePersist = manager.getMeasuresByTaskID(taskID: "task-1")
+        let orderABeforePersist = measuresBeforePersist.first { $0.measuresID == "m-A" }?.order
+        #expect(orderABeforePersist == 0)
+
+        manager.clearAll()
+    }
+
+    @Test(
+        "persistMeasuresOrder - Realmのorderへ反映後、fetchTaskDetail再取得でも同じ並び順を維持する"
+    )
+    func persistMeasuresOrder_updatesRealmOrderAndRefetchesTaskDetail() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskViewModelTests.createTestTask(id: "task-1", groupID: "g1", order: 0)
+        try? manager.saveItem(task)
+        let measuresA = TaskViewModelTests.createTestMeasures(
+            id: "m-A", taskID: "task-1", title: "A", order: 0)
+        let measuresB = TaskViewModelTests.createTestMeasures(
+            id: "m-B", taskID: "task-1", title: "B", order: 1)
+        let measuresC = TaskViewModelTests.createTestMeasures(
+            id: "m-C", taskID: "task-1", title: "C", order: 2)
+        try? manager.saveItem(measuresA)
+        try? manager.saveItem(measuresB)
+        try? manager.saveItem(measuresC)
+
+        _ = await viewModel.fetchTaskDetail(taskID: "task-1")
+        guard let reordered = viewModel.reorderMeasuresListData(from: IndexSet(integer: 2), to: 0) else {
+            Issue.record("reorderMeasuresListData returned nil")
+            manager.clearAll()
+            return
+        }
+
+        let result = await viewModel.persistMeasuresOrder(reordered)
+        guard case .success = result else {
+            Issue.record("persistMeasuresOrder failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedMeasures = manager.getMeasuresByTaskID(taskID: "task-1")
+        let orderC = updatedMeasures.first { $0.measuresID == "m-C" }?.order
+        let orderA = updatedMeasures.first { $0.measuresID == "m-A" }?.order
+        let orderB = updatedMeasures.first { $0.measuresID == "m-B" }?.order
+        #expect(orderC == 0 && orderA == 1 && orderB == 2)
+
+        // fetchTaskDetailによる再取得後も、ドラッグ確定時に反映した並び順から変化しない
+        // （＝一旦元の位置に戻ってから正しい位置に変わるスナップバックが発生しない）ことを確認
+        #expect(viewModel.taskDetail?.measuresList.map { $0.measuresID } == ["m-C", "m-A", "m-B"])
+
+        manager.clearAll()
+    }
+
+    @Test("reorderMeasuresListData - taskDetailがnilの場合はnilを返しクラッシュしない")
+    func reorderMeasuresListData_withNilTaskDetail_returnsNil() async {
+        let viewModel = TaskViewModel()
+        RealmManager.shared.clearAll()
+
+        #expect(viewModel.taskDetail == nil)
+        let reordered = viewModel.reorderMeasuresListData(from: IndexSet(integer: 0), to: 1)
+        #expect(reordered == nil)
+    }
+
+    @Test("persistMeasuresOrder - 空配列を渡した場合は即座に成功を返す")
+    func persistMeasuresOrder_withEmptyArray_returnsSuccessWithoutCallingMeasuresViewModel() async {
+        let viewModel = TaskViewModel()
+        RealmManager.shared.clearAll()
+
+        let result = await viewModel.persistMeasuresOrder([])
+        guard case .success = result else {
+            Issue.record("persistMeasuresOrder with empty array should succeed immediately")
+            return
+        }
+    }
+
+    @Test("moveMeasures - 表示反映と永続化を一括で行いRealmへ反映される")
+    func moveMeasures_reordersAndPersists() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let task = TaskViewModelTests.createTestTask(id: "task-1", groupID: "g1", order: 0)
+        try? manager.saveItem(task)
+        let measuresA = TaskViewModelTests.createTestMeasures(
+            id: "m-A", taskID: "task-1", title: "A", order: 0)
+        let measuresB = TaskViewModelTests.createTestMeasures(
+            id: "m-B", taskID: "task-1", title: "B", order: 1)
+        try? manager.saveItem(measuresA)
+        try? manager.saveItem(measuresB)
+
+        _ = await viewModel.fetchTaskDetail(taskID: "task-1")
+
+        let result = await viewModel.moveMeasures(from: IndexSet(integer: 1), to: 0)
+        guard case .success = result else {
+            Issue.record("moveMeasures failed")
+            manager.clearAll()
+            return
+        }
+
+        let updatedMeasures = manager.getMeasuresByTaskID(taskID: "task-1")
+        let orderA = updatedMeasures.first { $0.measuresID == "m-A" }?.order
+        let orderB = updatedMeasures.first { $0.measuresID == "m-B" }?.order
+        #expect(orderB == 0 && orderA == 1)
+
+        manager.clearAll()
+    }
+
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）
 
     @Test(
@@ -1481,6 +1624,24 @@ extension TaskViewModelTests {
             memoID: nil,
             order: order,
             isComplete: isComplete
+        )
+    }
+
+    /// テスト用のMeasuresを作成
+    static func createTestMeasures(
+        id: String = "measures-1",
+        taskID: String = "task-1",
+        title: String = "Test Measures",
+        order: Int = 0,
+        isDeleted: Bool = false
+    ) -> Measures {
+        return Measures(
+            measuresID: id,
+            taskID: taskID,
+            title: title,
+            order: order,
+            created_at: Date(),
+            isDeleted: isDeleted
         )
     }
 
