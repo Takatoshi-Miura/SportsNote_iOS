@@ -5,6 +5,7 @@
 //  Created by Swift Testing on 2025/11/23.
 //
 
+import Combine
 import Foundation
 import RealmSwift
 import Testing
@@ -1450,6 +1451,49 @@ struct TaskViewModelTests {
         // 完了課題表示をOFFに戻しても、並び替え後の順序（未完了課題のみ）が保持されているべき（issue #177）
         viewModel.showCompletedTasks = false
         #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["C", "A"])
+
+        manager.clearAll()
+    }
+
+    @Test(
+        "persistTaskOrder - filteredTaskListDataへの再代入（Combine publish）を発生させない（issue #179回帰）"
+    )
+    func persistTaskOrder_doesNotRepublishFilteredTaskListData() async {
+        let viewModel = TaskViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let taskA = TaskViewModelTests.createTestTask(id: "A", groupID: "g1", order: 0, isComplete: false)
+        let taskB = TaskViewModelTests.createTestTask(id: "B", groupID: "g1", order: 1, isComplete: false)
+        let taskC = TaskViewModelTests.createTestTask(id: "C", groupID: "g1", order: 2, isComplete: false)
+        try? manager.saveItem(taskA)
+        try? manager.saveItem(taskB)
+        try? manager.saveItem(taskC)
+
+        _ = await viewModel.fetchData()
+
+        // reorderTaskListDataでfilteredTaskListDataへの同期反映を先に済ませておく
+        let mergedTasks = viewModel.reorderTaskListData(from: IndexSet(integer: 2), to: 0)
+
+        // reorderTaskListData完了後から購読を開始し、persistTaskOrder実行中にfilteredTaskListDataへの
+        // 再代入（publish）が発生しないことを検証する。List.onMoveの移動アニメーション完了前に
+        // filteredTaskListDataが再度置き換わると、一瞬ゴースト表示される不具合の再発を防ぐ（issue #179）
+        var publishCount = 0
+        var cancellables = Set<AnyCancellable>()
+        viewModel.$filteredTaskListData
+            .dropFirst()  // 購読開始時に現在値が即時発行される分はカウントしない
+            .sink { _ in publishCount += 1 }
+            .store(in: &cancellables)
+
+        let result = await viewModel.persistTaskOrder(mergedTasks)
+        guard case .success = result else {
+            Issue.record("persistTaskOrder failed")
+            manager.clearAll()
+            return
+        }
+
+        #expect(publishCount == 0, "persistTaskOrderはfilteredTaskListDataへ再代入すべきではない")
+        #expect(viewModel.filteredTaskListData.map { $0.taskID } == ["C", "A", "B"])
 
         manager.clearAll()
     }
