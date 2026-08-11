@@ -11,7 +11,6 @@ class Memo: Object {
     @Persisted var isDeleted: Bool
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
-    var noteDate: Date = Date()
 
     /// デフォルトイニシャライザ
     override init() {
