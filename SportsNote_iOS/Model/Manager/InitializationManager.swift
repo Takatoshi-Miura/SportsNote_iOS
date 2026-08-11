@@ -56,7 +56,12 @@ final class InitializationManager {
     /// フリーノートを作成
     /// ※既に存在する場合は作成しない
     private func createFreeNote() async {
-        if RealmManager.shared.getFreeNote() != nil {
+        do {
+            if try RealmManager.shared.getFreeNote() != nil {
+                return
+            }
+        } catch {
+            print("フリーノートの存在確認に失敗しました: \(error.localizedDescription)")
             return
         }
 
@@ -102,7 +107,11 @@ final class InitializationManager {
         // （未実行/実行中の同期Taskがinvalidate済みRealmオブジェクトへアクセスしてクラッシュ・
         //   同期データが消失するのを防ぐ。Issue #84対応）
         await BackgroundSyncTracker.shared.waitForAll()
-        RealmManager.shared.clearAll()
+        do {
+            try RealmManager.shared.clearAll()
+        } catch {
+            print("Realmデータの全削除に失敗しました: \(error.localizedDescription)")
+        }
         UserDefaultsManager.clearAll()
     }
 

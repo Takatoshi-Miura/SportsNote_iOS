@@ -51,16 +51,10 @@ final class FirebaseManager {
         data: [String: Any]
     ) async throws {
         do {
-            return try await withCheckedThrowingContinuation { continuation in
+            try await withFirestoreContinuation { completion in
                 db.collection(collectionName)
                     .document(documentID)
-                    .setData(data) { error in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                        } else {
-                            continuation.resume(returning: ())
-                        }
-                    }
+                    .setData(data, completion: completion)
             }
         } catch let error {
             throw ErrorMapper.mapFirebaseError(error, context: "saveDocument-\(collectionName)-\(documentID)")
@@ -224,21 +218,10 @@ final class FirebaseManager {
         let userID = currentUserID()
 
         do {
-            return try await withCheckedThrowingContinuation { continuation in
+            return try await withFirestoreQueryContinuation { completion in
                 db.collection(collection)
                     .whereField("userID", isEqualTo: userID)
-                    .getDocuments { (querySnapshot, error) in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                            return
-                        }
-
-                        if let querySnapshot = querySnapshot {
-                            continuation.resume(returning: querySnapshot.documents)
-                        } else {
-                            continuation.resume(returning: [])
-                        }
-                    }
+                    .getDocuments(completion: completion)
             }
         } catch let error {
             throw ErrorMapper.mapFirebaseError(error, context: "getAllDocuments-\(collection)")
@@ -321,15 +304,9 @@ final class FirebaseManager {
         data: [String: Any]
     ) async throws {
         do {
-            return try await withCheckedThrowingContinuation { continuation in
+            try await withFirestoreContinuation { completion in
                 db.collection(collection).document(documentID)
-                    .setData(data, merge: true) { error in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                        } else {
-                            continuation.resume(returning: ())
-                        }
-                    }
+                    .setData(data, merge: true, completion: completion)
             }
         } catch let error {
             throw ErrorMapper.mapFirebaseError(error, context: "updateDocument-\(collection)-\(documentID)")

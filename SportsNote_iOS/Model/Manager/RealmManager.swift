@@ -360,53 +360,54 @@ final class RealmManager {
     /// groupIDに合致する完了した課題を取得
     /// - Parameter groupID: groupID
     /// - Returns: 完了した課題のリスト
-    func getCompletedTasksByGroupId(groupID: String) -> [TaskData] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getCompletedTasksByGroupId(groupID: String) throws -> [TaskData] {
         do {
             let realm = try getRealm()
             return realm.objects(TaskData.self)
                 .filter("groupID == %@ AND isComplete == true AND isDeleted == false", groupID)
                 .sorted(byKeyPath: "order", ascending: true)
                 .map { $0 }
-        } catch {
-            print("Error fetching completed tasks: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getCompletedTasksByGroupId")
         }
     }
 
     /// taskIDに合致する対策を取得
     /// - Parameter taskID: taskID
     /// - Returns: 対策のリスト
-    func getMeasuresByTaskID(taskID: String) -> [Measures] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getMeasuresByTaskID(taskID: String) throws -> [Measures] {
         do {
             let realm = try getRealm()
             return realm.objects(Measures.self)
                 .filter("taskID == %@ AND isDeleted == false", taskID)
                 .sorted(byKeyPath: "order", ascending: true)
                 .map { $0 }
-        } catch {
-            print("Error fetching measures: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getMeasuresByTaskID")
         }
     }
 
     /// フリーノートを取得
     /// - Returns: フリーノート（存在しない場合は`nil`）
-    func getFreeNote() -> Note? {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getFreeNote() throws -> Note? {
         do {
             let realm = try getRealm()
             return realm.objects(Note.self)
                 .filter("noteType == %@ AND isDeleted == false", NoteType.free.rawValue)
                 .first
-        } catch {
-            print("Error fetching free note: \(error)")
-            return nil
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getFreeNote")
         }
     }
 
     /// 指定された文字列を含むノートを検索（メモ内容も検索対象）
     /// - Parameter query: 検索する文字列
     /// - Returns: 検索結果のノートリスト
-    func searchNotesByQuery(query: String) -> [Note] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func searchNotesByQuery(query: String) throws -> [Note] {
         do {
             let realm = try getRealm()
 
@@ -459,16 +460,16 @@ final class RealmManager {
 
             // フリーノートを先頭にして、検索結果を日付の降順でソート
             return validFreeNotes + validQueryNotes.sorted(by: { $0.date > $1.date })
-        } catch {
-            print("Error searching notes by query: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "searchNotesByQuery")
         }
     }
 
     /// 指定した日付に合致するノートを取得
     /// - Parameter selectedDate: 日付
     /// - Returns: 指定した日付に合致するノートのリスト
-    func getNotesByDate(selectedDate: Date) -> [Note] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getNotesByDate(selectedDate: Date) throws -> [Note] {
         do {
             let realm = try getRealm()
             let startOfDay = Calendar.current.startOfDay(for: selectedDate)
@@ -478,56 +479,55 @@ final class RealmManager {
                     .filter(
                         "isDeleted == false AND noteType != %@ AND date >= %@ AND date < %@", NoteType.free.rawValue,
                         startOfDay, endOfDay))
-        } catch {
-            print("Error fetching notes by date: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getNotesByDate")
         }
     }
 
     /// すべてのノートを取得（フリーノートは除く）
     /// - Returns: ノートのリスト
-    func getNotes() -> [Note] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getNotes() throws -> [Note] {
         do {
             let realm = try getRealm()
             return Array(
                 realm.objects(Note.self)
                     .filter("isDeleted == false AND noteType != %@", NoteType.free.rawValue)
                     .sorted(byKeyPath: "date", ascending: false))
-        } catch {
-            print("Error fetching notes: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getNotes")
         }
     }
 
     /// measuresIDに合致するメモを取得
     /// - Parameter measuresID: 対策ID
     /// - Returns: 対策IDに関連するメモのリスト
-    func getMemosByMeasuresID(measuresID: String) -> [Memo] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getMemosByMeasuresID(measuresID: String) throws -> [Memo] {
         do {
             let realm = try getRealm()
             return Array(
                 realm.objects(Memo.self)
                     .filter("measuresID == %@ AND isDeleted == false", measuresID)
                     .sorted(byKeyPath: "created_at", ascending: true))
-        } catch {
-            print("Error fetching memos by measuresID: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getMemosByMeasuresID")
         }
     }
 
     /// noteIDに合致するメモを取得
     /// - Parameter noteID: ノートID
     /// - Returns: ノートIDに関連するメモのリスト
-    func getMemosByNoteID(noteID: String) -> [Memo] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getMemosByNoteID(noteID: String) throws -> [Memo] {
         do {
             let realm = try getRealm()
             return Array(
                 realm.objects(Memo.self)
                     .filter("noteID == %@ AND isDeleted == false", noteID)
                     .sorted(byKeyPath: "created_at", ascending: true))
-        } catch {
-            print("Error fetching memos by noteID: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getMemosByNoteID")
         }
     }
 
@@ -538,14 +538,16 @@ final class RealmManager {
     ///   - noteID: ノートID
     ///   - measuresID: 対策ID
     /// - Returns: 該当するMemo（存在しない場合はnil）
-    func findMemo(noteID: String, measuresID: String) -> Memo? {
-        return getMemosByNoteID(noteID: noteID).first(where: { $0.measuresID == measuresID })
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func findMemo(noteID: String, measuresID: String) throws -> Memo? {
+        return try getMemosByNoteID(noteID: noteID).first(where: { $0.measuresID == measuresID })
     }
 
     /// ノートの背景色を取得
     /// - Parameter noteID: ノートID
     /// - Returns: ノートの背景色
-    func getNoteBackgroundColor(noteID: String) -> UIColor {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func getNoteBackgroundColor(noteID: String) throws -> UIColor {
         do {
             let realm = try getRealm()
             if let memo = realm.objects(Memo.self)
@@ -570,9 +572,8 @@ final class RealmManager {
                 }
             }
             return .gray
-        } catch {
-            print("Error fetching note background color: \(error)")
-            return .gray
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "getNoteBackgroundColor")
         }
     }
 
@@ -580,15 +581,15 @@ final class RealmManager {
     /// - Parameters:
     ///   - year: 取得したい目標の年
     /// - Returns: 条件に一致する目標のリスト
-    func fetchYearlyTargets(year: Int) -> [Target] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func fetchYearlyTargets(year: Int) throws -> [Target] {
         do {
             let realm = try getRealm()
             let targets = realm.objects(Target.self)
                 .filter("((isYearlyTarget == true AND year == %@)) AND isDeleted == false", year)
             return Array(targets)
-        } catch {
-            print("Error fetching targets by year and month: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "fetchYearlyTargets")
         }
     }
 
@@ -597,16 +598,16 @@ final class RealmManager {
     ///   - year: 取得したい目標の年
     ///   - month: 取得したい目標の月
     /// - Returns: 条件に一致する目標のリスト
-    func fetchTargetsByYearMonth(year: Int, month: Int) -> [Target] {
+    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
+    func fetchTargetsByYearMonth(year: Int, month: Int) throws -> [Target] {
         do {
             let realm = try getRealm()
             let targets = realm.objects(Target.self)
                 .filter(
                     "((isYearlyTarget == false AND year == %@ AND month == %@)) AND isDeleted == false", year, month)
             return Array(targets)
-        } catch {
-            print("Error fetching targets by year and month: \(error)")
-            return []
+        } catch let error {
+            throw ErrorMapper.mapRealmError(error, context: "fetchTargetsByYearMonth")
         }
     }
 
@@ -707,14 +708,15 @@ final class RealmManager {
     }
 
     /// Realmの全データを削除
-    func clearAll() {
+    /// - Throws: SportsNoteError削除に失敗した場合
+    func clearAll() throws {
         do {
             let realm = try getRealm()
             try realm.write {
                 realm.deleteAll()
             }
         } catch let error {
-            print("Failed to clear Realm: \(error)")
+            throw ErrorMapper.mapRealmError(error, context: "clearAll")
         }
     }
 }

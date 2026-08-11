@@ -49,25 +49,37 @@ class MeasuresViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelP
     /// - Parameter measuresID: 対策ID
     /// - Returns: Result
     func fetchMemosByMeasuresID(measuresID: String) async -> Result<Void, SportsNoteError> {
-        memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
-        return .success(())
+        do {
+            memos = try RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+            return .success(())
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "MeasuresViewModel-fetchMemosByMeasuresID"))
+        }
     }
 
     /// 課題IDに紐づく対策を取得
     /// - Parameter taskID: 課題ID
     /// - Returns: Result<[Measures], SportsNoteError>
     func getMeasuresByTaskID(taskID: String) async -> Result<[Measures], SportsNoteError> {
-        let measures = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
-        return .success(measures)
+        do {
+            let measures = try RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+            return .success(measures)
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "MeasuresViewModel-getMeasuresByTaskID"))
+        }
     }
 
     /// 最も優先度の高い（orderが低い）対策を取得
     /// - Parameter taskID: 課題ID
     /// - Returns: Result<Measures?, SportsNoteError>
     func getMostPriorityMeasures(taskID: String) async -> Result<Measures?, SportsNoteError> {
-        let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
-        let mostPriorityMeasures = measuresList.min { $0.order < $1.order }
-        return .success(mostPriorityMeasures)
+        do {
+            let measuresList = try RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+            let mostPriorityMeasures = measuresList.min { $0.order < $1.order }
+            return .success(mostPriorityMeasures)
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "MeasuresViewModel-getMostPriorityMeasures"))
+        }
     }
 
     /// 対策を保存する（既存インターフェースとの互換性のため）

@@ -285,7 +285,7 @@ struct MeasuresViewModelTests {
     func fetchData_retrievesData() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 0, created_at: Date())
         let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 1, created_at: Date())
@@ -298,14 +298,14 @@ struct MeasuresViewModelTests {
         #expect(viewModel.measuresList.contains(where: { $0.measuresID == "ms1" }))
         #expect(viewModel.measuresList.contains(where: { $0.measuresID == "ms2" }))
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("save - 新規対策を保存できる")
     func save_savesNewMeasures() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures = Measures(measuresID: "new-ms", taskID: "t1", title: "New Measures", order: 0, created_at: Date())
 
@@ -318,14 +318,14 @@ struct MeasuresViewModelTests {
         #expect(viewModel.measuresList.count == 1)
         #expect(viewModel.measuresList.first?.measuresID == "new-ms")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("delete - 対策を削除できる")
     func delete_deletesMeasures() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures = Measures(measuresID: "ms1", taskID: "t1", title: "Measures", order: 0, created_at: Date())
         try? manager.saveItem(measures)
@@ -341,7 +341,7 @@ struct MeasuresViewModelTests {
 
         #expect(viewModel.measuresList.isEmpty)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test(
@@ -350,7 +350,7 @@ struct MeasuresViewModelTests {
     func delete_registersBackgroundSyncTaskBeforeReturning() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 他テストの追跡Taskが残っていないことを保証
         await BackgroundSyncTracker.shared.waitForAll()
@@ -369,14 +369,14 @@ struct MeasuresViewModelTests {
         await BackgroundSyncTracker.shared.waitForAll()
         #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getMeasuresByTaskID - 課題IDに紐づく対策を取得できる")
     func getMeasuresByTaskID_retrievesMeasures() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 0, created_at: Date())
         let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 1, created_at: Date())
@@ -395,14 +395,14 @@ struct MeasuresViewModelTests {
             Issue.record("GetMeasuresByTaskID failed")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getMostPriorityMeasures - 最優先対策を取得できる")
     func getMostPriorityMeasures_retrievesMostPriorityMeasures() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures1 = Measures(measuresID: "ms1", taskID: "t1", title: "Measures 1", order: 2, created_at: Date())
         let measures2 = Measures(measuresID: "ms2", taskID: "t1", title: "Measures 2", order: 0, created_at: Date())
@@ -420,14 +420,14 @@ struct MeasuresViewModelTests {
             Issue.record("GetMostPriorityMeasures failed")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveMeasures - 既存インターフェースで対策を保存できる")
     func saveMeasures_savesWithLegacyInterface() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let result = await viewModel.saveMeasures(
             taskID: "t1",
@@ -441,7 +441,7 @@ struct MeasuresViewModelTests {
         #expect(viewModel.measuresList.count == 1)
         #expect(viewModel.measuresList.first?.title == "Legacy Measures")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - order値回帰テスト（issue #21: 削除後の新規追加でorderが逆転する不具合）
@@ -450,7 +450,7 @@ struct MeasuresViewModelTests {
     func saveMeasures_afterDeletion_newMeasuresGetsMaxOrderPlusOne() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // taskID "t1" に order 0〜2 の対策3件を作成
         for i in 0..<3 {
@@ -474,14 +474,14 @@ struct MeasuresViewModelTests {
         let newMeasures = viewModel.measuresList.first(where: { $0.title == "New Measures" })
         #expect(newMeasures?.order == 3)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveMeasures - 別taskIDの削除件数は新規対策のorderに影響しない")
     func saveMeasures_differentTaskDeletion_doesNotAffectOrder() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // taskID "tA" に対策3件を作成し、全て削除
         for i in 0..<3 {
@@ -505,7 +505,7 @@ struct MeasuresViewModelTests {
         let newMeasures = viewModel.measuresList.first(where: { $0.title == "New B Measures" })
         #expect(newMeasures?.order == 1)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - isDeleted保持回帰テスト（issue #75: 更新時にisDeletedがfalseにリセットされ削除済み対策が復活する不具合）
@@ -514,7 +514,7 @@ struct MeasuresViewModelTests {
     func saveMeasures_updatingDeletedMeasures_keepsIsDeletedTrue() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures = Measures(
             measuresID: "ms-deleted", taskID: "t1", title: "Original", order: 0, created_at: Date())
@@ -541,14 +541,14 @@ struct MeasuresViewModelTests {
         #expect(rawMeasures?.isDeleted == true)
         #expect(rawMeasures?.title == "Edited After Deletion")  // タイトル自体は更新される（isDeletedのみ保護される）
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveMeasures - 未削除の対策を更新した場合はisDeletedがfalseのまま")
     func saveMeasures_updatingActiveMeasures_keepsIsDeletedFalse() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures = Measures(
             measuresID: "ms-active", taskID: "t1", title: "Original", order: 0, created_at: Date())
@@ -564,14 +564,14 @@ struct MeasuresViewModelTests {
         let rawMeasures = manager.getRawObjectById(id: "ms-active", type: Measures.self)
         #expect(rawMeasures?.isDeleted == false)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateMeasuresOrder - 論理削除済みの対策の並び順を更新してもisDeletedはtrueのまま維持される")
     func updateMeasuresOrder_withDeletedMeasures_keepsIsDeletedTrue() async {
         let viewModel = MeasuresViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let measures1 = Measures(measuresID: "ms-1", taskID: "t1", title: "M1", order: 0, created_at: Date())
         let measures2 = Measures(measuresID: "ms-2", taskID: "t1", title: "M2", order: 1, created_at: Date())
@@ -590,7 +590,7 @@ struct MeasuresViewModelTests {
         let rawMeasures1 = manager.getRawObjectById(id: "ms-1", type: Measures.self)
         #expect(rawMeasures1?.isDeleted == true)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）

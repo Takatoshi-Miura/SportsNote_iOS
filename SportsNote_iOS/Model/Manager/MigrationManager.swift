@@ -104,17 +104,11 @@ final class MigrationManager {
     /// - Parameter collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
     private func fetchOldDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
         let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withFirestoreQueryContinuation { completion in
             db.collection(collection)
                 .whereField("userID", isEqualTo: userID)
                 .whereField("isDeleted", isEqualTo: false)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents ?? [])
-                    }
-                }
+                .getDocuments(completion: completion)
         }
     }
 
@@ -122,17 +116,12 @@ final class MigrationManager {
     /// isDeleted フィルタを持たず単一ドキュメントを返す点で fetchOldDocuments(collection:) とは構造が異なるため対象外
     private func fetchOldFreeNoteDocument() async throws -> QueryDocumentSnapshot? {
         let userID = getUserID()
-        return try await withCheckedThrowingContinuation { continuation in
+        let documents = try await withFirestoreQueryContinuation { completion in
             db.collection("FreeNoteData")
                 .whereField("userID", isEqualTo: userID)
-                .getDocuments { snapshot, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: snapshot?.documents.first)
-                    }
-                }
+                .getDocuments(completion: completion)
         }
+        return documents.first
     }
 
     // MARK: - 変換・Realm + Firebase 保存
@@ -289,7 +278,7 @@ final class MigrationManager {
         let userID = getUserID()
         let now = Date()
 
-        if let existingFreeNote = RealmManager.shared.getFreeNote() {
+        if let existingFreeNote = try RealmManager.shared.getFreeNote() {
             // 既存のフリーノートに上書き（managed objectを直接変更するとwriteトランザクション外エラーになるため、
             // 同じnoteIDで新規unmanagedオブジェクトを作成し saveItem(.modified) で上書きする）
             let updatedNote = Note()
@@ -385,29 +374,17 @@ final class MigrationManager {
     ///   - collection: 対象コレクション名（"TaskData" / "TargetData" / "NoteData"）
     ///   - documentID: 対象ドキュメントID
     private func markOldDocumentDeleted(collection: String, documentID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withFirestoreContinuation { completion in
             db.collection(collection).document(documentID)
-                .updateData(["isDeleted": true]) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
+                .updateData(["isDeleted": true], completion: completion)
         }
     }
 
     /// 旧 FreeNoteData ドキュメントを論理削除（isDeleted = true）
     private func deleteOldFreeNoteDocument(userID: String) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withFirestoreContinuation { completion in
             db.collection("FreeNoteData").document(userID)
-                .updateData(["isDeleted": true]) { error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(returning: ())
-                    }
-                }
+                .updateData(["isDeleted": true], completion: completion)
         }
     }
 

@@ -338,7 +338,7 @@ struct MemoViewModelTests {
     func fetchData_retrievesData() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let memo1 = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail 1", created_at: Date())
         let memo2 = Memo(memoID: "m2", measuresID: "ms2", noteID: "n2", detail: "Detail 2", created_at: Date())
@@ -351,14 +351,14 @@ struct MemoViewModelTests {
         #expect(viewModel.memoList.contains(where: { $0.memoID == "m1" }))
         #expect(viewModel.memoList.contains(where: { $0.memoID == "m2" }))
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("save - 新規メモを保存できる")
     func save_savesNewMemo() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let memo = Memo(memoID: "new-memo", measuresID: "ms1", noteID: "n1", detail: "New Detail", created_at: Date())
 
@@ -371,14 +371,14 @@ struct MemoViewModelTests {
         #expect(viewModel.memoList.count == 1)
         #expect(viewModel.memoList.first?.memoID == "new-memo")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("delete - メモを削除できる")
     func delete_deletesMemo() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let memo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail", created_at: Date())
         try? manager.saveItem(memo)
@@ -394,7 +394,7 @@ struct MemoViewModelTests {
 
         #expect(viewModel.memoList.isEmpty)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test(
@@ -403,7 +403,7 @@ struct MemoViewModelTests {
     func delete_registersBackgroundSyncTaskBeforeReturning() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 他テストの追跡Taskが残っていないことを保証
         await BackgroundSyncTracker.shared.waitForAll()
@@ -422,14 +422,14 @@ struct MemoViewModelTests {
         await BackgroundSyncTracker.shared.waitForAll()
         #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getMemosByMeasuresID - 対策IDに紐づくメモを取得できる")
     func getMemosByMeasuresID_retrievesMemos() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let note = Note(purpose: "Purpose", detail: "Detail")
         note.noteID = "n1"
@@ -454,14 +454,14 @@ struct MemoViewModelTests {
             Issue.record("GetMemosByMeasuresID failed")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("deleteMemoByNoteAndMeasures - 一致するメモを論理削除できる")
     func deleteMemoByNoteAndMeasures_deletesMatchingMemo() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let memo = Memo(memoID: "m1", measuresID: "ms1", noteID: "n1", detail: "Detail", created_at: Date())
         try? manager.saveItem(memo)
@@ -472,16 +472,16 @@ struct MemoViewModelTests {
             Issue.record("DeleteMemoByNoteAndMeasures failed")
         }
 
-        #expect(manager.findMemo(noteID: "n1", measuresID: "ms1") == nil)
+        #expect((try? manager.findMemo(noteID: "n1", measuresID: "ms1")) == nil)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("deleteMemoByNoteAndMeasures - 一致するメモが存在しない場合は何もせず成功を返す")
     func deleteMemoByNoteAndMeasures_noMatchReturnsSuccess() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let result = await viewModel.deleteMemoByNoteAndMeasures(noteID: "n1", measuresID: "ms-not-exist")
 
@@ -489,14 +489,14 @@ struct MemoViewModelTests {
             Issue.record("DeleteMemoByNoteAndMeasures should succeed when no match found")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getMemosByMeasuresID - noteIDが空文字のメモ（旧データのノート未紐付けメモ）も一覧に含まれる")
     func getMemosByMeasuresID_includesMemosWithEmptyNoteID() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let note = Note(purpose: "Purpose", detail: "Detail")
         note.noteID = "n1"
@@ -518,14 +518,14 @@ struct MemoViewModelTests {
             Issue.record("GetMemosByMeasuresID failed")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveMemo - 既存インターフェースでメモを保存できる")
     func saveMemo_savesWithLegacyInterface() async {
         let viewModel = MemoViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let result = await viewModel.saveMemo(
             measuresID: "ms1",
@@ -541,7 +541,7 @@ struct MemoViewModelTests {
             Issue.record("SaveMemo failed")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）

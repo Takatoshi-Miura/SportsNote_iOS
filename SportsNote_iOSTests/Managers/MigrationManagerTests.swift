@@ -21,7 +21,7 @@ struct MigrationManagerTests {
 
     init() async throws {
         RealmManager.shared.setupInMemoryRealm()
-        RealmManager.shared.clearAll()
+        try RealmManager.shared.clearAll()
     }
 
     private func makeGroup(title: String, order: Int) -> Group {

@@ -48,7 +48,7 @@ struct RealmManagerTests {
         #expect(savedGroup?.title == "Test Group")
 
         // クリーンアップ
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("updateAllUserIds - 全データのUserIDを一括更新できる")
@@ -76,7 +76,7 @@ struct RealmManagerTests {
         #expect(updatedGroup?.userID == "new-user")
         #expect(updatedNote?.userID == "new-user")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getDataList - データ一覧を取得できる（ソート順・論理削除除外）")
@@ -101,7 +101,7 @@ struct RealmManagerTests {
         #expect(results[0].groupID == "g2")  // order順（0 -> 1）
         #expect(results[1].groupID == "g1")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - getDataListIncludingDeleted テスト（issue #26: 同期時の削除復活バグ対策）
@@ -126,7 +126,7 @@ struct RealmManagerTests {
         #expect(results[2].groupID == "g3")
         #expect(results[2].isDeleted == true)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getCount - 有効なデータ件数を取得できる")
@@ -143,7 +143,7 @@ struct RealmManagerTests {
         let count = try manager.getCount(clazz: Note.self)
         #expect(count == 2)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - getMaxOrder テスト（issue #21: order初期値算出の共通ヘルパー）
@@ -153,7 +153,7 @@ struct RealmManagerTests {
         let maxOrder = try manager.getMaxOrder(clazz: Group.self)
         #expect(maxOrder == nil)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMaxOrder - 複数レコードから最大値を返す")
@@ -165,7 +165,7 @@ struct RealmManagerTests {
         let maxOrder = try manager.getMaxOrder(clazz: Group.self)
         #expect(maxOrder == 5)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMaxOrder - 論理削除済みレコードは無視される")
@@ -180,7 +180,7 @@ struct RealmManagerTests {
         let maxOrder = try manager.getMaxOrder(clazz: Group.self)
         #expect(maxOrder == 1)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMaxOrder - predicateによるスコープ絞り込みが機能する")
@@ -211,7 +211,7 @@ struct RealmManagerTests {
         )
         #expect(maxOrderForGroupA == 7)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - getNextOrder テスト（issue #50: order初期値算出ロジックの共通ヘルパー）
@@ -221,7 +221,7 @@ struct RealmManagerTests {
         let nextOrder = manager.getNextOrder(clazz: Group.self)
         #expect(nextOrder == 0)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNextOrder - 既存データがある場合は最大order+1を返す")
@@ -232,7 +232,7 @@ struct RealmManagerTests {
         let nextOrder = manager.getNextOrder(clazz: Group.self)
         #expect(nextOrder == 6)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNextOrder - predicateによるスコープ絞り込みが機能する")
@@ -257,7 +257,7 @@ struct RealmManagerTests {
         )
         #expect(nextOrderForGroupA == 4)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - 論理削除テスト
@@ -283,7 +283,7 @@ struct RealmManagerTests {
         #expect(rawNote != nil)
         #expect(rawNote?.isDeleted == true)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("logicalDelete - Targetを論理削除できる（issue #38: SoftDeletable共通化の回帰防止）")
@@ -301,7 +301,7 @@ struct RealmManagerTests {
         #expect(rawTarget != nil)
         #expect(rawTarget?.isDeleted == true)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("logicalDelete - updated_atが更新される（issue #26: Firebase同期時に削除が新しいと判定されるようにするため）")
@@ -319,7 +319,7 @@ struct RealmManagerTests {
         #expect(rawGroup != nil)
         #expect(rawGroup!.updated_at > oldDate)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("logicalDelete - 連鎖削除（Group -> Task -> Measures -> Memo）")
@@ -373,7 +373,7 @@ struct RealmManagerTests {
         #expect(rawMeasures != nil && rawMeasures!.updated_at > oldDate)
         #expect(rawMemo != nil && rawMemo!.updated_at > oldDate)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - 検索機能テスト
@@ -401,18 +401,18 @@ struct RealmManagerTests {
         try manager.saveItem(note3)
 
         // "test"で検索 -> note1 (Free、purposeに"testing"を含む) がヒット
-        let results1 = manager.searchNotesByQuery(query: "test")
+        let results1 = try manager.searchNotesByQuery(query: "test")
         #expect(results1.count == 1)
         #expect(results1.first?.noteID == "n-1")
 
         // "Data"で検索 -> note1 (Free) はpurposeに"Data"を含まないため除外され、note2 (Practice) のみヒット
         // issue #76: フリーノートも内容が一致する場合のみ検索結果に含める
-        let results2 = manager.searchNotesByQuery(query: "Data")
+        let results2 = try manager.searchNotesByQuery(query: "Data")
         #expect(results2.count == 1)
         #expect(results2.contains(where: { $0.noteID == "n-2" }))
         #expect(!results2.contains(where: { $0.noteID == "n-1" }))
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("searchNotesByQuery - issue #76: クエリが非空でフリーノートの内容にも一致しない場合は検索結果が0件になる")
@@ -431,10 +431,10 @@ struct RealmManagerTests {
         try manager.saveItem(practiceNote)
 
         // どのノートの内容にも一致しないクエリで検索 -> 0件（「ノートが見つかりません」表示に到達できる）
-        let results = manager.searchNotesByQuery(query: "存在しないキーワード")
+        let results = try manager.searchNotesByQuery(query: "存在しないキーワード")
         #expect(results.isEmpty)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("searchNotesByQuery - issue #76: クエリが空の場合は従来通りフリーノートを含む全ノートが表示される")
@@ -452,10 +452,10 @@ struct RealmManagerTests {
         try manager.saveItem(practiceNote)
 
         // クエリが空文字の場合、フリーノートは内容に関わらず無条件で結果に含まれる
-        let results = manager.searchNotesByQuery(query: "")
+        let results = try manager.searchNotesByQuery(query: "")
         #expect(results.contains(where: { $0.noteID == "n-free-empty" }))
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNotesByDate - 日付でノートを取得できる")
@@ -479,11 +479,11 @@ struct RealmManagerTests {
         try manager.saveItem(noteYesterday)
 
         // 今日のノートを取得
-        let results = manager.getNotesByDate(selectedDate: today)
+        let results = try manager.getNotesByDate(selectedDate: today)
         #expect(results.count == 1)
         #expect(results.first?.noteID == "today")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getFreeNote - フリーノートを取得できる")
@@ -499,11 +499,11 @@ struct RealmManagerTests {
         try manager.saveItem(freeNote)
         try manager.saveItem(practiceNote)
 
-        let result = manager.getFreeNote()
+        let result = try manager.getFreeNote()
         #expect(result != nil)
         #expect(result?.noteType == NoteType.free.rawValue)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNotes - 通常ノート（フリー以外）を日付順で取得できる")
@@ -528,13 +528,13 @@ struct RealmManagerTests {
         try manager.saveItem(note2)
         try manager.saveItem(freeNote)
 
-        let results = manager.getNotes()
+        let results = try manager.getNotes()
 
         #expect(results.count == 2)  // フリーノートは除外
         #expect(results[0].title == "Today")  // 日付降順
         #expect(results[1].title == "Yesterday")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - 特定条件取得テスト
@@ -565,9 +565,9 @@ struct RealmManagerTests {
         try manager.saveItem(task2)
         try manager.saveItem(task3)
 
-        let results = manager.getCompletedTasksByGroupId(groupID: groupID)
+        let results = try manager.getCompletedTasksByGroupId(groupID: groupID)
         #expect(results.count == 1)
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMeasuresByTaskID - 特定TaskIDの対策を取得できる")
@@ -593,12 +593,12 @@ struct RealmManagerTests {
         try manager.saveItem(m2)
         try manager.saveItem(m3)
 
-        let results = manager.getMeasuresByTaskID(taskID: taskID)
+        let results = try manager.getMeasuresByTaskID(taskID: taskID)
         #expect(results.count == 2)
         #expect(results[0].measuresID == "m2")  // order順
         #expect(results[1].measuresID == "m1")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMemosByMeasuresID - 特定MeasuresIDのメモを取得できる")
@@ -618,11 +618,11 @@ struct RealmManagerTests {
         try manager.saveItem(memo1)
         try manager.saveItem(memo2)
 
-        let results = manager.getMemosByMeasuresID(measuresID: measuresID)
+        let results = try manager.getMemosByMeasuresID(measuresID: measuresID)
         #expect(results.count == 1)
         #expect(results.first?.memoID == "memo1")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getMemosByNoteID - 特定NoteIDのメモを取得できる")
@@ -641,11 +641,11 @@ struct RealmManagerTests {
         try manager.saveItem(memo1)
         try manager.saveItem(memo2)
 
-        let results = manager.getMemosByNoteID(noteID: noteID)
+        let results = try manager.getMemosByNoteID(noteID: noteID)
         #expect(results.count == 1)
         #expect(results.first?.memoID == "memo1")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("findMemo - noteIDとmeasuresIDが一致するMemoを取得できる")
@@ -663,10 +663,10 @@ struct RealmManagerTests {
         try manager.saveItem(memo1)
         try manager.saveItem(memo2)
 
-        let result = manager.findMemo(noteID: "n1", measuresID: "ms1")
+        let result = try manager.findMemo(noteID: "n1", measuresID: "ms1")
         #expect(result?.memoID == "memo1")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("findMemo - 一致するMemoが存在しない場合はnilを返す")
@@ -677,10 +677,10 @@ struct RealmManagerTests {
         memo1.measuresID = "ms1"
         try manager.saveItem(memo1)
 
-        let result = manager.findMemo(noteID: "n1", measuresID: "ms-not-exist")
+        let result = try manager.findMemo(noteID: "n1", measuresID: "ms-not-exist")
         #expect(result == nil)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("fetchYearlyTargets - 年間目標を取得できる")
@@ -696,11 +696,11 @@ struct RealmManagerTests {
         try manager.saveItem(t2)
         try manager.saveItem(t3)
 
-        let results = manager.fetchYearlyTargets(year: year)
+        let results = try manager.fetchYearlyTargets(year: year)
         #expect(results.count == 1)
         #expect(results.first?.title == "Yearly Target")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("fetchTargetsByYearMonth - 月間目標を取得できる")
@@ -717,11 +717,11 @@ struct RealmManagerTests {
         try manager.saveItem(t2)
         try manager.saveItem(t3)
 
-        let results = manager.fetchTargetsByYearMonth(year: year, month: month)
+        let results = try manager.fetchTargetsByYearMonth(year: year, month: month)
         #expect(results.count == 1)
         #expect(results.first?.title == "May Target")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNoteBackgroundColor - 正しい背景色を取得できる")
@@ -751,13 +751,13 @@ struct RealmManagerTests {
         try manager.saveItem(memo)
 
         // NoteIDから背景色（Groupの色）を取得
-        let color = manager.getNoteBackgroundColor(noteID: "n-color")
+        let color = try manager.getNoteBackgroundColor(noteID: "n-color")
 
         // GroupColor.blueの色と一致するか確認
         // UIColorの比較は厳密には難しいが、ここではCGColorで比較
         #expect(color.cgColor == GroupColor.blue.color.cgColor)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("getNoteBackgroundColor - 範囲外のcolor値でもクラッシュせずgrayを返す（issue #43）")
@@ -784,11 +784,11 @@ struct RealmManagerTests {
         try manager.saveItem(measures)
         try manager.saveItem(memo)
 
-        let color = manager.getNoteBackgroundColor(noteID: "n-invalid-color")
+        let color = try manager.getNoteBackgroundColor(noteID: "n-invalid-color")
 
         #expect(color.cgColor == GroupColor.gray.color.cgColor)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - パラメータ化テスト
@@ -806,10 +806,10 @@ struct RealmManagerTests {
 
         try manager.saveItem(note)
 
-        let results = manager.searchNotesByQuery(query: query)
+        let results = try manager.searchNotesByQuery(query: query)
         #expect(!results.isEmpty)
         #expect(results.first?.noteID == "n-param")
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 }
