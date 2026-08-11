@@ -47,24 +47,17 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
     /// データを取得（プロトコル準拠）
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
+        await fetchDataDefault(context: "TargetViewModel-fetchData") {
             // Realm操作はMainActorで実行
             let allTargets = try RealmManager.shared.getDataList(clazz: Target.self)
 
             // 現在の年月に基づいてフィルタリング
-            yearlyTargets = allTargets.filter { $0.year == currentYear && $0.isYearlyTarget }
-            monthlyTargets = allTargets.filter {
-                $0.year == currentYear && $0.month == currentMonth && !$0.isYearlyTarget
+            self.yearlyTargets = allTargets.filter { $0.year == self.currentYear && $0.isYearlyTarget }
+            self.monthlyTargets = allTargets.filter {
+                $0.year == self.currentYear && $0.month == self.currentMonth && !$0.isYearlyTarget
             }
-
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TargetViewModel-fetchData")
-            return .failure(sportsNoteError)
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -101,37 +94,18 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
     ///   - isUpdate: 更新かどうか
     /// - Returns: Result
     func save(_ entity: Target, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate,
-                let existingTarget = try RealmManager.shared.getObjectById(id: entity.targetID, type: Target.self)
-            {
-                entity.userID = existingTarget.userID
-            }
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
+        await saveDefault(entity, isUpdate: isUpdate, context: "TargetViewModel-save") {
             // Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
             // UI更新 - 現在の年月のデータを再取得
             let allTargets = try RealmManager.shared.getDataList(clazz: Target.self)
-            yearlyTargets = allTargets.filter { $0.year == currentYear && $0.isYearlyTarget }
-            monthlyTargets = allTargets.filter {
-                $0.year == currentYear && $0.month == currentMonth && !$0.isYearlyTarget
+            self.yearlyTargets = allTargets.filter { $0.year == self.currentYear && $0.isYearlyTarget }
+            self.monthlyTargets = allTargets.filter {
+                $0.year == self.currentYear && $0.month == self.currentMonth && !$0.isYearlyTarget
             }
 
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "TargetViewModel-save")
-            return .failure(sportsNoteError)
+            self.hideErrorAlert()
         }
     }
 

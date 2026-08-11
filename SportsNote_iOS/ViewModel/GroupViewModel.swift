@@ -32,17 +32,11 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     /// データを取得
     /// - Returns: Result
     func fetchData() async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
+        await fetchDataDefault(context: "GroupViewModel-fetchData") {
             // Realm操作はMainActorで実行
-            groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-fetchData")
-            return .failure(sportsNoteError)
+            self.groups = try RealmManager.shared.getDataList(clazz: Group.self)
+        } onSuccess: {
+            self.hideErrorAlert()
         }
     }
 
@@ -128,31 +122,13 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
     ///   - isUpdate: 更新要否
     /// - Returns: Result
     func save(_ entity: Group, isUpdate: Bool = false) async -> Result<Void, SportsNoteError> {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // 更新時は、エンティティ再構築時にUserDefaultsの現在値で上書きされてしまったuserIDを、
-            // Realmに永続化済みの値に戻す（アカウント作成直後のuserID切替タイミングでも
-            // Firebase更新が正しいドキュメントIDに対して行われるようにするため。issue #74）
-            if isUpdate, let existingGroup = try RealmManager.shared.getObjectById(id: entity.groupID, type: Group.self)
-            {
-                entity.userID = existingGroup.userID
-            }
-
-            // Realm操作はMainActorで実行
-            try RealmManager.shared.saveItem(entity)
-
+        await saveDefault(entity, isUpdate: isUpdate, context: "GroupViewModel-save") {
             // Firebase同期はバックグラウンドで実行
-            performBackgroundSync(entity, isUpdate: isUpdate)
+            self.performBackgroundSync(entity, isUpdate: isUpdate)
 
             // UI更新
-            groups = try RealmManager.shared.getDataList(clazz: Group.self)
-            hideErrorAlert()
-            return .success(())
-        } catch {
-            let sportsNoteError = convertToSportsNoteError(error, context: "GroupViewModel-save")
-            return .failure(sportsNoteError)
+            self.groups = try RealmManager.shared.getDataList(clazz: Group.self)
+            self.hideErrorAlert()
         }
     }
 

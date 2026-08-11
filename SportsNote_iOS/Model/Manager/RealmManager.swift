@@ -20,6 +20,34 @@ extension Measures: SoftDeletable {}
 extension Memo: SoftDeletable {}
 extension Target: SoftDeletable {}
 
+/// userIDを保持するRealmモデルの共通インターフェース
+///
+/// 保存時のuserID巻き戻し処理（アカウント作成直後のuserID切替タイミングでも
+/// Firebase更新が正しいドキュメントIDに対して行われるようにするための処理。issue #74）を
+/// ViewModelのsave(_:isUpdate:)共通実装（CRUDViewModelProtocol.saveDefault）から利用するために使用する
+protocol UserOwnedEntity: Object {
+    var userID: String { get set }
+    /// RealmManager.getObjectByIdでの検索に使用する主キー値
+    var entityID: String { get }
+}
+
+// Realmモデルに対してUserOwnedEntityプロトコルを適用する拡張
+extension Group: UserOwnedEntity {
+    var entityID: String { groupID }
+}
+extension Measures: UserOwnedEntity {
+    var entityID: String { measuresID }
+}
+extension Memo: UserOwnedEntity {
+    var entityID: String { memoID }
+}
+extension Target: UserOwnedEntity {
+    var entityID: String { targetID }
+}
+extension TaskData: UserOwnedEntity {
+    var entityID: String { taskID }
+}
+
 /// Realmデータベースを管理するクラス
 @MainActor
 final class RealmManager {
