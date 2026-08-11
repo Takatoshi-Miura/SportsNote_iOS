@@ -198,9 +198,7 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
 
             // Firebase同期はバックグラウンドで実行（論理削除なので更新として扱う）
             if let target = targetToDelete {
-                Task {
-                    performBackgroundSync(target, isUpdate: true)
-                }
+                performBackgroundSync(target, isUpdate: true)
             }
 
             // UI更新 - 配列から削除

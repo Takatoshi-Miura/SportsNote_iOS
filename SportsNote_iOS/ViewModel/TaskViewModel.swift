@@ -291,9 +291,7 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
             // 3. Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             if let taskToDelete = taskToDelete {
-                Task {
-                    performBackgroundSync(taskToDelete, isUpdate: true)
-                }
+                performBackgroundSync(taskToDelete, isUpdate: true)
             }
 
             // 4. UI更新

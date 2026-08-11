@@ -425,6 +425,38 @@ struct GroupViewModelTests {
         manager.clearAll()
     }
 
+    @Test(
+        "delete - performBackgroundSyncが直接呼ばれ、戻り値を返す前にBackgroundSyncTrackerへ登録される（issue #164回帰）"
+    )
+    func delete_registersBackgroundSyncTaskBeforeReturning() async {
+        let viewModel = GroupViewModel()
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        // 他テストの追跡Taskが残っていないことを保証
+        await BackgroundSyncTracker.shared.waitForAll()
+
+        let group1 = Group(
+            groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
+        let group2 = Group(
+            groupID: "g2", title: "Group 2", color: GroupColor.blue.rawValue, order: 1, created_at: Date())
+        try? manager.saveItem(group1)
+        try? manager.saveItem(group2)
+        _ = await viewModel.fetchData()
+
+        _ = await viewModel.delete(id: "g1")
+
+        // delete(id:)から戻った直後（追加のawait/yieldを挟まない）時点でperformBackgroundSyncが
+        // 直接（同期的に）呼ばれていればtrack()は既に完了している。外側Task{}でラップされていると
+        // この時点ではまだ登録されておらず0のままになる（issue #164のシナリオを再現する回帰テスト）
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 1)
+
+        await BackgroundSyncTracker.shared.waitForAll()
+        #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
+
+        manager.clearAll()
+    }
+
     @Test("saveGroup - 既存インターフェースでグループを保存できる")
     func saveGroup_savesWithLegacyInterface() async {
         let viewModel = GroupViewModel()

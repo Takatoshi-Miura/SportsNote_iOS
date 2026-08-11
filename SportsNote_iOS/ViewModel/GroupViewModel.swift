@@ -168,9 +168,7 @@ class GroupViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProt
 
             // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             if let groupToDelete = groupToDelete {
-                Task {
-                    performBackgroundSync(groupToDelete, isUpdate: true)
-                }
+                performBackgroundSync(groupToDelete, isUpdate: true)
             }
 
             // UI更新

@@ -99,9 +99,7 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
             // Firebase同期はバックグラウンドで実行（論理削除なので更新として扱う）
             if let memo = memoToDelete {
-                Task {
-                    performBackgroundSync(memo, isUpdate: true)
-                }
+                performBackgroundSync(memo, isUpdate: true)
             }
 
             // UI更新 - 配列から削除
