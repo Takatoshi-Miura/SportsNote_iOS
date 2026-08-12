@@ -199,6 +199,9 @@ final class MigrationManager {
             measuresPriority: measuresPriority
         )
 
+        // 対策ごとの効果コメントを収集する（Memoへの変換は課題全体でノートIDごとにマージしてから行う。issue #184）
+        var effectivenessByMeasures: [MigrationMemoMerger.MeasuresEffectiveness] = []
+
         for (measuresOrder, measuresTitle) in orderedTitles.enumerated() {
             guard let effectivenessArray = measuresData[measuresTitle] else { continue }
 
@@ -215,27 +218,35 @@ final class MigrationManager {
             try RealmManager.shared.saveItem(measures)
             try await FirebaseManager.shared.saveMeasures(measures: measures)
 
-            // 有効性コメントを Memo に変換
             // effectivenessArray: [ ["コメント文字列": ノートID(Int)], ... ]
+            var comments: [(comment: String, oldNoteID: Int)] = []
             for effectivenessDict in effectivenessArray {
                 for (comment, oldNoteIDInt) in effectivenessDict {
-                    guard !comment.isEmpty else { continue }
-
-                    let memo = Memo()
-                    memo.memoID = UUIDGenerator.generateID()
-                    memo.userID = userID
-                    memo.measuresID = measures.measuresID
-                    // noteID は旧 Int を String に変換して保持（Note 変換時の noteID と整合させる）
-                    memo.noteID = oldNoteIDInt == 0 ? "" : String(oldNoteIDInt)
-                    memo.detail = comment
-                    memo.isDeleted = false
-                    memo.created_at = now
-                    memo.updated_at = now
-
-                    try RealmManager.shared.saveItem(memo)
-                    try await FirebaseManager.shared.saveMemo(memo: memo)
+                    comments.append((comment: comment, oldNoteID: oldNoteIDInt))
                 }
             }
+            effectivenessByMeasures.append(
+                MigrationMemoMerger.MeasuresEffectiveness(measuresID: measures.measuresID, comments: comments))
+        }
+
+        // 旧アプリは効果コメントを対策単位で保持していたため、同一ノートで複数対策にコメントが
+        // 付いていた場合、素直に変換すると同一taskID・同一noteIDだが異なるmeasuresIDを持つ複数の
+        // Memoが生成されてしまう（新データモデルは1課題1メモ/ノートが前提のため、片方が画面から
+        // 見えなくなる。issue #184）。ノートIDごとに1件へマージしてからMemoを生成する
+        let mergedMemos = MigrationMemoMerger.merge(effectivenessByMeasures: effectivenessByMeasures)
+        for merged in mergedMemos {
+            let memo = Memo()
+            memo.memoID = UUIDGenerator.generateID()
+            memo.userID = userID
+            memo.measuresID = merged.measuresID
+            memo.noteID = merged.noteID
+            memo.detail = merged.detail
+            memo.isDeleted = false
+            memo.created_at = now
+            memo.updated_at = now
+
+            try RealmManager.shared.saveItem(memo)
+            try await FirebaseManager.shared.saveMemo(memo: memo)
         }
     }
 
