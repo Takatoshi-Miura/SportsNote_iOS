@@ -402,7 +402,22 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 continue
             }
             if let task = taskListData.first(where: { $0.taskID == measures.taskID }) {
-                result[task.taskID] = (task: task, memo: memo)
+                // taskListData由来のtask.measures/measuresIDは常に「現在の最優先対策」を指すため、
+                // 対策の優先度（並び順）を変更した後は、実際にメモが紐づく対策と表示上の対策名が
+                // 乖離してしまう。ここで既に取得済みのmeasures（memo.measuresIDが実際に指す対策）の
+                // title/measuresIDで上書きし、表示専用の対策名をメモが実際に紐づく対策に一致させる（issue #183）
+                let resolvedTask = TaskListData(
+                    taskID: task.taskID,
+                    groupID: task.groupID,
+                    groupColor: task.groupColor,
+                    title: task.title,
+                    measuresID: measures.measuresID,
+                    measures: measures.title,
+                    memoID: task.memoID,
+                    order: task.order,
+                    isComplete: task.isComplete
+                )
+                result[task.taskID] = (task: resolvedTask, memo: memo)
             }
         }
         // Dictionary経由で組み立てるため列挙順が不定になる。task.order昇順にソートし、

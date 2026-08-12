@@ -516,6 +516,52 @@ struct TaskViewModelTests {
         #expect(pairs.count == 1)
         #expect(pairs.first?.task.taskID == "task-1")
         #expect(pairs.first?.memo.memoID == "memo-1")
+        // 対策の優先度変更後も、表示される対策名/IDはメモが実際に紐づく対策（measures-a="Measures A"）の
+        // ままであり、taskListData由来の「現在の最優先対策」（measures-b="Measures B"）にすり替わらないこと
+        // （issue #183回帰: 対策の並び替え後、練習ノートの振り返り欄の対策名表示が実際に紐づく対策と乖離する不具合）
+        #expect(pairs.first?.task.measuresID == "measures-a")
+        #expect(pairs.first?.task.measures == "Measures A")
+
+        manager.clearAll()
+    }
+
+    @Test("associateTasksWithMemos - 新規メモ作成時（並び替えなし）は現在の最優先対策の名前がそのまま表示される（issue #183: 既存動作の回帰なし）")
+    func associateTasksWithMemos_showsCurrentMeasuresNameWhenNoReorderHappened() async {
+        let manager = RealmManager.shared
+        manager.clearAll()
+
+        let viewModel = TaskViewModel()
+        let task = TaskListData(
+            taskID: "task-1",
+            groupID: "group-1",
+            groupColor: .red,
+            title: "Test Task",
+            measuresID: "measures-1",
+            measures: "Test Measures",
+            memoID: nil,
+            order: 0,
+            isComplete: false
+        )
+        viewModel.taskListData = [task]
+
+        try? manager.saveItem(
+            Measures(measuresID: "measures-1", taskID: "task-1", title: "Test Measures", order: 0, created_at: Date())
+        )
+
+        // 並び替えを経ていない新規メモは、taskListDataの最優先対策とmemo.measuresIDが一致する
+        let memo = Memo(
+            memoID: "memo-1",
+            measuresID: "measures-1",
+            noteID: "note-1",
+            detail: "新規メモ",
+            created_at: Date()
+        )
+
+        let pairs = viewModel.associateTasksWithMemos(memos: [memo])
+
+        #expect(pairs.count == 1)
+        #expect(pairs.first?.task.measuresID == "measures-1")
+        #expect(pairs.first?.task.measures == "Test Measures")
 
         manager.clearAll()
     }
