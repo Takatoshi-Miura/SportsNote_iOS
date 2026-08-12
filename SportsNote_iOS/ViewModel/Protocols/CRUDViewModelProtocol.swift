@@ -138,7 +138,8 @@ extension CRUDViewModelProtocol where Self: FirebaseSyncable {
             let entityToDelete = try RealmManager.shared.getObjectById(id: id, type: EntityType.self)
 
             // Realm操作はMainActorで実行
-            try RealmManager.shared.logicalDelete(id: id, type: EntityType.self)
+            // logicalDeleteはカスケードで論理削除された子エンティティ（TaskData/Measures/Memo）を返す（issue #181）
+            let cascade = try RealmManager.shared.logicalDelete(id: id, type: EntityType.self)
 
             // Firebase同期はバックグラウンドで実行（削除前に取得したオブジェクトを使用）
             // performBackgroundSync自体が内部でTaskを生成しBackgroundSyncTrackerに追跡登録するため、
@@ -146,6 +147,8 @@ extension CRUDViewModelProtocol where Self: FirebaseSyncable {
             if let entityToDelete = entityToDelete {
                 performBackgroundSync(entityToDelete, isUpdate: true)
             }
+            // カスケードで論理削除された子エンティティもFirebaseに同期する（issue #181）
+            performCascadeBackgroundSync(cascade)
 
             // ローカルキャッシュからの除去はViewModelごとに異なるため呼び出し元に委譲
             try removeFromLocalCache()
@@ -156,5 +159,45 @@ extension CRUDViewModelProtocol where Self: FirebaseSyncable {
             let sportsNoteError = convertToSportsNoteError(error, context: context)
             return .failure(sportsNoteError)
         }
+    }
+
+    /// カスケードで論理削除された子エンティティ（TaskData/Measures/Memo）をバックグラウンドでFirebaseに同期する
+    ///
+    /// Group/TaskData/Measures/Noteの削除時、RealmManager.logicalDeleteは同一トランザクション内で
+    /// 子エンティティも再帰的に論理削除するが、削除対象本体のみをperformBackgroundSyncで同期していると
+    /// カスケード分がFirebaseに反映されず孤立データが残ってしまう（issue #181）。
+    /// performBackgroundSyncと同様、Task生成・BackgroundSyncTrackerへの追跡登録は
+    /// オンライン状態に関わらず同期的に行い（issue #164の回帰パターンを踏襲）、
+    /// 実際のFirebase呼び出しのみTask内でisOnlineAndLoggedInによりガードする。
+    /// - Parameter cascade: logicalDeleteが返したカスケード削除対象
+    private func performCascadeBackgroundSync(_ cascade: CascadeDeletedEntities) {
+        guard !cascade.isEmpty else { return }
+
+        let task = Task {
+            guard isOnlineAndLoggedIn else { return }
+
+            for taskData in cascade.tasks {
+                do {
+                    try await FirebaseManager.shared.updateTask(task: taskData)
+                } catch {
+                    print("Failed to sync cascade-deleted TaskData to Firebase: \(error)")
+                }
+            }
+            for measures in cascade.measures {
+                do {
+                    try await FirebaseManager.shared.updateMeasures(measures: measures)
+                } catch {
+                    print("Failed to sync cascade-deleted Measures to Firebase: \(error)")
+                }
+            }
+            for memo in cascade.memos {
+                do {
+                    try await FirebaseManager.shared.updateMemo(memo: memo)
+                } catch {
+                    print("Failed to sync cascade-deleted Memo to Firebase: \(error)")
+                }
+            }
+        }
+        BackgroundSyncTracker.shared.track(task)
     }
 }
