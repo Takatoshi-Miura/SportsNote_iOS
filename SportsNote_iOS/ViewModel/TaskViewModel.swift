@@ -446,8 +446,13 @@ class TaskViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     private func getMostPriorityMeasures(taskID: String) -> Measures? {
         // 同期的な処理が必要なため、RealmManagerを直接使用
         // 将来的にはconvertToTaskListData()の非同期化を検討
-        let measuresList = RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
-        return measuresList.min { $0.order < $1.order }
+        do {
+            let measuresList = try RealmManager.shared.getMeasuresByTaskID(taskID: taskID)
+            return measuresList.min { $0.order < $1.order }
+        } catch {
+            showErrorAlert(convertToSportsNoteError(error, context: "TaskViewModel-getMostPriorityMeasures"))
+            return nil
+        }
     }
 
     /// 対策表示上の並び替えを同期的に即時反映する（Realm永続化・Firebase同期は含まない）

@@ -338,7 +338,7 @@ struct GroupViewModelTests {
     @Test("getGroupColor - 範囲外のcolor値でもクラッシュせずgrayを返す（issue #43）")
     func getGroupColor_returnsGrayForOutOfRangeColor() throws {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let group = Group(
             groupID: "g-invalid-color", title: "Broken Group", color: 99, order: 0, created_at: Date())
@@ -347,7 +347,7 @@ struct GroupViewModelTests {
         let color = GroupViewModel.getGroupColor(groupID: "g-invalid-color")
         #expect(color == .gray)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - CRUD操作テスト
@@ -356,7 +356,7 @@ struct GroupViewModelTests {
     func fetchData_retrievesData() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let group1 = Group(
             groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
@@ -371,14 +371,14 @@ struct GroupViewModelTests {
         #expect(viewModel.groups.contains(where: { $0.groupID == "g1" }))
         #expect(viewModel.groups.contains(where: { $0.groupID == "g2" }))
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("save - 新規グループを保存できる")
     func save_savesNewGroup() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let group = Group(
             groupID: "new-g", title: "New Group", color: GroupColor.green.rawValue, order: 0, created_at: Date())
@@ -392,14 +392,14 @@ struct GroupViewModelTests {
         #expect(viewModel.groups.count == 1)
         #expect(viewModel.groups.first?.groupID == "new-g")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("delete - グループを削除できる")
     func delete_deletesGroup() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 2つのグループを作成（canDeleteがtrueになるように）
         let group1 = Group(
@@ -422,7 +422,7 @@ struct GroupViewModelTests {
         #expect(viewModel.groups.count == 1)
         #expect(viewModel.groups.first?.groupID == "g2")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test(
@@ -431,7 +431,7 @@ struct GroupViewModelTests {
     func delete_registersBackgroundSyncTaskBeforeReturning() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 他テストの追跡Taskが残っていないことを保証
         await BackgroundSyncTracker.shared.waitForAll()
@@ -454,14 +454,14 @@ struct GroupViewModelTests {
         await BackgroundSyncTracker.shared.waitForAll()
         #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveGroup - 既存インターフェースでグループを保存できる")
     func saveGroup_savesWithLegacyInterface() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let result = await viewModel.saveGroup(
             title: "Legacy Group",
@@ -476,14 +476,14 @@ struct GroupViewModelTests {
         #expect(viewModel.groups.first?.title == "Legacy Group")
         #expect(viewModel.groups.first?.color == GroupColor.purple.rawValue)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getColorForGroupAtIndex - グループカラーを取得できる")
     func getColorForGroupAtIndex_retrievesColor() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let group = Group(groupID: "g1", title: "Group 1", color: GroupColor.red.rawValue, order: 0, created_at: Date())
         try? manager.saveItem(group)
@@ -493,14 +493,14 @@ struct GroupViewModelTests {
         let color = viewModel.getColorForGroupAtIndex(0)
         #expect(color == .red)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("getTitleForGroupAtIndex - グループタイトルを取得できる")
     func getTitleForGroupAtIndex_retrievesTitle() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let group = Group(
             groupID: "g1", title: "Test Group", color: GroupColor.red.rawValue, order: 0, created_at: Date())
@@ -511,7 +511,7 @@ struct GroupViewModelTests {
         let title = viewModel.getTitleForGroupAtIndex(0)
         #expect(title == "Test Group")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - order値回帰テスト（issue #21: 削除後の新規追加でorderが逆転する不具合）
@@ -520,7 +520,7 @@ struct GroupViewModelTests {
     func saveGroup_afterDeletion_newGroupGetsMaxOrderPlusOne() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // order 0〜3 のグループ4件を作成
         for i in 0..<4 {
@@ -545,7 +545,7 @@ struct GroupViewModelTests {
         let newGroup = viewModel.groups.first(where: { $0.title == "New Group" })
         #expect(newGroup?.order == 4)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - reorderGroups / persistGroupOrder（グループ並び替えの同期性）テスト（issue #169）
@@ -554,7 +554,7 @@ struct GroupViewModelTests {
     func reorderGroups_synchronouslyUpdatesGroups() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
         let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
@@ -580,14 +580,14 @@ struct GroupViewModelTests {
         let orderABeforePersist = groupsBeforePersist.first { $0.groupID == "g-A" }?.order
         #expect(orderABeforePersist == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("persistGroupOrder - Realmのorderへ反映後、fetchDataで再取得しても同じ並び順を維持する")
     func persistGroupOrder_updatesRealmOrderAndRefetchesGroups() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
         let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
@@ -602,7 +602,7 @@ struct GroupViewModelTests {
         let result = await viewModel.persistGroupOrder(reordered)
         guard case .success = result else {
             Issue.record("persistGroupOrder failed")
-            manager.clearAll()
+            try? manager.clearAll()
             return
         }
 
@@ -617,14 +617,14 @@ struct GroupViewModelTests {
         _ = await viewModel.fetchData()
         #expect(viewModel.groups.map { $0.groupID } == ["g-C", "g-A", "g-B"])
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("moveGroup - 表示反映と永続化を一括で行いRealmへ反映される（後方互換ラッパーの回帰確認）")
     func moveGroup_reordersAndPersists() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let groupA = GroupViewModelTests.createTestGroup(id: "g-A", title: "A", order: 0)
         let groupB = GroupViewModelTests.createTestGroup(id: "g-B", title: "B", order: 1)
@@ -636,7 +636,7 @@ struct GroupViewModelTests {
         let result = await viewModel.moveGroup(from: IndexSet(integer: 1), to: 0)
         guard case .success = result else {
             Issue.record("moveGroup failed")
-            manager.clearAll()
+            try? manager.clearAll()
             return
         }
 
@@ -647,7 +647,7 @@ struct GroupViewModelTests {
         let orderB = updatedGroups.first { $0.groupID == "g-B" }?.order
         #expect(orderB == 0 && orderA == 1)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）

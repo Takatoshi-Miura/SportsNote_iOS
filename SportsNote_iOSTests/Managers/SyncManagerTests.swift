@@ -66,7 +66,7 @@ struct SyncManagerTests {
         let rawGroup = RealmManager.shared.getRawObjectById(id: id, type: Group.self)
         #expect(rawGroup?.isDeleted == true)
 
-        RealmManager.shared.clearAll()
+        try RealmManager.shared.clearAll()
     }
 
     @Test(
@@ -99,7 +99,7 @@ struct SyncManagerTests {
         #expect(rawGroup != nil)
         #expect(rawGroup?.isDeleted == true)
 
-        RealmManager.shared.clearAll()
+        try RealmManager.shared.clearAll()
     }
 
     @Test("syncGroup - Realmにのみ存在する新規データはFirebaseへ保存される（既存ロジックの回帰確認）")
@@ -117,7 +117,7 @@ struct SyncManagerTests {
 
         #expect(saveToFirebaseCalledWith?.groupID == "g-only-realm")
 
-        RealmManager.shared.clearAll()
+        try RealmManager.shared.clearAll()
     }
 
     @Test("syncGroup - Firebaseにのみ存在するデータはRealmへ保存される（既存ロジックの回帰確認）")
@@ -134,6 +134,6 @@ struct SyncManagerTests {
         #expect(rawGroup != nil)
         #expect(rawGroup?.groupID == "g-only-firebase")
 
-        RealmManager.shared.clearAll()
+        try RealmManager.shared.clearAll()
     }
 }

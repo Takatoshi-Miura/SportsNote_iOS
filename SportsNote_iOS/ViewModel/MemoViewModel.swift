@@ -109,7 +109,12 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter measuresID: 対策ID
     /// - Returns: Result<[MeasuresMemo], SportsNoteError>
     func getMemosByMeasuresID(measuresID: String) -> Result<[MeasuresMemo], SportsNoteError> {
-        let memos = RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+        let memos: [Memo]
+        do {
+            memos = try RealmManager.shared.getMemosByMeasuresID(measuresID: measuresID)
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "MemoViewModel-getMemosByMeasuresID"))
+        }
         var measuresMemoList = [MeasuresMemo]()
 
         for memo in memos {
@@ -228,7 +233,13 @@ class MemoViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     ///   - measuresID: 対策ID
     /// - Returns: Result<Void, SportsNoteError>（該当メモが存在しない場合も.success(())を返す）
     func deleteMemoByNoteAndMeasures(noteID: String, measuresID: String) async -> Result<Void, SportsNoteError> {
-        guard let memo = RealmManager.shared.findMemo(noteID: noteID, measuresID: measuresID) else {
+        let foundMemo: Memo?
+        do {
+            foundMemo = try RealmManager.shared.findMemo(noteID: noteID, measuresID: measuresID)
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "MemoViewModel-deleteMemoByNoteAndMeasures"))
+        }
+        guard let memo = foundMemo else {
             return .success(())
         }
         return await delete(id: memo.memoID)

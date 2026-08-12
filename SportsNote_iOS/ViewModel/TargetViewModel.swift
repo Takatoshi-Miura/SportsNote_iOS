@@ -127,7 +127,12 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
 
         // 重複する目標を削除（Realm操作はMainActorで実行）
         if isYearlyTarget {
-            let yearlyTargets = RealmManager.shared.fetchYearlyTargets(year: year)
+            let yearlyTargets: [Target]
+            do {
+                yearlyTargets = try RealmManager.shared.fetchYearlyTargets(year: year)
+            } catch {
+                return .failure(convertToSportsNoteError(error, context: "TargetViewModel-saveTarget"))
+            }
             for existingTarget in yearlyTargets {
                 let deleteResult = await delete(id: existingTarget.targetID)
                 if case .failure(let error) = deleteResult {
@@ -135,7 +140,12 @@ class TargetViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelPro
                 }
             }
         } else {
-            let monthlyTargets = RealmManager.shared.fetchTargetsByYearMonth(year: year, month: month)
+            let monthlyTargets: [Target]
+            do {
+                monthlyTargets = try RealmManager.shared.fetchTargetsByYearMonth(year: year, month: month)
+            } catch {
+                return .failure(convertToSportsNoteError(error, context: "TargetViewModel-saveTarget"))
+            }
             for existingTarget in monthlyTargets {
                 let deleteResult = await delete(id: existingTarget.targetID)
                 if case .failure(let error) = deleteResult {

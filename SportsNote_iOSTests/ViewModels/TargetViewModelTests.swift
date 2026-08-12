@@ -357,7 +357,7 @@ struct TargetViewModelTests {
     func fetchTargetsByYearMonth_retrievesTargets() async {
         let viewModel = TargetViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let target1 = Target(title: "Target 1", year: 2024, month: 11, isYearlyTarget: false)
         let target2 = Target(title: "Target 2", year: 2024, month: 11, isYearlyTarget: false)
@@ -368,14 +368,14 @@ struct TargetViewModelTests {
 
         #expect(viewModel.monthlyTargets.count == 2)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("save - 新規目標を保存できる")
     func save_savesNewTarget() async {
         let viewModel = TargetViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let target = Target(title: "New Target", year: 2024, month: 11, isYearlyTarget: false)
 
@@ -388,14 +388,14 @@ struct TargetViewModelTests {
         _ = await viewModel.fetchTargetsByYearMonth(year: 2024, month: 11)
         #expect(viewModel.monthlyTargets.count == 1)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("delete - 目標を削除できる")
     func delete_deletesTarget() async {
         let viewModel = TargetViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let target = Target(title: "Target", year: 2024, month: 11, isYearlyTarget: false)
         try? manager.saveItem(target)
@@ -411,7 +411,7 @@ struct TargetViewModelTests {
 
         #expect(viewModel.monthlyTargets.isEmpty)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test(
@@ -420,7 +420,7 @@ struct TargetViewModelTests {
     func delete_registersBackgroundSyncTaskBeforeReturning() async {
         let viewModel = TargetViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 他テストの追跡Taskが残っていないことを保証
         await BackgroundSyncTracker.shared.waitForAll()
@@ -439,7 +439,7 @@ struct TargetViewModelTests {
         await BackgroundSyncTracker.shared.waitForAll()
         #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）

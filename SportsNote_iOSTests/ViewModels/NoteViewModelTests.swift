@@ -338,7 +338,7 @@ struct NoteViewModelTests {
     func fetchData_retrievesData() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // テストデータ作成（フリーノート以外を使用）
         let note1 = Note(purpose: "Purpose 1", detail: "Detail 1")
@@ -355,7 +355,7 @@ struct NoteViewModelTests {
         #expect(viewModel.notes.contains(where: { $0.noteID == note1.noteID }))
         #expect(viewModel.notes.contains(where: { $0.noteID == note2.noteID }))
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
 
@@ -363,7 +363,7 @@ struct NoteViewModelTests {
     func delete_deletesNote() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // テストデータ（フリーノート以外でないと削除できない仕様があるため練習ノートにする）
         let note = Note(purpose: "Purpose", detail: "Detail")
@@ -388,7 +388,7 @@ struct NoteViewModelTests {
         let deletedNote = manager.getRawObjectById(id: note.noteID, type: Note.self)
         #expect(deletedNote?.isDeleted == true)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // NOTE(issue #164): NoteViewModel.delete(id:)は他5ViewModelと異なり
@@ -406,7 +406,7 @@ struct NoteViewModelTests {
     func delete_cannotDeleteFreeNote() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // フリーノート作成
         let note = Note(title: "Free Note")
@@ -429,7 +429,7 @@ struct NoteViewModelTests {
         let existingNote = try? manager.getObjectById(id: note.noteID, type: Note.self)
         #expect(existingNote != nil)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - 検索・フィルタリングテスト
@@ -438,7 +438,7 @@ struct NoteViewModelTests {
     func searchNotes_filtersByQuery() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // データ作成
         let note1 = Note(title: "Swift")
@@ -462,14 +462,14 @@ struct NoteViewModelTests {
         #expect(viewModel.notes.contains(where: { $0.noteID == note1.noteID }))
         #expect(viewModel.notes.contains(where: { $0.noteID == note2.noteID }))
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("filterNotesByDate - 日付でフィルタリングできる")
     func filterNotesByDate_filtersByDate() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let today = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
@@ -491,7 +491,7 @@ struct NoteViewModelTests {
         #expect(filtered.count == 1)
         #expect(filtered.first?.noteID == noteToday.noteID)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - 各種ノート作成メソッドテスト
@@ -500,7 +500,7 @@ struct NoteViewModelTests {
     func savePracticeNote_savesCorrectly() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         viewModel.savePracticeNoteWithReflections(
             purpose: "Practice Purpose",
@@ -533,7 +533,7 @@ struct NoteViewModelTests {
         #expect(note?.weather == Weather.rainy.rawValue)
         #expect(note?.temperature == 25)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - updateTaskReflections（課題振り返りメモ）のcreated_atテスト
@@ -542,7 +542,7 @@ struct NoteViewModelTests {
     func updateTaskReflections_newMemo_setsCurrentCreatedAt() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let beforeSave = Date()
         let task = TaskListData(
@@ -577,13 +577,13 @@ struct NoteViewModelTests {
             Issue.record("新規作成されたMemoのcreated_atが取得できませんでした")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - task.memoIDがある場合、既存メモのcreated_atが維持される")
     func updateTaskReflections_existingMemoWithMemoID_preservesCreatedAt() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 既存メモをRealmに直接投入（過去のcreated_atを持つ）
         let fixedCreatedAt = Date().addingTimeInterval(-86400)
@@ -628,13 +628,13 @@ struct NoteViewModelTests {
             Issue.record("更新後のMemoのcreated_atが取得できませんでした")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - task.memoIDがなくnoteID+measuresIDで既存メモが見つかる場合もcreated_atが維持される")
     func updateTaskReflections_existingMemoFoundBySearch_preservesCreatedAt() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 既存メモをRealmに直接投入（過去のcreated_atを持つ）
         let fixedCreatedAt = Date().addingTimeInterval(-3600)
@@ -681,7 +681,7 @@ struct NoteViewModelTests {
             Issue.record("更新後のMemoのcreated_atが取得できませんでした")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - updateTaskReflections（課題振り返りメモ）の対策並び替え回帰テスト（issue #109）
@@ -689,7 +689,7 @@ struct NoteViewModelTests {
     @Test("updateTaskReflections - 対策の並び替えでmeasuresIDが変わっても、既存メモが重複作成されず更新される")
     func updateTaskReflections_existingMemoFoundAfterMeasuresReorder_updatesExistingMemo() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 既存メモは並び替え前の最優先対策(measures-old)に対して作成されたもの
         let fixedCreatedAt = Date().addingTimeInterval(-3600)
@@ -733,7 +733,7 @@ struct NoteViewModelTests {
         )
 
         // 新規メモが作られず、既存メモが更新されていること（重複作成されないこと）
-        let memos = manager.getMemosByNoteID(noteID: "note-reorder-1")
+        let memos = (try? manager.getMemosByNoteID(noteID: "note-reorder-1")) ?? []
         #expect(memos.count == 1)
 
         let updatedMemo = try? manager.getObjectById(id: "memo-reorder-1", type: Memo.self)
@@ -745,7 +745,7 @@ struct NoteViewModelTests {
             Issue.record("更新後のMemoのcreated_atが取得できませんでした")
         }
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - updateTaskReflections（課題振り返りメモ）の対策付け替え回帰テスト（issue #160）
@@ -753,7 +753,7 @@ struct NoteViewModelTests {
     @Test("updateTaskReflections - 対策の並び替え後、既存メモのmeasuresIDが現在の最優先対策IDに上書きされず維持される（noteID+measuresID検索経由）")
     func updateTaskReflections_existingMemoFoundAfterMeasuresReorder_preservesOriginalMeasuresID() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 既存メモは並び替え前の最優先対策(measures-old)に対して作成されたもの
         let existingMemo = Memo(
@@ -804,13 +804,13 @@ struct NoteViewModelTests {
         #expect(updatedMemo?.measuresID == "measures-old-2")
         #expect(updatedMemo?.detail == "並び替え後の振り返り")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - task.memoIDによる既存メモ編集時も、対策の並び替え後にmeasuresIDが上書きされず維持される")
     func updateTaskReflections_existingMemoWithMemoID_preservesOriginalMeasuresIDAfterReorder() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 既存メモは並び替え前の最優先対策(measures-old-3)に対して作成されたもの
         let existingMemo = Memo(
@@ -848,13 +848,13 @@ struct NoteViewModelTests {
         #expect(updatedMemo?.measuresID == "measures-old-3")
         #expect(updatedMemo?.detail == "並び替え後の振り返り")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - 新規メモ作成時は引き続き現在の最優先対策IDが正しく設定される（回帰確認）")
     func updateTaskReflections_newMemo_usesCurrentMostPriorityMeasuresID() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let viewModel = NoteViewModel()
         let task = TaskListData(
@@ -876,11 +876,11 @@ struct NoteViewModelTests {
             taskReflections: [task: "新規の振り返り"]
         )
 
-        let memos = manager.getMemosByNoteID(noteID: "note-reorder-4")
+        let memos = (try? manager.getMemosByNoteID(noteID: "note-reorder-4")) ?? []
         #expect(memos.count == 1)
         #expect(memos.first?.measuresID == "measures-new-4")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - updateTaskReflections（課題振り返りメモ）の空文字編集テスト（issue #105）
@@ -888,7 +888,7 @@ struct NoteViewModelTests {
     @Test("updateTaskReflections - 既存メモを空文字に編集した場合、Realm上のdetailが空文字に更新される")
     func updateTaskReflections_existingMemo_savesEmptyDetail() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let existingMemo = Memo(
             memoID: "memo-fixed-3",
@@ -925,13 +925,13 @@ struct NoteViewModelTests {
         #expect(updatedMemo != nil)
         #expect(updatedMemo?.detail == "")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - task.memoIDがなくnoteID+measuresID検索で既存メモが見つかる場合も、空文字への編集が保存される")
     func updateTaskReflections_existingMemoFoundBySearch_savesEmptyDetail() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let existingMemo = Memo(
             memoID: "memo-fixed-4b",
@@ -972,13 +972,13 @@ struct NoteViewModelTests {
         #expect(updatedMemo != nil)
         #expect(updatedMemo?.detail == "")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - 既存メモがない状態で空文字のまま保存しても新規メモは作成されない")
     func updateTaskReflections_noExistingMemo_emptyText_doesNotCreateMemo() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let viewModel = NoteViewModel()
         let task = TaskListData(
@@ -1000,10 +1000,10 @@ struct NoteViewModelTests {
             taskReflections: [task: ""]
         )
 
-        let memos = manager.getMemosByNoteID(noteID: "note-4")
+        let memos = (try? manager.getMemosByNoteID(noteID: "note-4")) ?? []
         #expect(memos.isEmpty)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - updateTaskReflections（課題振り返りメモ）のFirebase同期テスト
@@ -1012,7 +1012,7 @@ struct NoteViewModelTests {
     func updateTaskReflections_newMemo_triggersFirebaseSyncCall() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let task = TaskListData(
             taskID: "task-sync-1",
@@ -1035,13 +1035,13 @@ struct NoteViewModelTests {
         #expect(viewModel.memoSyncCallsForTesting.count == 1)
         #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == false)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - task.memoIDによる既存メモ編集時、Memoの同期呼び出しがisUpdate=trueで発生する")
     func updateTaskReflections_existingMemoWithMemoID_triggersFirebaseSyncCallAsUpdate() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let existingMemo = Memo(
             memoID: "memo-sync-fixed-1",
@@ -1076,13 +1076,13 @@ struct NoteViewModelTests {
         #expect(viewModel.memoSyncCallsForTesting.first?.memoID == "memo-sync-fixed-1")
         #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == true)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("updateTaskReflections - noteID+measuresID検索で既存メモが見つかる場合もMemoの同期呼び出しがisUpdate=trueで発生する")
     func updateTaskReflections_existingMemoFoundBySearch_triggersFirebaseSyncCallAsUpdate() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let existingMemo = Memo(
             memoID: "memo-sync-fixed-2",
@@ -1122,7 +1122,7 @@ struct NoteViewModelTests {
         #expect(viewModel.memoSyncCallsForTesting.first?.memoID == "memo-sync-fixed-2")
         #expect(viewModel.memoSyncCallsForTesting.first?.isUpdate == true)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("syncMemoToFirebase - オフライン/テスト環境では同期をスキップして成功を返す", arguments: [false, true])
@@ -1147,7 +1147,7 @@ struct NoteViewModelTests {
     func saveTournamentNote_savesCorrectly() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         viewModel.saveTournamentNote(
             target: "Tournament Target",
@@ -1178,14 +1178,14 @@ struct NoteViewModelTests {
         #expect(note?.consciousness == "Consciousness")
         #expect(note?.result == "Result")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveFreeNote - フリーノートを保存できる")
     func saveFreeNote_savesCorrectly() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         viewModel.saveFreeNote(
             title: "Free Title",
@@ -1214,14 +1214,14 @@ struct NoteViewModelTests {
         #expect(note?.title == "Free Title")
         #expect(note?.detail == "Free Detail")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("fetchNotesExcludingFree - フリーノートを除外して取得できる")
     func fetchNotesExcludingFree_excludesFreeNotes() async {
         let viewModel = NoteViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let freeNote = Note(title: "Free")
         freeNote.noteType = NoteType.free.rawValue
@@ -1237,7 +1237,7 @@ struct NoteViewModelTests {
         #expect(viewModel.notes.count == 1)
         #expect(viewModel.notes.first?.noteType == NoteType.practice.rawValue)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     // MARK: - convertFirebaseSyncError テスト（issue #36: エラー二重変換防止）

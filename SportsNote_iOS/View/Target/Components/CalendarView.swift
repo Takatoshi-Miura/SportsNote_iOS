@@ -46,6 +46,7 @@ struct CalendarView: View {
                 }) {
                     Image(systemName: "chevron.left")
                 }
+                .disabled(isAnimating)
 
                 Spacer()
 
@@ -61,6 +62,7 @@ struct CalendarView: View {
                 }) {
                     Image(systemName: "chevron.right")
                 }
+                .disabled(isAnimating)
             }
             .padding(.horizontal)
             .padding(.bottom, 5)
@@ -131,6 +133,9 @@ struct CalendarView: View {
 
     // 月の切り替えを行う関数
     private func changeMonth(isPrevious: Bool) {
+        // アニメーション完了前の連続タップ・スワイプによる多重実行を防ぐ
+        guard !isAnimating else { return }
+
         isAnimating = true
         slideDirection = isPrevious ? -1 : 1  // 前月なら左から右へ、次月なら右から左へ
 

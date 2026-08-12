@@ -49,17 +49,21 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         defer { isLoading = false }
 
         // Realm操作はMainActorで実行
-        let allNotes = realmManager.getNotes()
-        if let freeNote = realmManager.getFreeNote() {
-            if !allNotes.contains(where: { $0.noteID == freeNote.noteID }) {
-                notes = [freeNote] + allNotes
+        do {
+            let allNotes = try realmManager.getNotes()
+            if let freeNote = try realmManager.getFreeNote() {
+                if !allNotes.contains(where: { $0.noteID == freeNote.noteID }) {
+                    notes = [freeNote] + allNotes
+                } else {
+                    notes = allNotes
+                }
             } else {
                 notes = allNotes
             }
-        } else {
-            notes = allNotes
+            return .success(())
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "NoteViewModel-fetchData"))
         }
-        return .success(())
     }
 
     /// ターゲット画面用: フリーノートを除外してノートを取得
@@ -69,9 +73,12 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         defer { isLoading = false }
 
         // フリーノートを除外したノートのみ取得（getNotes()は既にフリーノート除外済み）
-        let allNotes = realmManager.getNotes()
-        notes = allNotes
-        return .success(())
+        do {
+            notes = try realmManager.getNotes()
+            return .success(())
+        } catch {
+            return .failure(convertToSportsNoteError(error, context: "NoteViewModel-fetchNotesExcludingFree"))
+        }
     }
 
     /// ノートを取得
@@ -94,8 +101,11 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
 
     /// ノートに紐づくメモを取得
     private func loadMemos() {
-        if let noteID = selectedNote?.noteID {
-            memos = realmManager.getMemosByNoteID(noteID: noteID)
+        guard let noteID = selectedNote?.noteID else { return }
+        do {
+            memos = try realmManager.getMemosByNoteID(noteID: noteID)
+        } catch {
+            showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-loadMemos"))
         }
     }
 
@@ -372,12 +382,19 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
                 existingCreatedAt = existingMemo?.created_at
                 existingMeasuresID = existingMemo?.measuresID
             } else {
-                let existingMemos = realmManager.getMemosByNoteID(noteID: noteID)
-                // task.measuresID（現在の最優先対策のID）だけでなく、taskIDに紐づく
-                // 全対策のmeasuresIDのいずれかで検索する。対策の並び替えで最優先対策が
-                // 変わった後も、既存メモを同一課題のものとして正しく検出するため（issue #109）
-                let taskMeasuresIDs = Set(
-                    realmManager.getMeasuresByTaskID(taskID: task.taskID).map { $0.measuresID })
+                let existingMemos: [Memo]
+                let taskMeasuresIDs: Set<String>
+                do {
+                    existingMemos = try realmManager.getMemosByNoteID(noteID: noteID)
+                    // task.measuresID（現在の最優先対策のID）だけでなく、taskIDに紐づく
+                    // 全対策のmeasuresIDのいずれかで検索する。対策の並び替えで最優先対策が
+                    // 変わった後も、既存メモを同一課題のものとして正しく検出するため（issue #109）
+                    taskMeasuresIDs = Set(
+                        try realmManager.getMeasuresByTaskID(taskID: task.taskID).map { $0.measuresID })
+                } catch {
+                    showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-updateTaskReflections"))
+                    continue
+                }
                 if let existingMemo = existingMemos.first(where: {
                     taskMeasuresIDs.contains($0.measuresID)
                 }) {
@@ -552,7 +569,12 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
         case .free:
             return .systemGray
         case .practice:
-            return realmManager.getNoteBackgroundColor(noteID: noteID)
+            do {
+                return try realmManager.getNoteBackgroundColor(noteID: noteID)
+            } catch {
+                showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-getNoteIndicatorColor"))
+                return .gray
+            }
         case .tournament:
             return .systemOrange
         }
@@ -561,15 +583,23 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// ノートを文字列で検索
     /// - Parameter query: 検索文字列
     func searchNotes(query: String) {
-        let searchResults = realmManager.searchNotesByQuery(query: query)
-        notes = searchResults
+        do {
+            notes = try realmManager.searchNotesByQuery(query: query)
+        } catch {
+            showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-searchNotes"))
+        }
     }
 
     /// ノートを日付でフィルタリング
     /// - Parameter date: 日付
     /// - Returns: [Note]
     func filterNotesByDate(_ date: Date) -> [Note] {
-        return realmManager.getNotesByDate(selectedDate: date)
+        do {
+            return try realmManager.getNotesByDate(selectedDate: date)
+        } catch {
+            showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-filterNotesByDate"))
+            return []
+        }
     }
 
     /// 指定した日付でノート一覧を更新
@@ -582,7 +612,12 @@ class NoteViewModel: ObservableObject, BaseViewModelProtocol, CRUDViewModelProto
     /// - Parameter noteID: ノートID
     /// - Returns: [Memo]
     func getMemosByNoteID(noteID: String) -> [Memo] {
-        return realmManager.getMemosByNoteID(noteID: noteID)
+        do {
+            return try realmManager.getMemosByNoteID(noteID: noteID)
+        } catch {
+            showErrorAlert(convertToSportsNoteError(error, context: "NoteViewModel-getMemosByNoteID"))
+            return []
+        }
     }
 
 }
