@@ -131,6 +131,7 @@ SportsNote_iOS/
 - ユーザー向けテキストには`LocalizedStrings`を使用
 - 日付フォーマットには`DateFormatterUtil`を使用（パフォーマンス最適化とコード統一）
 - 既存の命名規則に従う（プロパティはcamelCase、型はPascalCase）
+- タップでキーボードを閉じる処理は`View/Common/ViewExtensions.swift`の`dismissKeyboardOnTap()`（`onTapGesture`ベース）を使うが、`List`内に`NavigationLink`を含む画面（`TaskDetailView`、`MeasureDetailView`）では`onTapGesture`が`NavigationLink`のタップと競合し遷移できなくなるため使用しない。代わりに`.toolbar { ToolbarItemGroup(placement: .keyboard) { ... } }`でキーボード上に「閉じる」ボタン（`LocalizedStrings.close`＋`KeyboardUtil.hideKeyboard()`）を表示する方式を使う
 
 ### 多言語化
 - 文字列は`en.lproj/Localizable.strings`と`ja.lproj/Localizable.strings`で定義
