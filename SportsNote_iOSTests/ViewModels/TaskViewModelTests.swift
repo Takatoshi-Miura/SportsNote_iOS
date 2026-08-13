@@ -522,13 +522,13 @@ struct TaskViewModelTests {
         #expect(pairs.first?.task.measuresID == "measures-a")
         #expect(pairs.first?.task.measures == "Measures A")
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("associateTasksWithMemos - 新規メモ作成時（並び替えなし）は現在の最優先対策の名前がそのまま表示される（issue #183: 既存動作の回帰なし）")
     func associateTasksWithMemos_showsCurrentMeasuresNameWhenNoReorderHappened() async {
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         let viewModel = TaskViewModel()
         let task = TaskListData(

@@ -409,7 +409,7 @@ struct RealmManagerTests {
         #expect(cascade.memos.map { $0.memoID } == ["memo-cascade-return"])
         #expect(cascade.isEmpty == false)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     @Test("logicalDelete - 子エンティティを持たない削除では空のCascadeDeletedEntitiesが返る")
@@ -423,7 +423,7 @@ struct RealmManagerTests {
 
         #expect(cascade.isEmpty == true)
 
-        manager.clearAll()
+        try manager.clearAll()
     }
 
     // MARK: - 検索機能テスト

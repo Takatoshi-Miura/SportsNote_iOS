@@ -463,7 +463,7 @@ struct GroupViewModelTests {
     func delete_tracksCascadeBackgroundSyncForChildEntities() async {
         let viewModel = GroupViewModel()
         let manager = RealmManager.shared
-        manager.clearAll()
+        try? manager.clearAll()
 
         // 他テストの追跡Taskが残っていないことを保証
         await BackgroundSyncTracker.shared.waitForAll()
@@ -503,7 +503,7 @@ struct GroupViewModelTests {
         await BackgroundSyncTracker.shared.waitForAll()
         #expect(BackgroundSyncTracker.shared.trackedCountForTesting == 0)
 
-        manager.clearAll()
+        try? manager.clearAll()
     }
 
     @Test("saveGroup - 既存インターフェースでグループを保存できる")
