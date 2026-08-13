@@ -7,6 +7,7 @@ struct SportsNote_iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isInitialized = false
     @State private var reinitializationTrigger = UUID()
+    @State private var didInitialLaunchInitialize = false
 
     init() {
         // 同期的な初期化のみここで実行
@@ -54,6 +55,12 @@ struct SportsNote_iOSApp: App {
                             } catch {
                                 print("🚨 Realm再初期化に失敗しました: \(error.localizedDescription)")
                             }
+                            // 現在のログイン状態を反映してinitializeAppを実行
+                            // （isLogin未指定=falseで呼ぶと、ログイン直後の再初期化時にcreateUncategorizedGroup()が
+                            //   二重実行され未分類グループが重複するため）
+                            let isLogin = UserDefaultsManager.get(
+                                key: UserDefaultsManager.Keys.isLogin, defaultValue: false)
+                            await InitializationManager.shared.initializeApp(isLogin: isLogin)
                             reinitializationTrigger = UUID()
                             isInitialized = true
                         }
@@ -62,7 +69,13 @@ struct SportsNote_iOSApp: App {
                 // 初期化中の表示
                 ProgressView(LocalizedStrings.initializing)
                     .task {
-                        await InitializationManager.shared.initializeApp()
+                        // .shouldReinitializeApp受信によりisInitializedがfalseへ戻った際にも
+                        // このtaskが再評価されるため、コールドスタート時の初期化は初回のみ実行する
+                        // （2回目以降はonReceive側でisLoginを正しく渡してinitializeAppを実行済みのため）
+                        if !didInitialLaunchInitialize {
+                            await InitializationManager.shared.initializeApp()
+                            didInitialLaunchInitialize = true
+                        }
                         isInitialized = true
                     }
             }

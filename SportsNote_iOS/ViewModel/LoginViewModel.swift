@@ -70,9 +70,10 @@ class LoginViewModel: ObservableObject {
                     UserDefaultsManager.set(key: UserDefaultsManager.Keys.password, value: self.password)
                     UserDefaultsManager.set(key: UserDefaultsManager.Keys.isLogin, value: true)
 
-                    // データ初期化と同期処理
+                    // データ初期化
+                    // initializeApp(isLogin: true)内部で、ログイン済み状態を検知して自動的にsyncAllData()が
+                    // 実行されるため、ここでの明示的なsyncAllData()呼び出しは不要（二重同期防止）
                     await InitializationManager.shared.initializeApp(isLogin: true)
-                    await InitializationManager.shared.syncAllData()
 
                     self.isLoggedIn = true
                     self.isLoading = false
