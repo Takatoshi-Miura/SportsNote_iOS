@@ -12,7 +12,6 @@ class Memo: Object {
     @Persisted var created_at: Date
     @Persisted var updated_at: Date
 
-    /// デフォルトイニシャライザ
     override init() {
         super.init()
         self.memoID = UUIDGenerator.generateID()
@@ -22,6 +21,7 @@ class Memo: Object {
         self.isDeleted = false
         self.created_at = Date()
         self.updated_at = Date()
+        
         // UserDefaultsから同期的に値を取得
         self.userID = UserDefaultsManager.get(key: UserDefaultsManager.Keys.userID, defaultValue: "")
     }

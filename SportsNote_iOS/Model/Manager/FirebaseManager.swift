@@ -13,7 +13,7 @@ final class FirebaseManager {
     /**
      * 現在のuserIDを取得
      *
-     * @return userID
+     * - Returns: userID
      */
     private func currentUserID() -> String {
         UserDefaultsManager.get(
@@ -21,15 +21,15 @@ final class FirebaseManager {
     }
 
     /**
-     * ドキュメントIDを組み立てる（userIDとentityIDから）
+     * ドキュメントIDを組み立てる
      *
-     * Firestoreに一切触れない純粋関数のため、Firebase未設定のテスト環境でも呼び出し可能。
      * 更新系メソッドは、UserDefaults上の現在のuserID（`currentUserID()`）ではなく、
      * エンティティ自身が保持するuserIDを渡すこと（`saveXxx`系と同じ基準に揃えるため）。
      *
-     * @param userID ドキュメントIDに使用するuserID（エンティティ自身の値を渡す）
-     * @param entityID エンティティのID
-     * @return "userID_entityID"形式のドキュメントID
+     * - Parameters:
+     *   - userID: ドキュメントIDに使用するuserID（エンティティ自身の値を渡す）
+     *   - entityID: エンティティのID
+     * - Returns: "userID_entityID"形式のドキュメントID
      */
     static func buildDocumentID(userID: String, entityID: String) -> String {
         "\(userID)_\(entityID)"
@@ -40,10 +40,11 @@ final class FirebaseManager {
     /**
      * Firebaseにデータを保存
      *
-     * @param collectionName コレクション名
-     * @param documentID ドキュメントID
-     * @param data 保存するデータ
-     * @throws SportsNoteError Firebase保存に失敗した場合
+     * - Parameters:
+     *   - collectionName: コレクション名
+     *   - documentID: ドキュメントID
+     *   - data: 保存するデータ
+     * - Throws: SportsNoteError: Firebase保存に失敗した場合
      */
     private func saveDocument(
         collectionName: String,
@@ -64,13 +65,13 @@ final class FirebaseManager {
     /**
      * FirebaseにGroupを保存
      *
-     * @param group Group
-     * @throws SportsNoteError Firebase保存に失敗した場合
+     * - Parameter group: Group
+     * - Throws: SportsNoteError: Firebase保存に失敗した場合
      */
     func saveGroup(group: Group) async throws {
         try await saveDocument(
             collectionName: "Group",
-            documentID: "\(group.userID)_\(group.groupID)",
+            documentID: FirebaseManager.buildDocumentID(userID: group.userID, entityID: group.groupID),
             data: [
                 "userID": group.userID,
                 "groupID": group.groupID,
@@ -87,12 +88,12 @@ final class FirebaseManager {
     /**
      * FirebaseにTaskを保存
      *
-     * @param task TaskData
+     * - Parameter task: TaskData
      */
     func saveTask(task: TaskData) async throws {
         try await saveDocument(
             collectionName: "Task",
-            documentID: "\(task.userID)_\(task.taskID)",
+            documentID: FirebaseManager.buildDocumentID(userID: task.userID, entityID: task.taskID),
             data: [
                 "userID": task.userID,
                 "taskID": task.taskID,
@@ -111,12 +112,12 @@ final class FirebaseManager {
     /**
      * FirebaseにMeasuresを保存
      *
-     * @param measures Measures
+     * - Parameter measures: Measures
      */
     func saveMeasures(measures: Measures) async throws {
         try await saveDocument(
             collectionName: "Measures",
-            documentID: "\(measures.userID)_\(measures.measuresID)",
+            documentID: FirebaseManager.buildDocumentID(userID: measures.userID, entityID: measures.measuresID),
             data: [
                 "userID": measures.userID,
                 "measuresID": measures.measuresID,
@@ -133,12 +134,12 @@ final class FirebaseManager {
     /**
      * FirebaseにMemoを保存
      *
-     * @param memo Memo
+     * - Parameter memo: Memo
      */
     func saveMemo(memo: Memo) async throws {
         try await saveDocument(
             collectionName: "Memo",
-            documentID: "\(memo.userID)_\(memo.memoID)",
+            documentID: FirebaseManager.buildDocumentID(userID: memo.userID, entityID: memo.memoID),
             data: [
                 "userID": memo.userID,
                 "memoID": memo.memoID,
@@ -155,12 +156,12 @@ final class FirebaseManager {
     /**
      * FirebaseにTargetを保存
      *
-     * @param target Target
+     * - Parameter target: Target
      */
     func saveTarget(target: Target) async throws {
         try await saveDocument(
             collectionName: "Target",
-            documentID: "\(target.userID)_\(target.targetID)",
+            documentID: FirebaseManager.buildDocumentID(userID: target.userID, entityID: target.targetID),
             data: [
                 "userID": target.userID,
                 "targetID": target.targetID,
@@ -178,12 +179,12 @@ final class FirebaseManager {
     /**
      * FirebaseにNoteを保存
      *
-     * @param note Note
+     * - Parameter note: Note
      */
     func saveNote(note: Note) async throws {
         try await saveDocument(
             collectionName: "Note",
-            documentID: "\(note.userID)_\(note.noteID)",
+            documentID: FirebaseManager.buildDocumentID(userID: note.userID, entityID: note.noteID),
             data: [
                 "userID": note.userID,
                 "noteID": note.noteID,
@@ -211,8 +212,8 @@ final class FirebaseManager {
     /**
      * Firebaseから指定したコレクションのデータを全取得
      *
-     * @param collection コレクション名
-     * @return 取得したドキュメント
+     * - Parameter collection: コレクション名
+     * - Returns: 取得したドキュメント
      */
     private func getAllDocuments(collection: String) async throws -> [QueryDocumentSnapshot] {
         let userID = currentUserID()
@@ -231,7 +232,7 @@ final class FirebaseManager {
     /**
      * FirebaseからGroupを全取得
      *
-     * @return [Group]
+     * - Returns: [Group]
      */
     func getAllGroup() async throws -> [Group] {
         let documents = try await getAllDocuments(collection: "Group")
@@ -241,7 +242,7 @@ final class FirebaseManager {
     /**
      * FirebaseからTaskを全取得
      *
-     * @return [TaskData]
+     * - Returns: [TaskData]
      */
     func getAllTask() async throws -> [TaskData] {
         let documents = try await getAllDocuments(collection: "Task")
@@ -251,7 +252,7 @@ final class FirebaseManager {
     /**
      * FirebaseからMeasuresを全取得
      *
-     * @return [Measures]
+     * - Returns: [Measures]
      */
     func getAllMeasures() async throws -> [Measures] {
         let documents = try await getAllDocuments(collection: "Measures")
@@ -261,7 +262,7 @@ final class FirebaseManager {
     /**
      * FirebaseからMemoを全取得
      *
-     * @return [Memo]
+     * - Returns: [Memo]
      */
     func getAllMemo() async throws -> [Memo] {
         let documents = try await getAllDocuments(collection: "Memo")
@@ -271,7 +272,7 @@ final class FirebaseManager {
     /**
      * FirebaseからTargetを全取得
      *
-     * @return [Target]
+     * - Returns: [Target]
      */
     func getAllTarget() async throws -> [Target] {
         let documents = try await getAllDocuments(collection: "Target")
@@ -281,7 +282,7 @@ final class FirebaseManager {
     /**
      * FirebaseからNoteを全取得
      *
-     * @return [Note]
+     * - Returns: [Note]
      */
     func getAllNote() async throws -> [Note] {
         let documents = try await getAllDocuments(collection: "Note")
@@ -293,10 +294,11 @@ final class FirebaseManager {
     /**
      * Firebaseから指定したコレクションのデータを更新
      *
-     * @param collection コレクション名
-     * @param documentID ドキュメントID
-     * @param data 更新するデータ
-     * @throws SportsNoteError Firebase更新に失敗した場合
+     * - Parameters:
+     *   - collection: コレクション名
+     *   - documentID: ドキュメントID
+     *   - data: 更新するデータ
+     * - Throws: SportsNoteError: Firebase更新に失敗した場合
      */
     private func updateDocument(
         collection: String,
@@ -316,7 +318,7 @@ final class FirebaseManager {
     /**
      * グループを更新
      *
-     * @param group グループデータ
+     * - Parameter group: グループデータ
      */
     func updateGroup(group: Group) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: group.userID, entityID: group.groupID)
@@ -338,7 +340,7 @@ final class FirebaseManager {
     /**
      * 課題を更新
      *
-     * @param task 課題データ
+     * - Parameter task: 課題データ
      */
     func updateTask(task: TaskData) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: task.userID, entityID: task.taskID)
@@ -362,7 +364,7 @@ final class FirebaseManager {
     /**
      * 対策を更新
      *
-     * @param measures 対策データ
+     * - Parameter measures: 対策データ
      */
     func updateMeasures(measures: Measures) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: measures.userID, entityID: measures.measuresID)
@@ -384,7 +386,7 @@ final class FirebaseManager {
     /**
      * メモを更新
      *
-     * @param memo メモデータ
+     * - Parameter memo: メモデータ
      */
     func updateMemo(memo: Memo) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: memo.userID, entityID: memo.memoID)
@@ -406,7 +408,7 @@ final class FirebaseManager {
     /**
      * 目標を更新
      *
-     * @param target 目標データ
+     * - Parameter target: 目標データ
      */
     func updateTarget(target: Target) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: target.userID, entityID: target.targetID)
@@ -429,7 +431,7 @@ final class FirebaseManager {
     /**
      * ノート(フリー、練習、大会)を更新
      *
-     * @param note ノートデータ
+     * - Parameter note: ノートデータ
      */
     func updateNote(note: Note) async throws {
         let documentID = FirebaseManager.buildDocumentID(userID: note.userID, entityID: note.noteID)

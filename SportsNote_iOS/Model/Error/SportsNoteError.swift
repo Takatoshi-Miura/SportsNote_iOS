@@ -26,10 +26,10 @@ enum SportsNoteError: LocalizedError {
     case networkTimeout
 
     // MARK: - 予期しないエラー
-    case unexpectedError(Error)  // 予期しない一般的なエラー
-    case systemError(String)  // システムレベルのエラー
-    case unknownError(String)  // 分類不可能なエラー
-    case criticalError(Error, context: String)  // 重大なエラー（コンテキスト情報付き）
+    case unexpectedError(Error)
+    case systemError(String)
+    case unknownError(String)
+    case criticalError(Error, context: String)
 
     /// ローカライズされたエラーメッセージ
     var errorDescription: String? {

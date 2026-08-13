@@ -68,11 +68,12 @@ final class SyncManager {
 
     /// Firebase と Realm のデータを同期する汎用メソッド
     ///
-    /// @param T Syncable を実装したデータ型
-    /// @param getFirebaseData Firebase からデータを取得する関数
-    /// @param getRealmData Realm からデータを取得する関数
-    /// @param saveToFirebase Firebase にデータを保存する関数
-    /// @param updateFirebase Firebase のデータを更新する関数
+    /// - Parameters:
+    ///   - T: Syncable を実装したデータ型
+    ///   - getFirebaseData: Firebase からデータを取得する関数
+    ///   - getRealmData: Realm からデータを取得する関数
+    ///   - saveToFirebase: Firebase にデータを保存する関数
+    ///   - updateFirebase: Firebase のデータを更新する関数
     func syncData<T>(
         getFirebaseData: @MainActor () async throws -> [T],
         getRealmData: @MainActor () throws -> [T],
