@@ -2,6 +2,7 @@
 
 // MARK: Common
 "cancel" = "Cancel";
+"close" = "Close";
 "save" = "Save";
 "delete" = "Delete";
 "addTitle" = "Add %@";

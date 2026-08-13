@@ -106,6 +106,12 @@ struct TaskDetailView: View {
                     }
                 }
             }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(LocalizedStrings.close) {
+                    KeyboardUtil.hideKeyboard()
+                }
+            }
         }
         .alert(
             item: Binding<AlertItem?>(

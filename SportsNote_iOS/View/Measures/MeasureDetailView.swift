@@ -48,7 +48,6 @@ struct MeasureDetailView: View {
                             }
                         }
                 }
-                .dismissKeyboardOnTap()
 
                 Section(header: Text(LocalizedStrings.note)) {
                     if memoViewModel.measuresMemoList.isEmpty {
@@ -76,6 +75,14 @@ struct MeasureDetailView: View {
                         .foregroundColor(.red)
                 }
         )
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(LocalizedStrings.close) {
+                    KeyboardUtil.hideKeyboard()
+                }
+            }
+        }
         .deleteConfirmationAlert(
             isPresented: $showDeleteConfirmation,
             title: LocalizedStrings.delete,
