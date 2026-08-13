@@ -129,23 +129,6 @@ struct RealmManagerTests {
         try manager.clearAll()
     }
 
-    @Test("getCount - 有効なデータ件数を取得できる")
-    func getCount_returnsValidCount() async throws {
-        // let manager = RealmManager.shared
-
-        try manager.saveItem(Note(title: "Note 1"))
-        try manager.saveItem(Note(title: "Note 2"))
-
-        let deletedNote = Note(title: "Deleted")
-        deletedNote.isDeleted = true
-        try manager.saveItem(deletedNote)
-
-        let count = try manager.getCount(clazz: Note.self)
-        #expect(count == 2)
-
-        try manager.clearAll()
-    }
-
     // MARK: - getMaxOrder テスト（issue #21: order初期値算出の共通ヘルパー）
 
     @Test("getMaxOrder - データが1件もない場合はnilを返す")

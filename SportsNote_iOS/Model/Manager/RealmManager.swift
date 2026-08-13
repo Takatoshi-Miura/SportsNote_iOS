@@ -326,21 +326,6 @@ final class RealmManager {
         }
     }
 
-    /// 汎用的なデータカウント取得メソッド
-    /// - Parameter clazz: RealmObjectのクラス型
-    /// - Returns: isDeletedがfalseのデータ数
-    /// - Throws: SportsNoteErrorデータベースアクセスに失敗した場合
-    func getCount<T: Object>(clazz: T.Type) throws -> Int {
-        do {
-            let realm = try getRealm()
-            return realm.objects(T.self)
-                .filter("isDeleted == false")
-                .count
-        } catch let error {
-            throw ErrorMapper.mapRealmError(error, context: "getCount-\(String(describing: T.self))")
-        }
-    }
-
     /// 汎用的な最大order取得メソッド（新規レコードのorder初期値算出に使用）
     /// - Parameters:
     ///   - clazz: 取得するデータ型のクラス（"order"プロパティを持つ必要がある）
