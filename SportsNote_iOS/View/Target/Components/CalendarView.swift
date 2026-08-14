@@ -7,9 +7,10 @@ struct CalendarView: View {
     let onMonthChanged: (Date) -> Void
 
     @State private var currentMonth: Date
-    @GestureState private var dragOffset: CGFloat = 0
-    @State private var slideDirection: CGFloat = 0  // スライド方向（-1: 左, 1: 右）
-    @State private var isAnimating: Bool = false  // アニメーション中かどうか
+    // TabView(.page)による無限ページングのための3ページ・スライディングウィンドウ
+    // 0: 前月, 1: 当月(currentMonth), 2: 翌月を常に配置し、選択が変わるたびに
+    // currentMonthを更新してselectionを1へ戻すことで、実質無限にスワイプできるようにする
+    @State private var selection: Int = 1
     @ObservedObject var noteViewModel: NoteViewModel  // 親から渡されるNoteViewModel
     @State private var datesWithPractice: Set<Date> = []  // 練習ノートがある日付のセット
     @State private var datesWithTournament: Set<Date> = []  // 大会ノートがある日付のセット
@@ -42,11 +43,12 @@ struct CalendarView: View {
             // カレンダーヘッダー
             HStack {
                 Button(action: {
-                    changeMonth(isPrevious: true)
+                    withAnimation {
+                        selection = 0
+                    }
                 }) {
                     Image(systemName: "chevron.left")
                 }
-                .disabled(isAnimating)
 
                 Spacer()
 
@@ -58,45 +60,43 @@ struct CalendarView: View {
                 Spacer()
 
                 Button(action: {
-                    changeMonth(isPrevious: false)
+                    withAnimation {
+                        selection = 2
+                    }
                 }) {
                     Image(systemName: "chevron.right")
                 }
-                .disabled(isAnimating)
             }
             .padding(.horizontal)
             .padding(.bottom, 5)
 
-            // カレンダーコンテンツ（スワイプ可能）
-            ZStack {
-                calendarContent
-                    .offset(x: isAnimating ? -slideDirection * UIScreen.main.bounds.width : 0)
-                    .offset(x: dragOffset)
-                    .animation(isAnimating ? .easeInOut(duration: 0.3) : nil, value: isAnimating)
+            // カレンダーコンテンツ（前月・当月・翌月の3ページをTabView(.page)でスワイプ可能に）
+            TabView(selection: $selection) {
+                calendarContent(for: adjacentMonth(offset: -1))
+                    .tag(0)
+                calendarContent(for: currentMonth)
+                    .tag(1)
+                calendarContent(for: adjacentMonth(offset: 1))
+                    .tag(2)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: calendarContentHeight)
+            .onChange(of: selection) { newValue in
+                // 前月(0)・翌月(2)へページが送られたら中心月を更新し、
+                // アニメーションなしでウィンドウを1へ戻して次のスワイプに備える
+                guard newValue != 1 else { return }
 
-                if isAnimating {
-                    // 新しい月のカレンダーを表示（スライド方向に基づいて配置）
-                    calendarContent
-                        .offset(x: slideDirection * UIScreen.main.bounds.width - (slideDirection * dragOffset))
+                let isPrevious = newValue == 0
+                currentMonth = adjacentMonth(offset: isPrevious ? -1 : 1)
+                onMonthChanged(currentMonth)
+                updateDatesWithNotes()
+
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    selection = 1
                 }
             }
-            .clipped()
-            .gesture(
-                DragGesture()
-                    .updating($dragOffset) { value, state, _ in
-                        state = value.translation.width
-                    }
-                    .onEnded { value in
-                        let threshold: CGFloat = 50
-                        if value.translation.width > threshold {
-                            // 右スワイプ - 前月
-                            changeMonth(isPrevious: true)
-                        } else if value.translation.width < -threshold {
-                            // 左スワイプ - 翌月
-                            changeMonth(isPrevious: false)
-                        }
-                    }
-            )
         }
         .padding(.bottom)
         .onAppear {
@@ -131,74 +131,52 @@ struct CalendarView: View {
         }
     }
 
-    // 月の切り替えを行う関数
-    private func changeMonth(isPrevious: Bool) {
-        // アニメーション完了前の連続タップ・スワイプによる多重実行を防ぐ
-        guard !isAnimating else { return }
-
-        isAnimating = true
-        slideDirection = isPrevious ? -1 : 1  // 前月なら左から右へ、次月なら右から左へ
-
-        // アニメーション完了後の処理
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // 月を実際に変更
-            withAnimation(nil) {
-                let newMonth =
-                    Calendar.current.date(
-                        byAdding: .month,
-                        value: isPrevious ? -1 : 1,
-                        to: currentMonth
-                    ) ?? currentMonth
-
-                currentMonth = newMonth
-                onMonthChanged(currentMonth)
-
-                // アニメーションをリセット
-                isAnimating = false
-                slideDirection = 0
-
-                // 新しい月のノートがある日付を取得
-                updateDatesWithNotes()
-            }
-        }
+    // currentMonthからoffsetヶ月分ずらした月を返す（前月/翌月ページの算出に使用）
+    private func adjacentMonth(offset: Int) -> Date {
+        Calendar.current.date(byAdding: .month, value: offset, to: currentMonth) ?? currentMonth
     }
 
-    // 表示中の月のノートがある日付を更新
+    // 表示中の月・前月・翌月（TabViewの3ページ分）のノートがある日付を更新
     private func updateDatesWithNotes() {
         datesWithPractice.removeAll()
         datesWithTournament.removeAll()
 
-        // 表示している月の初日と末日を取得
-        let calendar = Calendar.current
-        let year = currentMonth.get(.year)
-        let month = currentMonth.get(.month)
-
-        if let startDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
-            let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate)
-        {
-
-            // 月の初日から末日までの間の全ての日のノートを確認
-            var date = startDate
-            while date <= endDate {
-                let notesForDate = noteViewModel.filterNotesByDate(date)
-                let startOfDay = calendar.startOfDay(for: date)
-                for note in notesForDate {
-                    switch NoteType(rawValue: note.noteType) {
-                    case .practice:
-                        datesWithPractice.insert(startOfDay)
-                    case .tournament:
-                        datesWithTournament.insert(startOfDay)
-                    default:
-                        break
-                    }
-                }
-                date = calendar.date(byAdding: .day, value: 1, to: date)!
-            }
+        for month in [adjacentMonth(offset: -1), currentMonth, adjacentMonth(offset: 1)] {
+            insertNoteDates(for: month)
         }
     }
 
-    // カレンダーコンテンツ部分を分離
-    private var calendarContent: some View {
+    // 指定した月の初日から末日までのノート日付をdatesWithPractice/datesWithTournamentに追加
+    private func insertNoteDates(for month: Date) {
+        let calendar = Calendar.current
+        let year = month.get(.year)
+        let monthValue = month.get(.month)
+
+        guard let startDate = calendar.date(from: DateComponents(year: year, month: monthValue, day: 1)),
+            let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate)
+        else { return }
+
+        // 月の初日から末日までの間の全ての日のノートを確認
+        var date = startDate
+        while date <= endDate {
+            let notesForDate = noteViewModel.filterNotesByDate(date)
+            let startOfDay = calendar.startOfDay(for: date)
+            for note in notesForDate {
+                switch NoteType(rawValue: note.noteType) {
+                case .practice:
+                    datesWithPractice.insert(startOfDay)
+                case .tournament:
+                    datesWithTournament.insert(startOfDay)
+                default:
+                    break
+                }
+            }
+            date = calendar.date(byAdding: .day, value: 1, to: date)!
+        }
+    }
+
+    // カレンダーコンテンツ部分を分離（表示対象の月を明示的に受け取る）
+    private func calendarContent(for month: Date) -> some View {
         VStack {
             // 曜日ヘッダー
             HStack {
@@ -212,11 +190,11 @@ struct CalendarView: View {
             }
 
             // 日付グリッド
-            let days = extractDates()
+            let days = extractDates(for: month)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
                 ForEach(days, id: \.self) { date in
                     VStack {
-                        if date.get(.month) == currentMonth.get(.month) {
+                        if date.get(.month) == month.get(.month) {
                             Text("\(date.get(.day))")
                                 .fontWeight(isToday(date) ? .bold : .regular)
                                 .foregroundColor(foregroundColorFor(date))
@@ -228,16 +206,26 @@ struct CalendarView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }
-                    .frame(height: 40)
+                    .frame(height: calendarWeekRowHeight)
                     .onTapGesture {
-                        if date.get(.month) == currentMonth.get(.month) {
+                        if date.get(.month) == month.get(.month) {
                             selectedDate = date
                             onDateSelected(date)
                         }
                     }
                 }
             }
+            Spacer(minLength: 0)
         }
+        .frame(height: calendarContentHeight)
+    }
+
+    // TabView(.page)は各ページの高さが揃っている必要があるため、
+    // 月によって変動する週数（5〜6週）を吸収できるよう常に6週分の高さで固定する
+    private let calendarWeekRowHeight: CGFloat = 40
+    private let calendarWeekdayHeaderHeight: CGFloat = 20
+    private var calendarContentHeight: CGFloat {
+        calendarWeekdayHeaderHeight + calendarWeekRowHeight * 6
     }
 
     // 曜日ヘッダーの色を返す関数（0=Sunday, 6=Saturday）
@@ -301,11 +289,11 @@ struct CalendarView: View {
         }
     }
 
-    private func extractDates() -> [Date] {
+    private func extractDates(for month: Date) -> [Date] {
         let calendar = Calendar.current
-        let startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: month))!
         let firstWeekday = calendar.component(.weekday, from: startDate)
-        let daysInMonth = calendar.range(of: .day, in: .month, for: currentMonth)!.count
+        let daysInMonth = calendar.range(of: .day, in: .month, for: month)!.count
 
         var days: [Date] = []
 
