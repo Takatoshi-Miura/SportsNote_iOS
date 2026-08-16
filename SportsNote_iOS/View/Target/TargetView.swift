@@ -29,26 +29,26 @@ struct TargetView: View {
             },
             content: {
                 VStack(spacing: 0) {
-                    // カレンダーセクション（固定）
-                    CalendarSection(
-                        selectedYear: selectedYear,
-                        selectedMonth: selectedMonth,
-                        selectedDate: $selectedDate,
-                        onDateSelected: { date in
-                            selectedDate = date
-                            // 選択した日付に対応するノートを取得
-                            Task { @MainActor in
-                                noteViewModel.updateNotesByDate(date)
-                            }
-                        },
-                        targetViewModel: viewModel,
-                        noteViewModel: noteViewModel
-                    )
-                    .padding(.top, 16)
+                    // カレンダーセクション・ノートリストセクション（UICalendarViewの縦サイズが
+                    // 固定的で縮小できないため、画面全体をスクロール可能にして両方を表示する）
+                    ScrollView {
+                        CalendarSection(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            selectedDate: $selectedDate,
+                            onDateSelected: { date in
+                                selectedDate = date
+                                // 選択した日付に対応するノートを取得
+                                Task { @MainActor in
+                                    noteViewModel.updateNotesByDate(date)
+                                }
+                            },
+                            targetViewModel: viewModel,
+                            noteViewModel: noteViewModel
+                        )
+                        .padding(.top, 16)
 
-                    // ノートリストセクション（スクロール可能）
-                    if let date = selectedDate {
-                        ScrollView {
+                        if let date = selectedDate {
                             NoteListSection(
                                 notes: noteViewModel.notes,
                                 date: date,
@@ -56,8 +56,6 @@ struct TargetView: View {
                             )
                             .padding(.vertical, 16)
                         }
-                    } else {
-                        Spacer()
                     }
 
                     // AdMobバナー広告

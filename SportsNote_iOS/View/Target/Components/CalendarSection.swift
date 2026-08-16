@@ -57,6 +57,7 @@ struct CalendarSection: View {
                 },
                 noteViewModel: noteViewModel
             )
+            .frame(maxWidth: .infinity)
             .padding(.horizontal)
         }
         .background(Color(.secondarySystemBackground))

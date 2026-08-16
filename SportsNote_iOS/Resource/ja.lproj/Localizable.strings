@@ -13,6 +13,7 @@
 "basicInfo" = "基本情報";
 "select" = "選択";
 "complete" = "完了";
+"incomplete" = "未完了";
 "sort" = "並び替え";
 "edit" = "編集";
 "notice" = "お知らせ";

@@ -13,6 +13,7 @@
 "basicInfo" = "Basic Information";
 "select" = "Select";
 "complete" = "Complete";
+"incomplete" = "Incomplete";
 "sort" = "Sort";
 "edit" = "Edit";
 "notice" = "Notice";

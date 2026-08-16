@@ -42,7 +42,7 @@ struct MainTaskList: View {
                     } label: {
                         let isComplete = isTaskComplete(taskID: taskList.taskID)
                         Label(
-                            isComplete ? "Incomplete" : "Complete",
+                            isComplete ? LocalizedStrings.incomplete : LocalizedStrings.complete,
                             systemImage: isComplete ? "xmark.circle" : "checkmark.circle"
                         )
                     }

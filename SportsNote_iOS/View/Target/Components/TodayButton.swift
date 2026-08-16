@@ -18,11 +18,6 @@ struct TodayButton: View {
             // ViewModelの年月も更新
             targetViewModel.updateCurrentPeriod(year: selectedYear, month: selectedMonth)
 
-            NotificationCenter.default.post(
-                name: .moveToToday,
-                object: nil
-            )
-
             Task { @MainActor in
                 noteViewModel.updateNotesByDate(today)
             }

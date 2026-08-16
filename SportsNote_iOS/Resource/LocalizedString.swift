@@ -20,6 +20,7 @@ struct LocalizedStrings {
     static let basicInfo = "basicInfo".localized
     static let select = "select".localized
     static let complete = "complete".localized
+    static let incomplete = "incomplete".localized
     static let sort = "sort".localized
     static let edit = "edit".localized
     static let notice = "notice".localized
