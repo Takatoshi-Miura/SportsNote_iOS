@@ -38,6 +38,11 @@ struct AdMobBannerView: UIViewRepresentable {
         return bannerView
     }
 
+    // 回転時に前の向きの幅を保持して親レイアウトを押し広げないよう、幅は提案幅に従わせる
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: BannerView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? uiView.adSize.size.width, height: uiView.adSize.size.height)
+    }
+
     func updateUIView(_ uiView: BannerView, context: Context) {
         // 広告のリフレッシュは自動的に行われるため、特別な更新処理は不要
     }

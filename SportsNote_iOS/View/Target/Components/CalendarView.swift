@@ -52,7 +52,10 @@ struct CalendarView: UIViewRepresentable {
     // SwiftUI側のVStackレイアウトを圧迫する（横のはみ出し・縦の伸びすぎ）ため、
     // 横幅はSwiftUIからの提案幅に合わせ、縦は月の週数に応じた実際のコンテンツ高さに従わせる
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UICalendarView, context: Context) -> CGSize? {
-        let width = proposal.width ?? UIView.layoutFittingCompressedSize.width
+        // 1ページ分の幅を上限にする（iPadで前月・翌月が見えるのを防ぐ）
+        let maxWidth = uiView.intrinsicContentSize.width
+        let proposedWidth = proposal.width ?? UIView.layoutFittingCompressedSize.width
+        let width = maxWidth > 0 ? min(proposedWidth, maxWidth) : proposedWidth
         let targetSize = CGSize(width: width, height: UIView.layoutFittingCompressedSize.height)
         return uiView.systemLayoutSizeFitting(
             targetSize,
