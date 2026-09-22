@@ -25,13 +25,34 @@ struct AdMobBannerView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> BannerView {
-        let adSize = AdSizeBanner
-        let bannerView = BannerView(adSize: adSize)
+        let bannerView = BannerView(adSize: AdSizeBanner)
         bannerView.adUnitID = adUnitID
         bannerView.delegate = context.coordinator
         bannerView.rootViewController = getRootViewController()
+        return bannerView
+    }
 
-        print("📢 AdMob: バナー広告の読み込み開始 (adUnitID: \(adUnitID))")
+    // 回転時に前の向きの幅を保持して親レイアウトを押し広げないよう、幅は提案幅に従わせる
+    // uiView.adSizeはSwiftUIのレイアウト過程で(0,0)にリセットされるため、固定値のAdSizeBannerを参照する
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: BannerView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? AdSizeBanner.size.width, height: AdSizeBanner.size.height)
+    }
+
+    func updateUIView(_ uiView: BannerView, context: Context) {
+        guard !context.coordinator.hasStartedLoading else { return }
+        context.coordinator.hasStartedLoading = true
+        loadWhenReady(uiView, attempt: 0)
+    }
+
+    // makeUIView直後はSwiftUIのレイアウトが未確定でuiView.frameの高さが0のままのため、
+    // 確定するまで次のRunLoopで再試行してからロードする
+    private func loadWhenReady(_ uiView: BannerView, attempt: Int) {
+        guard uiView.frame.height > 0 || attempt >= 10 else {
+            DispatchQueue.main.async {
+                self.loadWhenReady(uiView, attempt: attempt + 1)
+            }
+            return
+        }
 
         let request = Request()
         if TrackingPermissionManager.shared.requiresNonPersonalizedAds {
@@ -39,17 +60,7 @@ struct AdMobBannerView: UIViewRepresentable {
             extras.additionalParameters = ["npa": "1"]
             request.register(extras)
         }
-        bannerView.load(request)
-        return bannerView
-    }
-
-    // 回転時に前の向きの幅を保持して親レイアウトを押し広げないよう、幅は提案幅に従わせる
-    func sizeThatFits(_ proposal: ProposedViewSize, uiView: BannerView, context: Context) -> CGSize? {
-        CGSize(width: proposal.width ?? uiView.adSize.size.width, height: uiView.adSize.size.height)
-    }
-
-    func updateUIView(_ uiView: BannerView, context: Context) {
-        // 広告のリフレッシュは自動的に行われるため、特別な更新処理は不要
+        uiView.load(request)
     }
 
     /// ルートViewControllerを取得
@@ -72,6 +83,8 @@ struct AdMobBannerView: UIViewRepresentable {
 
     /// AdMobバナー広告のデリゲート
     class Coordinator: NSObject, BannerViewDelegate {
+        var hasStartedLoading = false
+
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             print("✅ AdMob: 広告の読み込み成功")
         }
