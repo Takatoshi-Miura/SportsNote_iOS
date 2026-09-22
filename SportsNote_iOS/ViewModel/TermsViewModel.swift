@@ -42,5 +42,6 @@ class TermsViewModel: ObservableObject {
     func agreeToTerms() {
         UserDefaultsManager.set(key: UserDefaultsManager.Keys.agree, value: true)
         termsDialogShown = false
+        TrackingPermissionManager.shared.requestAuthorizationIfNeeded()
     }
 }

@@ -384,6 +384,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SportsNote-iOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SportsNote;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "広告を表示するために使用します。この情報が他社のアプリやWebサイトでのトラッキングに利用されることはありません。";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -428,6 +430,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SportsNote-iOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SportsNote;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "広告を表示するために使用します。この情報が他社のアプリやWebサイトでのトラッキングに利用されることはありません。";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

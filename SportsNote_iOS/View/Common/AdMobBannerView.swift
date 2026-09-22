@@ -34,6 +34,11 @@ struct AdMobBannerView: UIViewRepresentable {
         print("📢 AdMob: バナー広告の読み込み開始 (adUnitID: \(adUnitID))")
 
         let request = Request()
+        if TrackingPermissionManager.shared.requiresNonPersonalizedAds {
+            let extras = Extras()
+            extras.additionalParameters = ["npa": "1"]
+            request.register(extras)
+        }
         bannerView.load(request)
         return bannerView
     }

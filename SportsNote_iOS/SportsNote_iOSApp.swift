@@ -86,6 +86,9 @@ struct SportsNote_iOSApp: App {
     private func checkAndShowTermsDialog() {
         if !UserDefaultsManager.get(key: UserDefaultsManager.Keys.agree, defaultValue: false) {
             TermsViewModel.showDialog()
+        } else {
+            // 同意済みユーザー向け（未同意時はagreeToTerms()内でリクエストする）
+            TrackingPermissionManager.shared.requestAuthorizationIfNeeded()
         }
     }
 
