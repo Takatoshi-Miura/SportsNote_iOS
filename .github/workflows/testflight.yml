@@ -105,6 +105,17 @@ jobs:
             | tee build/archive.log | grep -E "error:|warning: .*deprecated|ARCHIVE (SUCCEEDED|FAILED)" || true
           test -d "$ARCHIVE_PATH"
 
+      # 未署名アーカイブではバイナリxcframeworkがlinker-signedのまま残り、export後の署名要件の
+      # identifierがバンドルIDと食い違ってITMS-90035になるため、バンドルIDでad-hoc再署名しておく
+      - name: Re-sign linker-signed frameworks
+        run: |
+          for FW in "$ARCHIVE_PATH"/Products/Applications/*.app/Frameworks/*.framework; do
+            if codesign -dv "$FW" 2>&1 | grep -q "linker-signed"; then
+              codesign --force --sign - --timestamp=none "$FW"
+              echo "Re-signed $(basename "$FW")"
+            fi
+          done
+
       - name: Export and upload to App Store Connect
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
