@@ -37,11 +37,32 @@ jobs:
         env:
           GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > SportsNote_iOS/Resource/GoogleService-Info.plist
-          plutil -lint SportsNote_iOS/Resource/GoogleService-Info.plist
+          # どのSecretが原因か分かるよう個別にチェックする
+          MISSING=0
+          for NAME in GOOGLE_SERVICE_INFO_PLIST_BASE64 ASC_API_KEY_P8_BASE64 ASC_KEY_ID ASC_ISSUER_ID; do
+            if [[ -z "${!NAME}" ]]; then
+              echo "::error::Secret $NAME is not set"
+              MISSING=1
+            fi
+          done
+          [[ $MISSING -eq 0 ]] || exit 1
+
+          PLIST_PATH=SportsNote_iOS/Resource/GoogleService-Info.plist
+          if ! printf '%s' "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | tr -d '[:space:]' | base64 --decode > "$PLIST_PATH" 2>/dev/null \
+            || ! plutil -lint -s "$PLIST_PATH"; then
+            echo "::error::GOOGLE_SERVICE_INFO_PLIST_BASE64 is not a base64-encoded plist"
+            exit 1
+          fi
+
           KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
-          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          if ! printf '%s' "$ASC_API_KEY_P8_BASE64" | tr -d '[:space:]' | base64 --decode > "$KEY_PATH" 2>/dev/null \
+            || ! grep -q "BEGIN PRIVATE KEY" "$KEY_PATH"; then
+            echo "::error::ASC_API_KEY_P8_BASE64 is not a base64-encoded .p8 key"
+            exit 1
+          fi
           echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
       - name: Cache Swift packages
