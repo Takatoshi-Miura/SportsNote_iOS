@@ -1,0 +1,114 @@
+name: Upload to TestFlight
+
+on:
+  push:
+    tags:
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+env:
+  XCODE_VERSION: '26.6'
+  PROJECT: SportsNote_iOS.xcodeproj
+  SCHEME: SportsNote_iOS
+  ARCHIVE_PATH: ${{ github.workspace }}/build/SportsNote_iOS.xcarchive
+  EXPORT_PATH: ${{ github.workspace }}/build/export
+
+jobs:
+  upload:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+          xcodebuild -version
+
+      - name: Restore secret files
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+        run: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > SportsNote_iOS/Resource/GoogleService-Info.plist
+          plutil -lint SportsNote_iOS/Resource/GoogleService-Info.plist
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: build/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('SportsNote_iOS.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      # タグのバージョンとMARKETING_VERSIONの不一致によるアップロード事故を防ぐ
+      - name: Verify version
+        run: |
+          SETTINGS=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -clonedSourcePackagesDirPath build/SourcePackages -showBuildSettings 2>/dev/null)
+          MARKETING_VERSION=$(echo "$SETTINGS" | awk -F' = ' '/ MARKETING_VERSION = /{print $2; exit}')
+          BUILD_NUMBER=$(echo "$SETTINGS" | awk -F' = ' '/ CURRENT_PROJECT_VERSION = /{print $2; exit}')
+          echo "Version: $MARKETING_VERSION ($BUILD_NUMBER)"
+          if [[ "$GITHUB_REF" == refs/tags/release/* ]]; then
+            TAG_VERSION="${GITHUB_REF#refs/tags/release/}"
+            if [[ "$TAG_VERSION" != "$MARKETING_VERSION" ]]; then
+              echo "::error::Tag version ($TAG_VERSION) does not match MARKETING_VERSION ($MARKETING_VERSION)"
+              exit 1
+            fi
+          fi
+          echo "### $MARKETING_VERSION ($BUILD_NUMBER)" >> "$GITHUB_STEP_SUMMARY"
+
+      # 署名はexport時にクラウド管理証明書で行う（CIで開発証明書が毎回作成されるのを防ぐ）
+      - name: Archive
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            -clonedSourcePackagesDirPath build/SourcePackages \
+            -disableAutomaticPackageResolution \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build/archive.log | grep -E "error:|warning: .*deprecated|ARCHIVE (SUCCEEDED|FAILED)" || true
+          test -d "$ARCHIVE_PATH"
+
+      - name: Export and upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist ci/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            | tee build/export.log
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: build/*.log
+          if-no-files-found: ignore
+
+      - name: Clean up secret files
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/AuthKey.p8" SportsNote_iOS/Resource/GoogleService-Info.plist
