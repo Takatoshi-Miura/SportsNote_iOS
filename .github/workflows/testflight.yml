@@ -119,7 +119,11 @@ jobs:
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            | tee build/export.log
+            2>&1 | tee build/export.log || {
+              # ログを開かずに原因が分かるよう、エラー行と直後の詳細行をアノテーションに出す
+              awk '/error:/ { msg=$0; if ((getline nxt) > 0 && nxt ~ /^[[:space:]]+[^[:space:]]/) { sub(/^[[:space:]]+/, "", nxt); msg=msg " / " nxt } print "::error::" msg }' build/export.log | sort -u
+              exit 1
+            }
 
       - name: Upload logs
         if: always()
